@@ -21,7 +21,12 @@ Built in backend-v2 Phase 4. The web app still uses its own Next routes until th
 |---|---|---|
 | Ops | `GET /health`, `GET /ready` | Ready checks Postgres (and that the role is `lens_app`), Redis and storage |
 | Auth | `POST /auth/otp/request`, `POST /auth/otp/verify`, `GET /auth/google/start`, `GET /auth/google/callback`, `POST /auth/logout`, `GET /auth/providers` | Ported 1:1; providers tells the login page whether Google sign-in is configured |
-| Me | `GET /me` | `{ user, credits, role }` (role read from the DB; the web uses it for the admin page) |
+| | `POST /auth/start { email }` | First step of the sign-in card: `{ method: "password" }` when the account has a password, otherwise a code is emailed now and `{ method: "code", sent, masked }`. (It tells whether an email has a password; per-IP limits slow probing.) |
+| | `POST /auth/password/login { email, password, source? }` | Email + password → session cookie. One message for a wrong password or unknown email (`invalid_password`, 401); 10 failures lock password sign-in for 15 minutes (429 `locked`; codes still work). Audit: `password_failed`, login method `password` |
+| | `POST /auth/password/set { password }` | Signed in. First password: right after the code (or for a Google user). Changing one needs a sign-in in the last 10 minutes (the "Forgot password?" code), else 403 `reauth_required`. Rules: 8–128 characters, not a common password, not the email (400 `weak_password` with the sentence). Other devices are signed out (`sessions_valid_after`); this one gets a fresh cookie |
+| | `POST /auth/password/forgot { email }` | Emails a code to an existing account; the same `{ sent, masked }` for unknown emails (no account is created) |
+| | `POST /auth/otp/verify` | Also returns `needsPassword: true` for an email account without a password (the page then asks for one) |
+| Me | `GET /me` | `{ user, credits, role, hasPassword, needsPassword }` (role read from the DB; `needsPassword` = an email account that must still set its password; never the hash) |
 | Plans | `GET /plans` | Prices for the visitor's country (server-side); `mine` = the signed-in user's plans with usage and validity |
 | Uploads | `POST /analyses` (alias `POST /uploads`) | Multipart fields below. Answers `202 { analysisId, status: "queued" }` |
 | | `GET /analyses/:id` | `status`: `queued` → `parsing` → `analysing` → `storing` → `ready`, or `failed`. When ready, a `preview` with the numbers the upload screen shows. When failed, `message` is the engine's own sentence or the upload screen's text |

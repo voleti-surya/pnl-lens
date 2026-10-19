@@ -1,7 +1,7 @@
 /**
  * @file  tests/e2e-web/helpers.ts
  * @area  Tests
- * @what  E2E helpers: sign in with an emailed code (read from the API's console mail log), give a user a plan, run SQL as the admin.
+ * @what  E2E helpers: sign in (password, or an emailed code from the API's console mail log then the required password), give a user a plan, run SQL as the admin.
  */
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -28,16 +28,40 @@ function latestCode(email: string): string | null {
   return lines.length ? lines[lines.length - 1].subject.slice(0, 6) : null;
 }
 
-/** Signs in through the real login page with an emailed 6-digit code. */
-export async function signIn(page: Page, email: string, next = '/dashboard') {
-  await page.goto(`/login?next=${encodeURIComponent(next)}`);
-  await page.fill('input[type=email]', email);
-  const before = latestCode(email);
-  await page.getByRole('button', { name: /continue with email/i }).click();
+export const E2E_PASSWORD = 'e2e-Password-1';
+
+/** Reads the newest code emailed to this address (from the API's console mail log), waiting for one newer than `before`. */
+export async function waitForCode(email: string, before: string | null): Promise<string> {
   let code: string | null = null;
   await expect.poll(() => { code = latestCode(email); return code && code !== before ? code : null; }, { timeout: 20_000 }).not.toBeNull();
-  await page.fill('input[inputmode=numeric], input[name=code]', code!);
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  return code!;
+}
+export const codeBefore = (email: string) => latestCode(email);
+
+/**
+ * Signs in through the real login page. A new email (or one without a password) gets a code and then sets
+ * E2E_PASSWORD, which is required; an email that has a password signs in with it.
+ */
+export async function signIn(page: Page, email: string, next = '/dashboard') {
+  await page.goto(`/login?next=${encodeURIComponent(next)}`);
+  await page.getByRole('textbox', { name: 'Email' }).fill(email);
+  const before = latestCode(email);
+  await page.getByRole('button', { name: /continue with email/i }).click();
+  const card = page.locator('[data-step]');
+  await expect(card).not.toHaveAttribute('data-step', 'email', { timeout: 20_000 });
+  if ((await card.getAttribute('data-step')) === 'password') {
+    await page.getByLabel('Password', { exact: true }).fill(E2E_PASSWORD);
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  } else {
+    await page.fill('input[name=code]', await waitForCode(email, before));
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await expect(card).not.toHaveAttribute('data-step', 'code', { timeout: 20_000 }).catch(() => {});
+    if ((await card.count()) && (await card.getAttribute('data-step')) === 'set') {
+      await page.getByLabel('Password', { exact: true }).fill(E2E_PASSWORD);
+      await page.getByLabel('Repeat the password').fill(E2E_PASSWORD);
+      await page.getByRole('button', { name: 'Save and continue' }).click();
+    }
+  }
   await page.waitForURL((u) => !u.pathname.startsWith('/login'));
 }
 

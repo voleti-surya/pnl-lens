@@ -32,7 +32,7 @@ export class PgAuthStore implements AuthStore {
     return toUser(rows[0]);
   }
 
-  async markLogin(userId: string, method: 'email' | 'google') {
+  async markLogin(userId: string, method: 'email' | 'google' | 'password') {
     await this.db.query(
       `update public.users set last_login_at = now(), email_verified_at = coalesce(email_verified_at, now()) where id = $1`, [userId]);
     await this.audit(userId, 'login', { method });

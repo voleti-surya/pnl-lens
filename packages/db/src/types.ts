@@ -42,6 +42,11 @@ export interface UsersTable {
   google_sub: string | null;
   name: string | null;
   role: Generated<UserRole>;
+  password_hash: string | null;
+  password_set_at: TimestampNull;
+  password_failed: Generated<number>;
+  password_locked_until: TimestampNull;
+  sessions_valid_after: TimestampNull;
 }
 
 export interface CreditsTable {

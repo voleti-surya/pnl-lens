@@ -184,6 +184,12 @@ a{color:inherit}
 .btn-provider:hover{background:var(--s3);border-color:var(--line-hover)}.btn-provider:active{background:var(--s1)}
 .login-or{margin:16px 0;text-align:center;color:var(--ink-3);font-size:12px;font-weight:600;letter-spacing:.06em}
 .login-email{display:flex;flex-direction:column;gap:14px}
+.login-card h3{margin-top:0}
+.login-who{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.login-who b{color:var(--ink);font-weight:600;overflow-wrap:anywhere}
+.login-rule{margin:-4px 0 0}
+.pw-field{position:relative}.pw-field .field{padding-right:48px}
+.pw-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:grid;place-items:center;background:none;border:0;border-radius:10px;color:var(--ink-3);cursor:pointer}
+.pw-eye:hover{color:var(--ink)}.pw-eye:focus-visible{outline:2px solid var(--y);outline-offset:0}
 @media (max-width:480px){.login-card{margin:6vh 16px 0;padding:24px 20px}.login-card .btn,.login-card .field{min-height:48px}}
 .linkbtn.quiet{color:var(--ink-3)}.linkbtn.quiet:hover{color:var(--ink);opacity:1}.linkbtn.accent{color:var(--y)}
 .center-card h3{font-size:20px;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}.center-sub{margin:0 0 20px;font-size:14px}

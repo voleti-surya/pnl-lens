@@ -21,8 +21,11 @@ export async function meRoutes(app: App, deps: Deps) {
     await trackWith(deps.pool, user.id, 'active');
     const r = await deps.db.selectFrom('credits').select('balance').where('user_id', '=', user.id).executeTakeFirst();
     // role: read from the DB on every request (never from the token), so the web can show or hide the admin console
-    const u = await deps.db.selectFrom('users').select('role').where('id', '=', user.id).executeTakeFirst();
-    return ok(reply, { user, credits: r?.balance ?? 0, role: u?.role ?? 'user' });
+    const u = await deps.db.selectFrom('users').select(['role', 'password_hash', 'google_sub']).where('id', '=', user.id).executeTakeFirst();
+    // hasPassword / needsPassword: email accounts must set a password after the first code (never the hash itself)
+    const hasPassword = !!u?.password_hash, dev = (process.env.AUTH_MODE || 'dev') === 'dev';
+    return ok(reply, { user: { id: user.id, country: user.country }, credits: r?.balance ?? 0, role: u?.role ?? 'user',
+      hasPassword, needsPassword: !hasPassword && !u?.google_sub && !dev });
   });
 
   /** Plans and prices for the visitor's country (server-side, never from the browser); plus the user's own plans when signed in. */

@@ -39,8 +39,11 @@ export async function sessionUser(req: FastifyRequest): Promise<SessionUser | nu
   const u = await sessionFromToken(req.cookies?.[SESSION_COOKIE]);
   if (!u) return null;
   const db = (req.server as any).deps.db as import('@pnl-lens/db').Db;     // fail closed: no DB, no session
-  const row = await db.selectFrom('users').select('status').where('id', '=', u.id).executeTakeFirst();
-  return row?.status === 'active' ? u : null;
+  const row = await db.selectFrom('users').select(['status', 'sessions_valid_after']).where('id', '=', u.id).executeTakeFirst();
+  if (row?.status !== 'active') return null;
+  // a password change or reset ends the sessions issued before it (other devices); dev-mode sessions have no iat
+  if (row.sessions_valid_after && u.iat !== undefined && u.iat * 1000 < new Date(row.sessions_valid_after).getTime() - 1000) return null;
+  return u;
 }
 
 /** For handlers: the signed-in user, or sends the old 401 and returns null. */

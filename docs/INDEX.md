@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 206 files._
+_Generated from file headers by `npm run docs:index` — 211 files._
 
 ### Pages
 
@@ -118,17 +118,19 @@ _Generated from file headers by `npm run docs:index` — 206 files._
 
 | File | What it does |
 |---|---|
-| `apps/api/src/routes/auth.ts` | Sign-in, ported 1:1 from apps/web/app/api/auth/*: email code request/verify, Google start/callback, logout. |
+| `apps/api/src/routes/auth.ts` | Sign-in: email + password (a one-time code proves the email first and resets a forgotten password), email code request/verify, Google start/callback, logout. |
 | `apps/api/src/routes/me.ts` | GET /me (ported), GET /plans, consents (GET/POST /me/consents), POST /me/export, POST /me/delete and DELETE /me. |
-| `apps/web/app/(auth)/login/page.tsx` | Sign-in page: one card with Continue with Google, OR, Continue with email (one-time code). One account per email; new users are created on first sign-in. |
+| `apps/web/app/(app)/layout.tsx` | Signed-in area (dashboard, upload, report): an email account without a password is sent to set one first. |
+| `apps/web/app/(auth)/login/page.tsx` | Sign-in page: one card (Continue with Google · OR · Continue with email → password, or a code for a new email → set a password). One account per email. |
 | `apps/web/app/(auth)/signup/page.tsx` | Redirects /signup to /login (one page for new and returning users). |
-| `apps/web/components/auth/LoginForm.tsx` | Sign-in form: "Continue with Google", OR, email + "Continue with email", then the 6-digit code step. |
+| `apps/web/components/auth/LoginForm.tsx` | Sign-in card steps: email (Continue with Google · OR · Continue with email) → password, or a one-time code for a new email → set a password; Forgot password → code → new password. |
 | `apps/web/components/auth/LogoutButton.tsx` | Log-out button. |
 | `apps/web/lib/auth/session.ts` | The signed-in user for server components, asked from the API (GET /api/v1/me with the visitor's cookie). |
 | `packages/shared/src/auth/google.ts` | Google OpenID Connect flow (PKCE, state, nonce, ID-token verification). |
 | `packages/shared/src/auth/next.ts` | safeNext(): the only way a "next" URL after sign-in is accepted — a path on this site, never another host. |
 | `packages/shared/src/auth/origin.ts` | Public origin for redirects behind the load balancer (APP_URL). |
 | `packages/shared/src/auth/otp.ts` | Email one-time codes: generation, hashing (HMAC), checks, email normalisation. |
+| `packages/shared/src/auth/password.ts` | Password hashing (scrypt, Node built-in), checking in constant time, and the "is this password acceptable" rule. |
 | `packages/shared/src/auth/pg-auth-store.ts` | Auth store on PostgreSQL (users, OTP codes, audit log); the connection is passed in (web pool or API pool). |
 | `packages/shared/src/auth/session.ts` | Session token (signed JWT in the lens_session cookie): create, verify, cookie options, dev bypass. Used by apps/web and apps/api. |
 | `packages/shared/src/auth/types.ts` | Auth store interface and user/OTP types. |
@@ -142,7 +144,7 @@ _Generated from file headers by `npm run docs:index` — 206 files._
 | `apps/web/app/(app)/dashboard/page.tsx` | Signed-in dashboard: plan card, report history grouped by month (MON-YY) with rename; your data (research opt-in, export, delete account). |
 | `apps/web/app/(app)/report/[id]/page.tsx` | One report in the workspace: file tabs, All files, +, ×, the five dashboard tabs; a "deleted" page once removed. |
 | `apps/web/app/(app)/upload/page.tsx` | New report: the workspace upload view (consent, files, loader; the API and worker read the files). |
-| `apps/web/components/workspace/DataRights.tsx` | "Your data" panel: research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account. |
+| `apps/web/components/workspace/DataRights.tsx` | "Your data" panel: password (set or change), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account. |
 | `apps/web/components/workspace/History.tsx` | Report history grouped by month (MON-YY) with Progress score; rename in the history list only (PATCH /api/v1/reports/:id). |
 | `apps/web/components/workspace/JourneyBar.tsx` | REQ-2 journey bar above the workspace and dashboard: 5 steps (done / locked with the unlocking plan), score line, next action; one line on phones. |
 | `apps/web/components/workspace/model.ts` | Workspace data types (from the API) and the offline tool's wording, labels and plan rules, kept word for word. |
@@ -274,6 +276,7 @@ _Generated from file headers by `npm run docs:index` — 206 files._
 | `packages/db/migrations/0017_data_export.sql` | "Export my data": export_user_data(request) for the worker (only for a real export request in progress) and the archive's key columns. |
 | `packages/db/migrations/0018_log_retention.sql` | Retention for logs (privacy policy draft): product/error events after 12 months, audit and file-access logs after 24 months. |
 | `packages/db/migrations/0019_blog.sql` | REQ-7 blog: posts, slug redirects, a public view (the only thing the app role can read), and owner/admin-only SECURITY DEFINER functions that write the audit log. |
+| `packages/db/migrations/0020_passwords.sql` | Email + password sign-in: password hash (scrypt), lockout counters, and sessions_valid_after (a password change signs out other devices). |
 | `packages/db/optional/pg_cron.sql` | Optional: schedule the purge inside Postgres if pg_cron is available. |
 | `packages/db/scripts/seed-dev.mjs` | Applies seed.sql (dev user with credits) — only when SEED_DEV_DATA=true (set by infra/compose.dev.yml only). |
 | `packages/db/scripts/setup-roles.mjs` | Creates/updates the login roles lens_app and lens_worker with passwords from env (runs after migrations, as superuser). |
@@ -325,6 +328,7 @@ _Generated from file headers by `npm run docs:index` — 206 files._
 | `apps/api/test/helpers.ts` | API test helpers: app on a fresh migrated database (lens_app connection), session cookies, multipart bodies, captured mail. |
 | `apps/api/test/openapi-doc.ts` | Builds the app with placeholder dependencies (no database connection is opened) to read its OpenAPI document. |
 | `apps/api/test/openapi.test.ts` | apps/api/openapi.json matches the routes (regenerate: npm run openapi -w @pnl-lens/api); global and sign-in rate limits. |
+| `apps/api/test/password.test.ts` | Email + password sign-in: start → code for new emails, required password after the first code, password login, lockout, forgot, change needs a fresh sign-in, other devices signed out, no hash leaks. |
 | `apps/api/test/payments-admin.test.ts` | Payments (off mode, Checkout verify, webhook signature, replay idempotency, legacy path) and admin RBAC (tabs, roles, audit, owner-only grant). |
 | `apps/api/test/sniff.test.ts` | Upload type check: every engine fixture is accepted with the engine's kind; executables, images, wrong ZIPs and binaries posing as CSV are refused. |
 | `apps/api/test/uploads.test.ts` | Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete. |
@@ -352,15 +356,16 @@ _Generated from file headers by `npm run docs:index` — 206 files._
 | `packages/shared/test/mail.test.ts` | Email drivers: console writes the log; smtp (Google Workspace) connects with TLS and the App password from env, and sends the code email. |
 | `packages/shared/test/next.test.ts` | safeNext(): same-site paths pass; every off-site trick (//, /\, tabs/newlines, schemes) falls back. |
 | `packages/shared/test/otp.test.ts` | Email one-time code helpers. |
+| `packages/shared/test/password.test.ts` | scrypt password hashing: round trip, wrong password, unique salts, the dummy hash never matches, and the password rules. |
 | `packages/shared/test/payments.test.ts` | Razorpay checkout and webhook signature verification. |
 | `packages/shared/test/pricing.test.ts` | REQ-3: plan durations and prices from the single source of truth, the wording built from them, and no stale copy left in the repo. |
 | `packages/shared/test/rbac.test.ts` | Role permissions and error fingerprinting. |
 | `tests/e2e-web/blog.spec.ts` | REQ-7 blog end to end: owner drafts, previews, publishes, unpublishes, schedules; /blog, article, landing preview, sitemap; raw-HTML SEO; sanitising; support sees no Blog tab; events. |
-| `tests/e2e-web/helpers.ts` | E2E helpers: sign in with an emailed code (read from the API's console mail log), give a user a plan, run SQL as the admin. |
+| `tests/e2e-web/helpers.ts` | E2E helpers: sign in (password, or an emailed code from the API's console mail log then the required password), give a user a plan, run SQL as the admin. |
 | `tests/e2e-web/instagram.spec.ts` | REQ-6 Instagram section: scroll-linked row (card 1 → 4), manual takeover, reduced motion, video play rules, exact copy, no Meta requests, no layout shift. |
 | `tests/e2e-web/journey.spec.ts` | REQ-2 journey bar and "What's next" card end to end: Single 2/5 with locks, later month completes step 3, locked step opens pricing, phone view, events in admin. |
 | `tests/e2e-web/landing.spec.ts` | REQ-4: on a 390x844 phone pricing starts within 4 screen-heights; See plans / nav / pill reach it; mobile card order; no section lost; landing events stored. |
-| `tests/e2e-web/login.spec.ts` | Sign-in card (19 Oct 2026): Continue with email → code → signed in; layout at 320/390/1440; Google button only when configured; focus ring; errors. |
+| `tests/e2e-web/login.spec.ts` | Sign-in card: new email → code → required password → dashboard; password sign-in sends no code; wrong password; forgot → code → new password; the set step can't be skipped; layout at 320/390/1440. |
 | `tests/e2e-web/privacy.spec.ts` | Data rights in the browser: research opt-in toggle, export my data (worker builds the ZIP, download works), delete my account. |
 | `tests/e2e-web/score-card.spec.ts` | REQ-1: the Progress score card's level labels never overlap, at every level and width, in Chromium (Chrome/Edge) and WebKit (Safari). |
 | `tests/e2e-web/workspace.spec.ts` | Browser end to end on the stack: sign in → upload with consent → loader → report (5 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete. |

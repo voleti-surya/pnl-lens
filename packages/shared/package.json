@@ -11,6 +11,7 @@
     "./jobs": "./src/jobs.ts",
     "./mail": "./src/mail.ts",
     "./auth/otp": "./src/auth/otp.ts",
+    "./auth/password": "./src/auth/password.ts",
     "./auth/google": "./src/auth/google.ts",
     "./auth/session": "./src/auth/session.ts",
     "./auth/types": "./src/auth/types.ts",

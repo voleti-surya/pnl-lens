@@ -1,7 +1,7 @@
 /**
  * @file  apps/web/components/workspace/DataRights.tsx
  * @area  Reports
- * @what  "Your data" panel: research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account.
+ * @what  "Your data" panel: password (set or change), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account.
  */
 'use client';
 import { useEffect, useState } from 'react';
@@ -16,10 +16,12 @@ export default function DataRights() {
   const [msg, setMsg] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [typed, setTyped] = useState('');
+  const [hasPassword, setHasPassword] = useState<boolean | null>(null);
 
   const loadExports = () => api<{ exports: ExportRow[] }>('/me/exports').then((r) => setExports(r.exports)).catch(() => {});
   useEffect(() => {
     api<{ research: boolean }>('/me/consents').then((c) => setResearch(c.research)).catch(() => setResearch(false));
+    api<{ hasPassword?: boolean }>('/me').then((m) => setHasPassword(!!m.hasPassword)).catch(() => {});
     loadExports();
   }, []);
   // refresh while an export is being prepared
@@ -48,6 +50,13 @@ export default function DataRights() {
   return (
     <div className="panel data-rights">
       <h3>Your data</h3>
+      {hasPassword !== null && (
+        <div className="filters dr-actions dr-password">
+          {hasPassword
+            ? <><a className="btn ghost" href="/login?step=forgot&next=/dashboard">Change password</a><span className="muted small">We’ll email you a code to confirm it’s you.</span></>
+            : <><a className="btn ghost" href="/login?step=set&next=/dashboard">Set a password</a><span className="muted small">Sign in with your email and a password, as well as Google.</span></>}
+        </div>
+      )}
       <div className="consent dr-consent">
         <label><input type="checkbox" name="research" checked={!!research} disabled={research === null} onChange={(e) => toggleResearch(e.target.checked)} /> <span>{CONSENT_RESEARCH}</span></label>
       </div>

@@ -17,7 +17,8 @@ import { jwtVerify, SignJWT } from 'jose';
 export const SESSION_COOKIE = 'lens_session';
 export const DEV_USER = '00000000-0000-0000-0000-000000000001';
 
-export interface SessionUser { id: string; country: string | null }
+/** iat: when the token was issued (seconds); set when read from a cookie, used to end sessions older than a password change. */
+export interface SessionUser { id: string; country: string | null; iat?: number }
 
 function secret() {
   const s = process.env.SESSION_SECRET;
@@ -35,7 +36,7 @@ export async function sessionFromToken(token: string | null | undefined): Promis
   try {
     const { payload } = await jwtVerify(token, secret(), { algorithms: ['HS256'] });
     if (!payload.sub) return null;
-    return { id: payload.sub, country: typeof payload.country === 'string' ? payload.country : null };
+    return { id: payload.sub, country: typeof payload.country === 'string' ? payload.country : null, iat: typeof payload.iat === 'number' ? payload.iat : 0 };
   } catch {
     return null;
   }
