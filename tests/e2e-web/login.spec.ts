@@ -6,7 +6,9 @@
 import { test, expect } from '@playwright/test';
 import { signIn } from './helpers';
 
-test('continue with email: code step, then signed in (one account per email)', async ({ page }) => {
+test('continue with email: code step, then signed in (one account per email)', async ({ page, browserName }) => {
+  // Linux WebKit drops the Secure session cookie on http://localhost (production is https); the journey runs in Chromium
+  test.skip(browserName === 'webkit', 'Secure cookie over plain http');
   const email = `login-${Date.now()}@e2e.local`;
   await signIn(page, email, '/dashboard');
   await expect(page).toHaveURL(/\/dashboard/);
