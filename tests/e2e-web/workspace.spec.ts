@@ -16,8 +16,8 @@ test('a trader without a plan gets the free preview, nothing is spent', async ({
   await expect(page.getByRole('button', { name: 'Analyse' })).toBeDisabled();                 // consent is required
   await page.check('input[name=consent]');
   await page.getByRole('button', { name: 'Analyse' }).click();
-  await expect(page.getByText('96', { exact: true })).toBeVisible();                             // preview: positions
-  await expect(page.getByRole('link', { name: 'Buy a report credit' })).toBeVisible();
+  await expect(page.locator('[data-preview] .tile').filter({ hasText: 'Trades' })).toContainText('96');   // preview: trades
+  await expect(page.getByRole('link', { name: /^Get the full report from (₹99|\$9)$/ })).toBeVisible();
   expect(sql(`select count(*) from reports r join users u on u.id = r.user_id where u.email = '${email}'`)).toBe('0');
   expect(sql(`select string_agg(purpose || ':' || granted, ',') from consents c join users u on u.id = c.user_id where u.email = '${email}'`)).toBe('processing:true');
 });

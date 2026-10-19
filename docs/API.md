@@ -26,10 +26,10 @@ Built in backend-v2 Phase 4. The web app still uses its own Next routes until th
 | | `POST /auth/password/set { password }` | Signed in. First password: right after the code (or for a Google user). Changing one needs a sign-in in the last 10 minutes (the "Forgot password?" code), else 403 `reauth_required`. Rules: 8–128 characters, not a common password, not the email (400 `weak_password` with the sentence). Other devices are signed out (`sessions_valid_after`); this one gets a fresh cookie |
 | | `POST /auth/password/forgot { email }` | Emails a code to an existing account; the same `{ sent, masked }` for unknown emails (no account is created) |
 | | `POST /auth/otp/verify` | Also returns `needsPassword: true` for an email account without a password (the page then asks for one) |
-| Me | `GET /me` | `{ user, credits, role, hasPassword, needsPassword }` (role read from the DB; `needsPassword` = an email account that must still set its password; never the hash) |
+| Me | `GET /me` | `{ user, credits, reportsLeft, role, hasPassword, needsPassword }`: `reportsLeft` = unused reports of plans whose window is open (`user_reports_left()`, what customers see); `credits` is the internal mirror (admin only); (role read from the DB; `needsPassword` = an email account that must still set its password; never the hash) |
 | Plans | `GET /plans` | Prices for the visitor's country (server-side); `mine` = the signed-in user's plans with usage and validity |
 | Uploads | `POST /analyses` (alias `POST /uploads`) | Multipart fields below. Answers `202 { analysisId, status: "queued" }` |
-| | `GET /analyses/:id` | `status`: `queued` → `parsing` → `analysing` → `storing` → `ready`, or `failed`. When ready, a `preview` with the numbers the upload screen shows. When failed, `message` is the engine's own sentence or the upload screen's text |
+| | `GET /analyses/:id` | The ready `preview` also carries `charges` and `insights` (titles of the 2 biggest insights) and `insightCount` for the free preview (credits spec rule 9). `status`: `queued` → `parsing` → `analysing` → `storing` → `ready`, or `failed`. When ready, a `preview` with the numbers the upload screen shows. When failed, `message` is the engine's own sentence or the upload screen's text |
 | Reports | `GET /reports` | History, newest first. Each item has `monthLabel` (`MON-YY`), `title`, `progressScore`, and `expiresAt: null` for v2 reports (D4) |
 | | `POST /reports { analysisId, title? }` | Saves an analysis and spends one report from a valid plan. 402 `no_plan` / `plan_used_up` / `plan_expired` / `too_many_files` |
 | | `POST /reports/:id/files { analysisId }` | The "+" button: the report now shows the new analysis of its old and new statements. Spends nothing. 402 `report_files_full` (file-set lock) |
@@ -71,7 +71,7 @@ The old external URLs `/api/payments/webhook` and `/api/auth/google/callback` ar
 | `research` | optional `true` | The separate research opt-in (unticked by default) |
 | `currency` | optional | Currency override, as in today's app |
 | `source` | optional `blog` | The upload started from a blog article's "Analyse my trades" (`/upload?from=blog`); added to the `upload_started` event (REQ-7) |
-| `reportId` | optional | The "+" flow: the report's current statements are analysed again together with the new ones. 409 `files_expired` once those were deleted after 30 days |
+| `reportId` | optional | The "+" flow (free, up to the report's plan limit; 402 `plan_expired` once that plan's window has ended, before anything is stored): the report's current statements are analysed again together with the new ones. 409 `files_expired` once those were deleted after 30 days |
 
 What happens: the API checks the files, encrypts each one with its own key (AES-256-GCM; the key is wrapped by `FILE_KEK_<id>`) and stores it under a random key with a write-only storage key. It then writes the analysis, file and access-log rows in one transaction, records consent, and queues BullMQ job `analysis-<id>` on queue `analyses` (3 attempts, exponential backoff, failed jobs kept 7 days).
 

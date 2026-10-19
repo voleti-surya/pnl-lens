@@ -9,7 +9,7 @@
  * creates the plan with values from packages/shared PLANS, never from the request.
  */
 import { z } from 'zod';
-import { PLANS, planPrice, planSummary } from '@pnl-lens/shared/pricing';
+import { PLANS, planPrice, planSummary, planDays } from '@pnl-lens/shared/pricing';
 import { paymentsMode, razorpayKeys } from '@pnl-lens/shared/payments/config';
 import { createOrder, verifyCheckout, verifyWebhook, parseWebhook } from '@pnl-lens/shared/payments/razorpay';
 import { clientCountry } from '@pnl-lens/shared/auth/request';
@@ -33,7 +33,7 @@ export async function paymentRoutes(app: App, deps: Deps, opts: { webhookOnly?: 
           const { rows } = await deps.pool.query('select plan_id from public.payments where gateway_order_id = $1', [orderId]);
           const plan = PLANS.find((p) => p.id === rows[0]?.plan_id);
           if (plan) {
-            const g = await deps.pool.query('select public.grant_plan($1, $2, $3, $4, $5, $6) as ok', [orderId, paymentId, body, plan.reports, plan.filesPerReport, plan.days]);
+            const g = await deps.pool.query('select public.grant_plan($1, $2, $3, $4, $5, $6) as ok', [orderId, paymentId, body, plan.reports, plan.filesPerReport, planDays(plan)]);
             // REQ-2: a purchase that started from the journey bar or card (Razorpay returns the order's notes)
             const notes = body?.payload?.payment?.entity?.notes || body?.payload?.order?.entity?.notes || {};
             if (g.rows[0]?.ok && notes.source === 'journey') {

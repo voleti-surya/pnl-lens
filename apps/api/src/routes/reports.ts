@@ -16,9 +16,9 @@ import { fail, ok, requireUser, UUID } from '../lib/http.js';
 
 /** HTTP status and message for each refusal from the SQL functions. */
 export const CLAIM_ERRORS: Partial<Record<DbErrorCode, [number, string]>> = {
-  no_plan: [402, 'No report credits left. Buy one to continue.'],
+  no_plan: [402, 'No reports left. Choose a plan to continue.'],
   plan_used_up: [402, 'You have used all the reports in your plan. Renew or upgrade to create more; past reports stay listed.'],
-  plan_expired: [402, 'Your plan has ended. Renew to create new reports; past reports stay listed.'],
+  plan_expired: [402, 'Your plan has ended. Your reports are still here. Choose a plan to create new ones.'],
   too_many_files: [402, 'Your plan allows fewer broker statements per report. Remove a file or upgrade.'],
   report_files_full: [402, 'This report already holds all the broker statements your plan allows. You can re-open a statement already in this report, or start a new report.'],
   user_blocked: [403, 'This account is disabled.'],

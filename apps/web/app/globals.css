@@ -106,7 +106,7 @@ svg text{font-family:inherit}
 
 
 @media (max-width:1000px){ .s3,.s4{grid-column:span 6} .s5,.s6,.s7,.s8{grid-column:span 12} .tiles{grid-template-columns:repeat(2,minmax(0,1fr))} }
-@media (max-width:640px){ .s3,.s4{grid-column:span 12} main{padding:16px 16px 56px} .bar{padding:0 16px;gap:8px} .brand span{display:none} .app-nav{gap:0;overflow-x:auto} .app-nav a{padding:0 10px;font-size:13px;white-space:nowrap} .credits-pill{font-size:12px} }
+@media (max-width:640px){ .s3,.s4{grid-column:span 12} main{padding:16px 16px 56px} .bar{padding:0 16px;gap:8px} .brand span{display:none} .app-nav{gap:0;overflow-x:auto;min-width:0;flex:1 1 auto} .credits-pill{padding:4px 9px;flex-shrink:0} .app-nav a{padding:0 10px;font-size:13px;white-space:nowrap} .credits-pill{font-size:12px} }
 
 @media print{
   @page{size:A4;margin:12mm}
@@ -138,8 +138,10 @@ a{color:inherit}
 .app-nav a{padding:0 14px;height:58px;display:inline-flex;align-items:center;color:var(--ink-3);font-size:14px;font-weight:500;text-decoration:none;border-bottom:2px solid transparent;transition:color var(--t) var(--ease),border-color var(--t) var(--ease)}
 .app-nav a[aria-current="page"]{color:var(--ink);border-bottom-color:var(--y)}
 .app-nav a:hover{color:var(--ink)}
-.credits-pill{font-size:13px;color:var(--ink-3);white-space:nowrap}
+.credits-pill{font-size:13px;color:var(--ink-2);white-space:nowrap;border:1px solid var(--y-line);border-radius:999px;padding:5px 12px;text-decoration:none;transition:border-color var(--t-fast) var(--ease),background-color var(--t-fast) var(--ease)}
 .credits-pill b{color:var(--ink);font-weight:600}
+a.credits-pill:hover{border-color:var(--y);background:var(--y-tint)}a.credits-pill b{color:var(--y)}
+@media (max-width:380px){.pill-long{display:none}}  /* smallest phones: "See plans" only, so the header fits */
 .page-title{font-size:clamp(26px,3.4vw,34px);font-weight:700;line-height:1.15;letter-spacing:-.025em;margin:8px 0 6px}
 .page-sub{color:var(--ink-3);font-size:14px;margin:0 0 24px}
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 20px;overflow-x:auto}

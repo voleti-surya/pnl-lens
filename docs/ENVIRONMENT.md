@@ -43,6 +43,7 @@ Everything lives in one `.env` file at the repo root (git-ignored). `npm run sta
 | `AUTH_MODE` | `jwt` in prod; `dev` in the dev stack | `dev` signs everyone in as the seeded dev user; never in production |
 | `WORKER_CONCURRENCY` / `ENGINE_TIMEOUT_MS` / `ENGINE_MEMORY_MB` | `2` / `60000` / `512` | Worker throughput and per-job engine limits |
 | `WORKER_MEM_LIMIT` | `2g` | Worker container memory (concurrency × engine memory + ~300 MB; `docs/LOAD_TEST.md`) |
+| `OTP_PER_IP_PER_HOUR_OVERRIDE` | — | E2E tests only (`infra/compose.e2e.yml`): raises the sign-in-code limit per IP (default 20 an hour). `compose.prod.yml` never passes it |
 | `RATE_LIMIT_EXEMPT_IPS` | — | Load and e2e tests only (`infra/compose.load.yml`, `infra/compose.e2e.yml`: every test browser shares one address): IPs/CIDRs the rate limiter skips. `compose.prod.yml` never passes it |
 | `RETENTION_USAGE_MONTHS` / `RETENTION_AUDIT_MONTHS` | `12` / `24` | Log retention (`purge_logs`, LAWYER CHECK) |
 | `EXTRA_ALLOWED_ORIGINS` | — | More origins allowed to send state-changing requests |

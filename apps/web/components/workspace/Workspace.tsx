@@ -62,14 +62,14 @@ export default function Workspace(props: { mode: 'upload' | 'report'; plans: Pla
       <LockMessage lock={lock} onClose={close} />
       <JourneyBar plans={props.plans} reports={props.reports} prices={props.prices || {}} />
       {props.mode === 'upload' || !props.current
-        ? <UploadView plan={plan} reports={props.reports} setLock={setLock} source={props.source} />
+        ? <UploadView plan={plan} reports={props.reports} setLock={setLock} source={props.source} prices={props.prices || {}} />
         : <ReportView plan={plan} plans={props.plans} prices={props.prices || {}} reports={props.reports} current={props.current} setLock={setLock} />}
     </>
   );
 }
 
 /* ---------------------------------------------------------------- upload view */
-function UploadView({ plan, reports, setLock, source }: { plan: PlanRow | null; reports: HistoryItem[]; setLock: (l: Lock) => void; source?: 'blog' }) {
+function UploadView({ plan, reports, setLock, source, prices }: { plan: PlanRow | null; reports: HistoryItem[]; setLock: (l: Lock) => void; source?: 'blog'; prices: Record<string, string> }) {
   const router = useRouter();
   const maxFiles = plan && !expired(plan) ? plan.filesPerReport : 3;
   const [picked, setPicked] = useState<File[]>([]);
@@ -103,7 +103,7 @@ function UploadView({ plan, reports, setLock, source }: { plan: PlanRow | null; 
     } catch (e) {
       const err = e as ApiError;
       if ((err.error === 'plan_used_up' || err.error === 'plan_expired') && plan) setLock({ title: 'No reports left in this plan', text: planEndedText(plan) });
-      else setError(err.status === 402 ? 'You have no report credits left.' : err.message);
+      else setError(err.status === 402 ? 'No reports left. Choose a plan to continue.' : err.message);
       setBusy(false);
     }
   }
@@ -171,16 +171,32 @@ function UploadView({ plan, reports, setLock, source }: { plan: PlanRow | null; 
       </div>
       {error && <p className="status err" role="status">{error}</p>}
       {p && preview && (
-        <div className="panel" style={{ marginTop: 16 }}>
-          <h3>Ready <small>{p.source === 'tradebook' ? 'trade-by-trade tradebook' : 'position-level statement'}</small></h3>
+        // free preview (credits spec rule 9): headline numbers and 2 insight titles; the rest is blurred; nothing is saved
+        <div className="panel pv" style={{ marginTop: 16 }} data-preview>
+          <h3>Your free preview</h3>
           <div className="tiles">
-            <div className="panel tile"><div className="lab">Positions</div><div className="val">{p.positions}</div></div>
-            <div className="panel tile"><div className="lab">Period</div><div className="val" style={{ fontSize: 16 }}>{p.from || '—'}<br />{p.to || ''}</div></div>
-            <div className="panel tile"><div className="lab">Market</div><div className="val" style={{ fontSize: 18 }}>{p.markets.join(' + ') || '—'}</div></div>
-            <div className="panel tile"><div className="lab">Currency</div><div className="val" style={{ fontSize: 18 }}>{p.currency}</div></div>
+            <div className="panel tile"><div className="lab">Net P&amp;L</div><div className={`val ${p.net < 0 ? 'loss' : 'gain'}`}>{money(p.net, p.currency)}</div></div>
+            <div className="panel tile"><div className="lab">Total charges</div><div className="val">{money(p.charges, p.currency)}</div></div>
+            <div className="panel tile"><div className="lab">Trades</div><div className="val">{p.positions}</div></div>
           </div>
-          <p className="note">{p.leaks} leaks and {p.rules} rules found. The full report, with every insight, cluster and export, opens once you save it. Totals: {money(p.net, p.currency)} net.</p>
-          <a className="btn" href="/pricing">Buy a report credit</a>
+          {p.insights.length > 0 && (
+            <div className="pv-insights">
+              <div className="lab">{p.insights.length} of {Math.max(p.insightCount, p.insights.length)} insights</div>
+              <ol>{p.insights.map((t) => <li key={t}>{t}</li>)}</ol>
+            </div>
+          )}
+          <div className="pv-locked">
+            <div className="pv-blur" aria-hidden="true">
+              <div className="pv-row"><i /><i /><i /><i /></div>
+              <div className="pv-chart" />
+              <div className="pv-row"><i /><i /></div>
+              <div className="pv-lines"><i /><i /><i /><i /></div>
+            </div>
+            <div className="pv-cta">
+              <p>Every insight, fix, cluster and position is in the full report.</p>
+              <a className="btn" href="/pricing">Get the full report from {prices.single || '₹99'}</a>
+            </div>
+          </div>
         </div>
       )}
       <div className="up-hist"><div className="ws-side-h">Your reports</div><History reports={reports} /></div>
@@ -264,7 +280,7 @@ function ReportView({ plan, plans, prices, reports, current, setLock }: { plan: 
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   async function remove() {
-    if (!confirm('Delete this report permanently? This cannot be undone and the credit is not refunded.')) return;
+    if (!confirm('Delete this report permanently? This can’t be undone, and the report isn’t returned to your plan.')) return;
     try { await api(`/reports/${current.id}`, { method: 'DELETE' }); router.push('/dashboard'); router.refresh(); }
     catch (e) { setLock({ title: 'Could not delete the report', text: (e as ApiError).message }); }
   }

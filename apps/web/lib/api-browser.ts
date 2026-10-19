@@ -31,7 +31,8 @@ export async function uploadStatements(files: File[], fields: Record<string, str
 export interface AnalysisStatus {
   id: string; status: 'queued' | 'parsing' | 'analysing' | 'storing' | 'ready' | 'failed';
   error: string | null; message: string | null; reportId: string | null;
-  preview: { source: string; positions: number; from: string | null; to: string | null; markets: string[]; currency: string; net: number; leaks: number; rules: number } | null;
+  preview: { source: string; positions: number; from: string | null; to: string | null; markets: string[]; currency: string; net: number; leaks: number; rules: number;
+    charges: number; insights: string[]; insightCount: number } | null;
 }
 
 /** Polls GET /api/v1/analyses/:id until the worker has finished (ready or failed). */

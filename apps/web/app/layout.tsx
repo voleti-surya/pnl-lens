@@ -1,7 +1,7 @@
 /**
  * @file  apps/web/app/layout.tsx
  * @area  Pages
- * @what  Root layout: fonts (Manrope + ₹ glyph), html lang (en-IN / en by site), header with logo and credits (from the API), browser error reporter.
+ * @what  Root layout: fonts (Manrope + ₹ glyph), html lang (en-IN / en by site), header with logo and reports left (from the API), browser error reporter.
  */
 import './globals.css';
 import './report.css';
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const me = await getMe().catch(() => null);
-  const user = me?.user ?? null, credits = me ? me.credits : null;
+  const user = me?.user ?? null, left = me ? me.reportsLeft ?? 0 : null;
   // REQ-7 SEO: en-IN on the India site, en on Global (same country rule as the landing page)
   const lang = regionFor((await requestCountry()) || user?.country) === 'IN' ? 'en-IN' : 'en';
   return (
@@ -42,7 +42,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Link href="/" className="brand" style={{ textDecoration: 'none' }} aria-label="PnL Lens home"><LogoMark size={28} /><span>PnL Lens</span></Link>
             {user ? <NavLinks /> : <div style={{ flex: 1 }} />}
             {user ? (
-              <><span className="credits-pill"><b>{credits ?? '—'}</b> credit{credits === 1 ? '' : 's'}</span>
+              <>{/* credits spec: customers see "reports"; usable reports of plans still open */}
+                {left ? <span className="credits-pill"><b>{left}</b> report{left === 1 ? '' : 's'} left</span>
+                  : <Link className="credits-pill" href="/pricing" aria-label="No reports left · See plans"><span className="pill-long">No reports left · </span><b>See plans</b></Link>}
                 {process.env.AUTH_MODE === 'jwt' && <LogoutButton />}</>
             ) : (
               <Link href="/login" className="btn">Sign in</Link>

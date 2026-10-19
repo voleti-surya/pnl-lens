@@ -68,8 +68,13 @@ describe.skipIf(!ok)('uploads and reports', () => {
     await finish(analysisId);
     const g = golden('zerodha_tradebook_csv');
     expect((await x.app.inject({ method: 'GET', url: `/api/v1/analyses/${analysisId}`, headers: h })).json()).toMatchObject({
-      status: 'ready', preview: { positions: g.m.n, from: g.m.from, to: g.m.to, currency: g.m.currency, net: g.m.net, leaks: g.leaks.length, rules: g.rules.length, source: g.m.source },
+      status: 'ready', preview: { positions: g.m.n, from: g.m.from, to: g.m.to, currency: g.m.currency, net: g.m.net, leaks: g.leaks.length, rules: g.rules.length, source: g.m.source,
+        charges: g.m.charges, insightCount: g.leaks.length + (g.strengths || []).length },
     });
+    // the free preview names only the 2 biggest insights (credits spec rule 9)
+    const pv = (await x.app.inject({ method: 'GET', url: `/api/v1/analyses/${analysisId}`, headers: h })).json().preview;
+    expect(pv.insights).toHaveLength(Math.min(2, g.leaks.length + (g.strengths || []).length));
+    expect(pv.insights[0]).toBe([...g.leaks].sort((a: any, b: any) => Math.abs(b.impact) - Math.abs(a.impact))[0].title);
     const other = await makeUser(x.t);
     expect((await x.app.inject({ method: 'GET', url: `/api/v1/analyses/${analysisId}`, headers: await as(other) })).statusCode).toBe(404);
   });
@@ -124,13 +129,13 @@ describe.skipIf(!ok)('uploads and reports', () => {
     await finish(a);
     const noPlan = await x.app.inject({ method: 'POST', url: '/api/v1/reports', headers: h, payload: { analysisId: a } });
     expect(noPlan.statusCode).toBe(402);
-    expect(noPlan.json()).toEqual({ error: 'no_plan', message: 'No report credits left. Buy one to continue.' });
+    expect(noPlan.json()).toEqual({ error: 'no_plan', message: 'No reports left. Choose a plan to continue.' });
 
     await givePlan(x.t, u, { reports: 2 });
     const saved = await x.app.inject({ method: 'POST', url: '/api/v1/reports', headers: h, payload: { analysisId: a, title: 'March' } });
     expect(saved.statusCode).toBe(201);
     const id = saved.json().id;
-    expect((await x.app.inject({ method: 'GET', url: '/api/v1/me', headers: h })).json().credits).toBe(1);
+    expect((await x.app.inject({ method: 'GET', url: '/api/v1/me', headers: h })).json()).toMatchObject({ credits: 1, reportsLeft: 1 });
     expect((await x.app.inject({ method: 'POST', url: '/api/v1/reports', headers: h, payload: { analysisId: a } })).json().error).toBe('already_claimed');
 
     const list = (await x.app.inject({ method: 'GET', url: '/api/v1/reports', headers: h })).json().reports;
@@ -151,6 +156,28 @@ describe.skipIf(!ok)('uploads and reports', () => {
     expect(gone.statusCode).toBe(410);
     expect(gone.json().error).toBe('expired');
     expect((await x.app.inject({ method: 'DELETE', url: `/api/v1/reports/${id}`, headers: h })).statusCode).toBe(404);
+  });
+
+  it('credits spec: reports left follows grant, create, delete and the plan window; "+" refused after the window, before storing', async () => {
+    const u = await makeUser(x.t), h = await as(u);
+    const me = async () => (await x.app.inject({ method: 'GET', url: '/api/v1/me', headers: h })).json().reportsLeft;
+    expect(await me()).toBe(0);
+    const sub = await givePlan(x.t, u, { reports: 5, files: 3 });
+    expect(await me()).toBe(5);
+    const a = (await upload(u, [consent, fixture('zerodha_tradebook.csv')])).json().analysisId;
+    await finish(a);
+    const report = (await x.app.inject({ method: 'POST', url: '/api/v1/reports', headers: h, payload: { analysisId: a } })).json().id;
+    expect(await me()).toBe(4);
+    await x.t.admin.query(`update subscriptions set ends_at = now() - interval '1 minute' where id = $1`, [sub]);
+    expect(await me()).toBe(0);
+    expect((await x.app.inject({ method: 'GET', url: `/api/v1/reports/${report}`, headers: h })).statusCode).toBe(200);   // old reports still open
+    const files = (await x.t.admin.query('select count(*)::int n from statement_files where user_id = $1', [u])).rows[0].n;
+    const plus = await upload(u, [consent, { name: 'reportId', value: report }, fixture('dhan_tradebook.csv')]);
+    expect(plus.statusCode).toBe(402);
+    expect(plus.json()).toEqual({ error: 'plan_expired', message: 'Your plan has ended. Your reports are still here. Choose a plan to add statements or create new reports.' });
+    expect((await x.t.admin.query('select count(*)::int n from statement_files where user_id = $1', [u])).rows[0].n).toBe(files);   // nothing stored
+    expect((await x.app.inject({ method: 'DELETE', url: `/api/v1/reports/${report}`, headers: h })).json()).toEqual({ deleted: true });
+    expect(await me()).toBe(0);
   });
 
   it('"+": adds a statement to a report (spends nothing) until the plan\'s limit; refuses once the old files are purged', async () => {

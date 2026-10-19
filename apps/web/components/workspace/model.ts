@@ -13,24 +13,27 @@ export interface CurrentReport { id: string; createdAt: string; title: string | 
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 export const monthTag = (d: string) => { const x = new Date(d); return MON[x.getMonth()] + '-' + String(x.getFullYear()).slice(2); };
 /** Plan end date as DD-MMM-YY, e.g. 14-JAN-27 (REQ-3). */
-export const dateTag = (d: string) => { const x = new Date(d); return String(x.getDate()).padStart(2, '0') + '-' + MON[x.getMonth()] + '-' + String(x.getFullYear()).slice(2); };
+/** "19-Jan-27" (credits spec wording for plan dates). */
+export const dateTag = (d: string) => { const x = new Date(d), m = MON[x.getMonth()]; return String(x.getDate()).padStart(2, '0') + '-' + m.charAt(0) + m.slice(1).toLowerCase() + '-' + String(x.getFullYear()).slice(2); };
 export const dayLabel = (d: string) => { const x = new Date(d); return x.getDate() + ' ' + MON[x.getMonth()].charAt(0) + MON[x.getMonth()].slice(1).toLowerCase(); };
 export const planName = (id: string) => PLANS.find((p) => p.id === id)?.name ?? id;
 export const expired = (p: PlanRow | null) => !p || new Date(p.endsAt).getTime() < Date.now();
 export const st = (k: number) => k + ' broker statement' + (k === 1 ? '' : 's');
 
-/** The plan the next report will use (as create_report_from_analysis picks it): active, ending first; else the latest one. */
+/** The plan the next report will use (as create_report_from_analysis picks it): active with reports left, ending first;
+ *  else the soonest-ending active one; else the latest one (credits spec rule 6). */
 export function currentPlan(plans: PlanRow[] | null): PlanRow | null {
   if (!plans?.length) return null;
   const active = plans.filter((p) => p.active).sort((a, b) => a.endsAt.localeCompare(b.endsAt));
-  return active[0] ?? [...plans].sort((a, b) => b.endsAt.localeCompare(a.endsAt))[0];
+  return active.find((p) => p.reportsUsed < p.reportsTotal) ?? active[0] ?? [...plans].sort((a, b) => b.endsAt.localeCompare(a.endsAt))[0];
 }
 export const reportsLeft = (p: PlanRow | null) => (p ? Math.max(0, p.reportsTotal - p.reportsUsed) : 0);
 
-/* Offline tool texts (apps/web/offline/app_offline.js), unchanged. */
+/* Offline tool texts (apps/web/offline/app_offline.js), except the plan texts (credits spec). */
+/** Credits spec wording (19 Oct 2026). */
 export const planEndedText = (p: PlanRow) => expired(p)
-  ? 'Your ' + planName(p.planId) + ' plan ended on ' + dayLabel(p.endsAt) + ' ' + new Date(p.endsAt).getFullYear() + '. Renew to create new reports; past reports stay listed on the left.'
-  : 'You have used all ' + p.reportsTotal + ' report' + (p.reportsTotal === 1 ? '' : 's') + ' in your ' + planName(p.planId) + ' plan. Renew or upgrade to create more; past reports stay listed on the left.';
+  ? 'Your ' + planName(p.planId) + ' plan ended on ' + dateTag(p.endsAt) + '. Your reports are still here. Choose a plan to create new ones.'
+  : 'You’ve used all ' + p.reportsTotal + ' report' + (p.reportsTotal === 1 ? '' : 's') + ' in your ' + planName(p.planId) + ' plan. Your reports are still here. Choose a plan to create new ones.';
 export const filesFullText = (files: number) => 'This report already holds its ' + files + ' broker statement' + (files === 1 ? '' : 's') + '. You can re-open a statement already in this report, or start a new report.';
 
 /* Approved wording (plan §2.1): W5 upload line, W9/W10 consent. */

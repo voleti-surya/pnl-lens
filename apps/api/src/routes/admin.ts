@@ -8,7 +8,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { can, assignable, type Perm, type Role } from '@pnl-lens/shared/admin/rbac';
 import { adminQueries } from '@pnl-lens/shared/admin/queries';
 import { normaliseEmail } from '@pnl-lens/shared/auth/otp';
-import { PLANS } from '@pnl-lens/shared/pricing';
+import { PLANS, planDays } from '@pnl-lens/shared/pricing';
 import { adminGrantPlan, isDbError } from '@pnl-lens/db';
 import type { App, Deps } from '../app.js';
 import { fail, ok, sessionUser } from '../lib/http.js';
@@ -96,7 +96,7 @@ export async function adminRoutes(app: App, deps: Deps) {
     const { rows } = await deps.pool.query('select id from public.users where email = $1', [email]);
     if (!rows[0]) return fail(reply, 404, 'not_found', 'No user with that email.');
     try {
-      const id = await adminGrantPlan(deps.db, { actorId: who.id, userId: rows[0].id, plan: plan.id, reports: plan.reports, filesPerReport: plan.filesPerReport, days: plan.days, reason: b.reason });
+      const id = await adminGrantPlan(deps.db, { actorId: who.id, userId: rows[0].id, plan: plan.id, reports: plan.reports, filesPerReport: plan.filesPerReport, days: planDays(plan), reason: b.reason });
       return ok(reply, { ok: true, subscriptionId: id }, 201);
     } catch (e) {
       if (isDbError(e, 'forbidden')) return reply.code(403).send({ error: 'forbidden' });

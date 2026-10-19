@@ -28,7 +28,7 @@ export default async function Dashboard() {
           <p className="page-sub">Your reports stay here until you delete them.</p>
         </div>
         <div className="actions">
-          {me.credits > 0 ? <Link className="btn" href="/upload">New report</Link> : <Link className="btn" href="/pricing">Buy a credit</Link>}
+          {(me.reportsLeft ?? 0) > 0 ? <Link className="btn" href="/upload">New report</Link> : <Link className="btn" href="/pricing">See plans</Link>}
         </div>
       </div>
       <div className="panel" style={{ maxWidth: 620 }}>

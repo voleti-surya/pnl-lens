@@ -36,12 +36,20 @@ const FILE_ERRORS = {
   empty: (n: string) => `${n} is empty.`,
 };
 
+/** Titles of the 2 most costly leaks, topped up from the strengths (short sentences) when there are fewer. */
+function previewInsights(p: any): string[] {
+  const leaks = [...(p.leaks || [])].sort((a: any, b: any) => Math.abs(b.impact || 0) - Math.abs(a.impact || 0)).map((l: any) => l.title);
+  return [...leaks, ...(p.strengths || [])].filter((t) => typeof t === 'string' && t).slice(0, 2);
+}
+
 export function analysisView(a: NonNullable<Awaited<ReturnType<typeof getAnalysis>>>) {
   const p = a.payload as any;
   const preview = a.status === 'ready' && p ? {
     source: p.m.source, positions: p.m.n, from: p.m.from ?? null, to: p.m.to ?? null,
     markets: (p.m.markets || []).map((x: any) => x.market), currency: p.m.currency, net: p.m.net,
     leaks: (p.leaks || []).length, rules: (p.rules || []).length,
+    // free preview (credits spec rule 9): total charges and the titles of the 2 biggest insights; the rest stays locked
+    charges: p.m.charges ?? 0, insights: previewInsights(p), insightCount: (p.leaks || []).length + (p.strengths || []).length,
   } : null;
   return {
     id: a.id, status: a.status, fileCount: a.file_count, reportId: a.report_id, targetReportId: a.target_report_id,
@@ -82,9 +90,13 @@ export async function analysisRoutes(app: App, deps: Deps) {
     if (fields.reportId) {
       if (!UUID.test(fields.reportId)) return fail(reply, 404, 'not_found');
       const r = await deps.db.selectFrom('reports as r').innerJoin('subscriptions as s', 's.id', 'r.subscription_id')
-        .select(['r.id', 'r.analysis_id', 's.files_per_report'])
+        .select(['r.id', 'r.analysis_id', 's.files_per_report', 's.ends_at'])
         .where('r.id', '=', fields.reportId).where('r.user_id', '=', user.id).where('r.purged_at', 'is', null).executeTakeFirst();
       if (!r || !r.analysis_id) return fail(reply, 404, 'not_found');
+      // credits spec: "+" is free only while the report's plan window is open (checked before any file is stored)
+      if (new Date(r.ends_at).getTime() <= Date.now()) {
+        return fail(reply, 402, 'plan_expired', 'Your plan has ended. Your reports are still here. Choose a plan to add statements or create new reports.');
+      }
       const prev = await deps.db.selectFrom('analysis_files as af').innerJoin('statement_files as f', 'f.id', 'af.file_id')
         .select(['f.id', 'f.status']).where('af.analysis_id', '=', r.analysis_id).orderBy('af.position').execute();
       if (prev.some((f) => f.status !== 'stored')) {

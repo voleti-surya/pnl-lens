@@ -24,7 +24,9 @@ export async function meRoutes(app: App, deps: Deps) {
     const u = await deps.db.selectFrom('users').select(['role', 'password_hash', 'google_sub']).where('id', '=', user.id).executeTakeFirst();
     // hasPassword / needsPassword: email accounts must set a password after the first code (never the hash itself)
     const hasPassword = !!u?.password_hash, dev = (process.env.AUTH_MODE || 'dev') === 'dev';
-    return ok(reply, { user: { id: user.id, country: user.country }, credits: r?.balance ?? 0, role: u?.role ?? 'user',
+    // reportsLeft: usable reports of plans whose window is open (customer screens); credits: internal mirror (admin only)
+    const { rows: left } = await deps.pool.query('select public.user_reports_left($1) as n', [user.id]);
+    return ok(reply, { user: { id: user.id, country: user.country }, credits: r?.balance ?? 0, reportsLeft: left[0]?.n ?? 0, role: u?.role ?? 'user',
       hasPassword, needsPassword: !hasPassword && !u?.google_sub && !dev });
   });
 

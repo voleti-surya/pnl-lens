@@ -6,7 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import { PLANS, planPrice, plansFor, durationLabel, lengthLabel, reportsBullet, validityBullet, planSummary, REPORTS_KEPT } from '../src/pricing';
+import { PLANS, planEndsAt, planDays, planPrice, plansFor, durationLabel, lengthLabel, reportsBullet, validityBullet, planSummary, REPORTS_KEPT } from '../src/pricing';
 
 const plan = (id: string) => PLANS.find((p) => p.id === id)!;
 
@@ -24,7 +24,7 @@ describe('plans (REQ-3, 15 Oct 2026)', () => {
   it('card wording comes from PLANS', () => {
     expect(PLANS.map(durationLabel)).toEqual(['one-time', 'for 3 months', 'for 6 months', 'for 12 months']);
     expect(PLANS.map(reportsBullet)).toEqual(['1 report', '5 reports', '25 reports over 6 months', '90 reports over 12 months']);
-    expect(PLANS.map(validityBullet)).toEqual(['Access for 7 days', 'Use within 3 months', null, null]);
+    expect(PLANS.map(validityBullet)).toEqual(['Use within 7 days', 'Use within 3 months', null, null]);
     expect(PLANS.map(lengthLabel)).toEqual(['7 days', '3 months', '6 months', '12 months']);
     expect(planSummary(plan('snapshot'))).toBe('Snapshot plan · 5 reports · 3 months');
     expect(planSummary(plan('single'))).toBe('Single plan · 1 report · 7 days');
@@ -39,5 +39,23 @@ describe('plans (REQ-3, 15 Oct 2026)', () => {
         '--', '.', ':!package-lock.json', ':!packages/engine/test/golden', ':!packages/shared/test/pricing.test.ts'], { cwd: root, encoding: 'utf8' });
     } catch (e: any) { if (e.status !== 1) throw e; }   // git grep exits 1 when nothing matches
     expect(hits).toBe('');
+  });
+});
+
+describe('plan windows (credits spec rule 4): calendar months from purchase or grant', () => {
+  const at = (iso: string) => new Date(iso);
+  const plan = (id: string) => PLANS.find((p) => p.id === id)!;
+  it('19-Oct-26: Single 26-Oct, Snapshot 19-Jan-27, Progress 19-Apr-27, Discipline 19-Oct-27', () => {
+    const from = at('2026-10-19T10:00:00Z');
+    expect(planEndsAt(plan('single'), from).toISOString()).toBe('2026-10-26T10:00:00.000Z');
+    expect(planEndsAt(plan('snapshot'), from).toISOString()).toBe('2027-01-19T10:00:00.000Z');
+    expect(planEndsAt(plan('progress'), from).toISOString()).toBe('2027-04-19T10:00:00.000Z');
+    expect(planEndsAt(plan('discipline'), from).toISOString()).toBe('2027-10-19T10:00:00.000Z');
+    expect(planDays(plan('snapshot'), from)).toBe(92);
+    expect(planDays(plan('progress'), from)).toBe(182);
+  });
+  it('month ends clamp: 31-Aug + 6 months = 28-Feb (29 in a leap year)', () => {
+    expect(planEndsAt(plan('progress'), at('2026-08-31T00:00:00Z')).toISOString().slice(0, 10)).toBe('2027-02-28');
+    expect(planEndsAt(plan('progress'), at('2027-08-31T00:00:00Z')).toISOString().slice(0, 10)).toBe('2028-02-29');
   });
 });

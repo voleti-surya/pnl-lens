@@ -62,6 +62,8 @@ export async function authRoutes(app: App, deps: Deps, opts: { googleCallbackOnl
    * Emails a 6-digit code (rate limits per email and per IP). create=false: only for an existing account ("Forgot
    * password" never creates one). Callers answer the same way whether or not the account exists.
    */
+  // per-IP code limit: 20/hour; the e2e stack raises it (every test browser shares one address), production never sets it
+  const ipLimit = Number(process.env.OTP_PER_IP_PER_HOUR_OVERRIDE) || OTP_PER_IP_PER_HOUR;
   type Sent = { ok: true; masked: string } | { ok: false; status: number; error: string; message: string };
   const sendCode = async (req: FastifyRequest, email: string, create = true): Promise<Sent> => {
     const r = asFetchLike(req), ip = ipOf(req), masked = maskEmail(email);
@@ -69,7 +71,7 @@ export async function authRoutes(app: App, deps: Deps, opts: { googleCallbackOnl
       store.countRecentOtps({ email, sinceMinutes: 60 }),
       ip ? store.countRecentOtps({ ip, sinceMinutes: 60 }) : Promise.resolve(0),
     ]);
-    if (byEmail >= OTP_PER_EMAIL_PER_HOUR || byIp >= OTP_PER_IP_PER_HOUR) return { ok: false, status: 429, error: 'rate_limited', message: 'Too many codes requested. Try again in an hour.' };
+    if (byEmail >= OTP_PER_EMAIL_PER_HOUR || byIp >= ipLimit) return { ok: false, status: 429, error: 'rate_limited', message: 'Too many codes requested. Try again in an hour.' };
     if (!create) {
       const { rows } = await deps.pool.query('select 1 from public.users where email = $1 and status = $2', [email, 'active']);
       if (!rows.length) return { ok: true, masked };                   // don't reveal
