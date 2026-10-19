@@ -1,17 +1,19 @@
 /**
  * @file  apps/web/components/admin/AdminConsole.tsx
  * @area  Admin
- * @what  Admin console UI: Users, Finance, Errors, Support, Product and Blog tabs (shown per role).
+ * @what  Admin console UI: Users, Finance, Errors, Support, Product, Blog and Research tabs (shown per role).
  */
 'use client';
 import { useEffect, useState } from 'react';
 import BlogAdmin from './BlogAdmin';
+import ResearchAdmin from './ResearchAdmin';
 
-type Tab = 'users' | 'finance' | 'errors' | 'support' | 'product' | 'blog';
+type Tab = 'users' | 'finance' | 'errors' | 'support' | 'product' | 'blog' | 'research';
 const TABS: { id: Tab; name: string; perm: string }[] = [
   { id: 'users', name: 'Users', perm: 'tab:users' }, { id: 'finance', name: 'Finance', perm: 'tab:finance' },
   { id: 'errors', name: 'Errors', perm: 'tab:errors' }, { id: 'support', name: 'Support', perm: 'tab:support' }, { id: 'product', name: 'Product', perm: 'tab:product' },
   { id: 'blog', name: 'Blog', perm: 'tab:blog' },
+  { id: 'research', name: 'Research', perm: 'tab:research' },
 ];
 const n = (v: any) => Number(v || 0);
 const money = (minor: any, cur = 'INR') => (cur === 'USD' ? '$' : '₹') + (n(minor) / 100).toLocaleString(cur === 'USD' ? 'en-US' : 'en-IN', { maximumFractionDigits: 0 });
@@ -35,16 +37,16 @@ export default function AdminConsole({ role, perms, pg }: { role: string; perms:
   const [data, setData] = useState<Record<string, any>>({});
   const [err, setErr] = useState('');
   const load = (t: Tab) => fetch(`/api/v1/admin/metrics?tab=${t}`).then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.message || j.error); setData((d) => ({ ...d, [t]: j })); }).catch((e) => setErr(e.message));
-  useEffect(() => { if (tab && tab !== 'blog' && !data[tab]) load(tab); }, [tab]); // eslint-disable-line
+  useEffect(() => { if (tab && tab !== 'blog' && tab !== 'research' && !data[tab]) load(tab); }, [tab]); // eslint-disable-line
   if (!pg) return <div className="panel center-card"><h3>Admin console</h3><p className="muted">Connect PostgreSQL (STORE_DRIVER=pg) to see live metrics.</p></div>;
   const d = tab ? data[tab] : null;
   return (
     <div className="ad">
       <div className="ad-head"><div><h1 className="page-title">Admin</h1><p className="muted" style={{ margin: 0 }}>Signed in as <b className="ad-role">{role}</b></p></div>
-        {tab !== 'blog' && <button className="btn ghost" onClick={() => tab && load(tab)}>Refresh</button>}</div>
+        {tab !== 'blog' && tab !== 'research' && <button className="btn ghost" onClick={() => tab && load(tab)}>Refresh</button>}</div>
       <nav className="tabs" role="tablist">{tabs.map((t) => <button key={t.id} role="tab" aria-selected={tab === t.id} data-tab={t.id} onClick={() => setTab(t.id)}>{t.name}</button>)}</nav>
       {err && <p className="status err">{err}</p>}
-      {tab === 'blog' ? <div className="rv-grid" style={{ marginTop: 16 }}><BlogAdmin /></div> : !d ? <p className="muted" style={{ padding: 20 }}>Loading…</p> : (
+      {tab === 'blog' ? <div className="rv-grid" style={{ marginTop: 16 }}><BlogAdmin /></div> : tab === 'research' ? <div className="rv-grid" style={{ marginTop: 16 }}><ResearchAdmin /></div> : !d ? <p className="muted" style={{ padding: 20 }}>Loading…</p> : (
         <div className="rv-grid" style={{ marginTop: 16 }}>
           {tab === 'users' && <UsersTab d={d} canRoles={perms.includes('roles:manage')} />}
           {tab === 'finance' && <FinanceTab d={d} />}

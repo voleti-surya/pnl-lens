@@ -9,10 +9,11 @@
  * `plans:grant` (owner only) is the approved exception to rule 6 (plan D5); the DB re-checks it in admin_grant_plan().
  */
 export type Role = 'user' | 'owner' | 'admin' | 'support' | 'finance' | 'analyst';
-export type Perm = 'tab:users' | 'tab:finance' | 'tab:errors' | 'tab:support' | 'tab:product' | 'user:lookup' | 'user:pii' | 'roles:manage' | 'plans:grant' | 'tab:blog' | 'blog:publish';
+export type Perm = 'tab:users' | 'tab:finance' | 'tab:errors' | 'tab:support' | 'tab:product' | 'user:lookup' | 'user:pii' | 'roles:manage' | 'plans:grant' | 'tab:blog' | 'blog:publish' | 'tab:research' | 'research:export';
 
 export const PERMS: Record<Role, Perm[]> = {
-  owner: ['tab:users', 'tab:finance', 'tab:errors', 'tab:support', 'tab:product', 'user:lookup', 'user:pii', 'roles:manage', 'plans:grant', 'tab:blog', 'blog:publish'],
+  // research datasets (19 Oct 2026): owner only — the files hold every opted-in trader's trades
+  owner: ['tab:users', 'tab:finance', 'tab:errors', 'tab:support', 'tab:product', 'user:lookup', 'user:pii', 'roles:manage', 'plans:grant', 'tab:blog', 'blog:publish', 'tab:research', 'research:export'],
   // blog (REQ-7, owner Q7): owner and admin only; the database re-checks the role in blog_admin_* functions
   admin: ['tab:users', 'tab:errors', 'tab:support', 'tab:product', 'user:lookup', 'user:pii', 'roles:manage', 'tab:blog', 'blog:publish'],
   support: ['tab:errors', 'tab:support', 'user:lookup', 'user:pii'],

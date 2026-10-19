@@ -1,7 +1,7 @@
 /**
  * @file  apps/worker/src/main.ts
  * @area  Worker
- * @what  Worker process: BullMQ consumer for analysis jobs (retries, dead-letter on final failure), schedules for nightly purge and storage sweep, local health endpoint.
+ * @what  Worker process: BullMQ consumer for analysis jobs (retries, dead-letter on final failure), data exports and research datasets, schedules (nightly purge, storage sweep, research dataset on the 1st and 16th), local health endpoint.
  */
 /**
  * Runs on the internal network only (no internet) as lens_worker. Health is served on 127.0.0.1 inside the container
@@ -16,7 +16,8 @@ import { s3WorkerStorage } from './storage.js';
 import { runEngineIsolated } from './engine-runner.js';
 import { engineVersion } from './engine-version.js';
 import { createAnalysisWorker } from './queue-worker.js';
-import { DATA_QUEUE, type ExportJobData } from '@pnl-lens/shared/jobs';
+import { DATA_QUEUE, RESEARCH_JOB, type ExportJobData, type ResearchJobData } from '@pnl-lens/shared/jobs';
+import { buildResearchExport, sweepResearch } from './research.js';
 import { processExport, failExport, sweepExports } from './export.js';
 import { nightly, sweepStorage } from './maintenance.js';
 
@@ -37,23 +38,32 @@ const deps = {
 const analyses = createAnalysisWorker(deps, pool, connection, { concurrency: cfg.concurrency, lockDurationMs: Math.max(60_000, cfg.engineTimeoutMs * 2), log });
 
 // "Export my data" requests (Phase 7): one at a time; final failure marks the request failed.
-const exportsWorker = new Worker<ExportJobData>(DATA_QUEUE, async (job) => {
-  const outcome = await processExport({ db, storage, keks: cfg.keks, currentKek: cfg.currentKek }, job.data.requestId, job.id);
-  log('export_done', { requestId: job.data.requestId, outcome });
+const exportsWorker = new Worker<ExportJobData | ResearchJobData>(DATA_QUEUE, async (job) => {
+  if (job.name === RESEARCH_JOB) {                                     // owner's "Build now" (research dataset)
+    const r = await buildResearchExport({ db, storage, currentKek: cfg.currentKek }, (job.data as ResearchJobData).researchId);
+    log('research_export', r);
+    return r;
+  }
+  const outcome = await processExport({ db, storage, keks: cfg.keks, currentKek: cfg.currentKek }, (job.data as ExportJobData).requestId, job.id);
+  log('export_done', { requestId: (job.data as ExportJobData).requestId, outcome });
   return { outcome };
 }, { connection, concurrency: 1, lockDuration: 300_000 });
 exportsWorker.on('failed', async (job, err) => {
-  if (!job || job.attemptsMade < (job.opts.attempts ?? 1)) return;
-  log('export_dead_letter', { requestId: job.data.requestId, error: err.message });
-  await failExport(db, job.data.requestId).catch(() => {});
+  if (!job || job.attemptsMade < (job.opts.attempts ?? 1) || job.name === RESEARCH_JOB) return;   // a research build marks its own row failed
+  log('export_dead_letter', { requestId: (job.data as ExportJobData).requestId, error: err.message });
+  await failExport(db, (job.data as ExportJobData).requestId).catch(() => {});
 });
 
 // Schedules (02:00 IST nightly purge; storage sweep every 15 minutes). Upserting is idempotent across restarts.
 const maintenanceQueue = new Queue(MAINTENANCE_QUEUE, { connection });
 await maintenanceQueue.upsertJobScheduler('nightly-purge', { pattern: '0 2 * * *', tz: 'Asia/Kolkata' }, { name: 'nightly' });
 await maintenanceQueue.upsertJobScheduler('storage-sweep', { every: 15 * 60_000 }, { name: 'sweep' });
+// research dataset for future model training (opted-in users only): 03:00 IST on the 1st and 16th, about every 15 days
+await maintenanceQueue.upsertJobScheduler('research-export', { pattern: '0 3 1,16 * *', tz: 'Asia/Kolkata' }, { name: 'research' });
 const maintenance = new Worker(MAINTENANCE_QUEUE, async (job) => {
-  const result = job.name === 'nightly' ? await nightly(db, storage) : { files: await sweepStorage(db, storage), exports: await sweepExports(db, storage) };
+  const result = job.name === 'nightly' ? await nightly(db, storage)
+    : job.name === 'research' ? await buildResearchExport({ db, storage, currentKek: cfg.currentKek })
+    : { files: await sweepStorage(db, storage), exports: await sweepExports(db, storage), research: await sweepResearch(db, storage) };
   log(`maintenance_${job.name}`, { result });
   return result;
 }, { connection, concurrency: 1 });

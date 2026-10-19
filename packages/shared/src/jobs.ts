@@ -14,3 +14,8 @@ export const DATA_QUEUE = 'data-requests';
 export const EXPORT_JOB = 'export';
 export interface ExportJobData { requestId: string }
 export const exportJobId = (requestId: string) => `export-${requestId}`;
+
+/** Research dataset (owner's "Build now"): same queue as data exports, one job per research_exports row. */
+export const RESEARCH_JOB = 'research';
+export interface ResearchJobData { researchId: string }
+export const researchJobId = (id: string) => `research-${id}`;

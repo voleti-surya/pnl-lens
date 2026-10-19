@@ -75,11 +75,15 @@ describe.skipIf(!ok)('database roles', () => {
       ['claim reports', `select create_report_from_analysis(gen_random_uuid(), gen_random_uuid(), null)`],
       ['grant plans', `select admin_grant_plan(gen_random_uuid(), gen_random_uuid(), 'single', 1, 1, 1, 'xxx')`],
       ['grant plans via the webhook function', `select grant_plan('o', 'p', '{}'::jsonb, 1, 1, 1)`],
-      ['read the research schema', 'select * from research.trades'],
+      ['read real user ids behind the research pseudonyms', 'select * from research.consenting_users'],
+      ['read the research pseudonym key', 'select * from research.pseudonym_key'],
       ['create tables', 'create table probe (x int)'],
     ] as const;
     for (const [what, q] of denied) it(`cannot ${what}`, () => expectPgError(asRole(t, 'lens_worker', q), DENIED));
 
+    it('can read the pseudonymised research views (research dataset, 0021)', async () => {
+      await asRole(t, 'lens_worker', 'select * from research.trades limit 1');
+    });
     it('can run the scheduled purge jobs', async () => {
       const r = await asRole(t, 'lens_worker', 'select purge_raw_files() as a, purge_drafts() as b, purge_otp_codes() as c');
       expect(r[0]).toEqual({ a: 0, b: 0, c: 0 });

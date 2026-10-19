@@ -18,6 +18,10 @@ describe('role-based access', () => {
   it('analyst sees metrics without personal data', () => {
     expect(can('analyst', 'tab:users')).toBe(true); expect(can('analyst', 'user:pii')).toBe(false); expect(can('analyst', 'user:lookup')).toBe(false);
   });
+  it('only the owner can open the research tab and download datasets', () => {
+    expect(can('owner', 'tab:research')).toBe(true); expect(can('owner', 'research:export')).toBe(true);
+    for (const r of ['admin', 'support', 'finance', 'analyst', 'user'] as const) { expect(can(r, 'tab:research')).toBe(false); expect(can(r, 'research:export')).toBe(false); }
+  });
   it('only owner and admin can open the blog tab and publish (REQ-7)', () => {
     for (const r of ['owner', 'admin'] as const) { expect(can(r, 'tab:blog')).toBe(true); expect(can(r, 'blog:publish')).toBe(true); }
     for (const r of ['support', 'finance', 'analyst', 'user'] as const) { expect(can(r, 'tab:blog')).toBe(false); expect(can(r, 'blog:publish')).toBe(false); }

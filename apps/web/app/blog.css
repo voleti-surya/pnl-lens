@@ -110,3 +110,4 @@ a.bl-tag:hover { background: var(--y); color: var(--on-y); }
 .ab-preview .bl-body { font-size: 16px; margin-top: 0; }
 @media (max-width: 960px) { .ab-cols { grid-template-columns: 1fr; } .ab-side { position: static; } }
 .bl-preview-bar { max-width: 720px; margin: 0 auto 24px; padding: 10px 14px; border: 1px dashed var(--y-line); border-radius: var(--r-sm); color: var(--y); font-size: 13px; font-weight: 600; text-transform: none; }
+.rs-intro { margin: 0 0 12px; font-size: 14px; line-height: 1.55; } .rs-intro b { color: var(--ink); }

@@ -344,7 +344,22 @@ export interface BlogPublicView {
 }
 export interface BlogPublicRedirectsView { old_slug: string; slug: string; site: BlogSite }
 
+export interface ResearchExportsTable {
+  id: Generated<string>;
+  requested_by: string | null;
+  status: Generated<'pending' | 'building' | 'ready' | 'failed'>;
+  subjects: number | null; reports: number | null; trades: number | null;
+  storage_key: string | null; enc_key_id: string | null; wrapped_dek: Buffer | null; iv: Buffer | null;
+  size_bytes: BigIntCol | null;
+  error: string | null;
+  created_at: Generated<Date>;
+  completed_at: TimestampNull;
+  expires_at: TimestampNull;
+  deleted_at: TimestampNull;
+}
+
 export interface Database {
+  research_exports: ResearchExportsTable;
   users: UsersTable;
   credits: CreditsTable;
   subscriptions: SubscriptionsTable;
