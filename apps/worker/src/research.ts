@@ -41,7 +41,7 @@ Engine version(s): ${engines.join(', ') || '—'}
 
 ## Who is in it
 Only users whose research consent ("Also let PnL Lens use my data, anonymised, to improve its analysis") was ON when
-this file was built, with an active account. Each file is a full snapshot: someone who withdraws consent is left out
+this file was built, with an active account and at least one report (traders with no reports are left out). Each file is a full snapshot: someone who withdraws consent is left out
 of the next dataset. Delete old datasets when they are no longer needed (they are kept 90 days on the server).
 
 ## Privacy
@@ -97,14 +97,17 @@ export async function buildResearchExport(deps: ResearchDeps, id?: string): Prom
     };
     const swap = (rows: Row[]): Row[] => rows.map(({ report_id, ...r }) => ({ subject: r.subject, report: report(report_id), ...r }));
     const reports = swap(data.reports), trades = swap(data.trades), habits = swap(data.habits);
+    // a trader is listed only with at least one report in this dataset (opted in but no reports yet, or all deleted: left out)
+    const withData = new Set(reports.map((r) => r.subject));
+    const subjects = data.subjects.filter((s) => withData.has(s.subject));
     const cols = (rows: Row[], fallback: string[]) => (rows[0] ? Object.keys(rows[0]) : fallback);
 
     const at = new Date();
-    const counts = { subjects: data.subjects.length, reports: reports.length, trades: trades.length };
+    const counts = { subjects: subjects.length, reports: reports.length, trades: trades.length };
     const engines = [...new Set(reports.map((r) => String(r.engine_version ?? '')).filter(Boolean))].sort();
     const zip = buildZip([
       { name: 'README.md', data: Buffer.from(README(at, counts, engines)) },
-      { name: 'subjects.csv', data: Buffer.from(toCsv(data.subjects, ['subject', 'country', 'joined_month'])) },
+      { name: 'subjects.csv', data: Buffer.from(toCsv(subjects, ['subject', 'country', 'joined_month'])) },
       { name: 'reports.csv', data: Buffer.from(toCsv(reports, cols(reports, ['subject', 'report']))) },
       { name: 'trades.csv', data: Buffer.from(toCsv(trades, cols(trades, ['subject', 'report']))) },
       { name: 'habits.csv', data: Buffer.from(toCsv(habits, cols(habits, ['subject', 'report']))) },

@@ -86,6 +86,15 @@ describe.skipIf(!ok)('research dataset', () => {
     expect(subjects.size).toBe(1);
   });
 
+  it('a trader who opted in but has no reports is left out and not counted', async () => {
+    const lonely = await makeUser(t);
+    await t.admin.query(`insert into consents (user_id, purpose, granted, policy_version, text_sha256) values ($1, 'research', true, '2026-10', repeat('a', 64))`, [lonely]);
+    const { row, files } = await open((await buildResearchExport(deps())).id);
+    expect(row.subjects).toBe(1);
+    expect(csvRows(files['subjects.csv'])).toHaveLength(2);
+    expect(files['subjects.csv'].trim().split('\r\n')[1].split(',')[0]).toBe(csvRows(files['reports.csv'])[1][0]);
+  });
+
   it('report pseudonyms line up inside one dataset but differ between datasets; subject stays the same', async () => {
     const a = await open((await buildResearchExport(deps())).id), b = await open((await buildResearchExport(deps())).id);
     const reportsA = new Set(csvRows(a.files['trades.csv']).slice(1).map((c) => c[1]));
