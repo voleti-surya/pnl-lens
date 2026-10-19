@@ -1,7 +1,7 @@
 /**
  * @file  apps/web/app/(auth)/login/page.tsx
  * @area  Auth
- * @what  Sign-in page: Google button + email one-time code (LoginForm). New users are created on first sign-in.
+ * @what  Sign-in page: one card with Continue with Google, OR, Continue with email (one-time code). One account per email; new users are created on first sign-in.
  */
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/auth/session';
@@ -22,7 +22,7 @@ export default async function Login(props: { searchParams: Promise<{ error?: str
   const providers = await apiServer<{ google: boolean }>('/auth/providers');
   const next = safeNext(searchParams.next);
   return (
-    <div className="panel center-card">
+    <div className="panel center-card login-card">
       <h3>Sign in or create an account</h3>
       <p className="muted center-sub">New here? Signing in creates your account.</p>
       <LoginForm google={!!providers.data?.google} next={next} error={searchParams.error ? ERRORS[searchParams.error] || ERRORS.google : ''} />

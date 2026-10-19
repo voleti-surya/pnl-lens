@@ -33,7 +33,7 @@ export async function signIn(page: Page, email: string, next = '/dashboard') {
   await page.goto(`/login?next=${encodeURIComponent(next)}`);
   await page.fill('input[type=email]', email);
   const before = latestCode(email);
-  await page.getByRole('button', { name: /email me a code/i }).click();
+  await page.getByRole('button', { name: /continue with email/i }).click();
   let code: string | null = null;
   await expect.poll(() => { code = latestCode(email); return code && code !== before ? code : null; }, { timeout: 20_000 }).not.toBeNull();
   await page.fill('input[inputmode=numeric], input[name=code]', code!);

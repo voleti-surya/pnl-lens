@@ -173,11 +173,18 @@ a{color:inherit}
 .form-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .small{font-size:13px}.tiny{font-size:12px}
 .btn-block{display:flex;width:100%}
-.btn-google{background:#fff;color:#1f1f1f;gap:10px}.btn-google:hover{background:#f2f2f2}.btn-google:active{background:#e6e6e6}
-.or-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--ink-3);font-size:12px}.or-divider span{flex:1;height:1px;background:var(--line)}
 .field-code{font-size:22px;font-weight:600;letter-spacing:.45em;text-align:center;padding-left:calc(14px + .45em)}
 .login-sent{margin:0 0 10px}.login-sent b{color:var(--ink);font-weight:600}
 .login-links{display:flex;justify-content:space-between;margin-top:14px;font-size:13px}
+/* sign-in card (19 Oct 2026): provider button, OR, email + Continue — one rounded card */
+.login-card{max-width:440px;padding:32px;border-radius:24px;border:1px solid var(--line)}
+.login-card .btn{min-height:44px;font-size:15px;border-radius:12px}
+.login-card .field{min-height:44px;border-radius:12px}
+.btn-provider{background:var(--s2);color:var(--ink);border-color:var(--line-strong);gap:10px;font-weight:500}
+.btn-provider:hover{background:var(--s3);border-color:var(--line-hover)}.btn-provider:active{background:var(--s1)}
+.login-or{margin:16px 0;text-align:center;color:var(--ink-3);font-size:12px;font-weight:600;letter-spacing:.06em}
+.login-email{display:flex;flex-direction:column;gap:14px}
+@media (max-width:480px){.login-card{margin:6vh 16px 0;padding:24px 20px}.login-card .btn,.login-card .field{min-height:48px}}
 .linkbtn.quiet{color:var(--ink-3)}.linkbtn.quiet:hover{color:var(--ink);opacity:1}.linkbtn.accent{color:var(--y)}
 .center-card h3{font-size:20px;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}.center-sub{margin:0 0 20px;font-size:14px}
 .link{color:var(--y);text-underline-offset:2px;text-decoration-thickness:1px}.link:hover{opacity:.85}

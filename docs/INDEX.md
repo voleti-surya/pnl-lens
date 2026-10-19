@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 204 files._
+_Generated from file headers by `npm run docs:index` — 205 files._
 
 ### Pages
 
@@ -120,9 +120,9 @@ _Generated from file headers by `npm run docs:index` — 204 files._
 |---|---|
 | `apps/api/src/routes/auth.ts` | Sign-in, ported 1:1 from apps/web/app/api/auth/*: email code request/verify, Google start/callback, logout. |
 | `apps/api/src/routes/me.ts` | GET /me (ported), GET /plans, consents (GET/POST /me/consents), POST /me/export, POST /me/delete and DELETE /me. |
-| `apps/web/app/(auth)/login/page.tsx` | Sign-in page: Google button + email one-time code (LoginForm). New users are created on first sign-in. |
+| `apps/web/app/(auth)/login/page.tsx` | Sign-in page: one card with Continue with Google, OR, Continue with email (one-time code). One account per email; new users are created on first sign-in. |
 | `apps/web/app/(auth)/signup/page.tsx` | Redirects /signup to /login (one page for new and returning users). |
-| `apps/web/components/auth/LoginForm.tsx` | Sign-in form: Google button + email code (two steps). |
+| `apps/web/components/auth/LoginForm.tsx` | Sign-in form: "Continue with Google", OR, email + "Continue with email", then the 6-digit code step. |
 | `apps/web/components/auth/LogoutButton.tsx` | Log-out button. |
 | `apps/web/lib/auth/session.ts` | The signed-in user for server components, asked from the API (GET /api/v1/me with the visitor's cookie). |
 | `packages/shared/src/auth/google.ts` | Google OpenID Connect flow (PKCE, state, nonce, ID-token verification). |
@@ -359,6 +359,7 @@ _Generated from file headers by `npm run docs:index` — 204 files._
 | `tests/e2e-web/instagram.spec.ts` | REQ-6 Instagram section: scroll-linked row (card 1 → 4), manual takeover, reduced motion, video play rules, exact copy, no Meta requests, no layout shift. |
 | `tests/e2e-web/journey.spec.ts` | REQ-2 journey bar and "What's next" card end to end: Single 2/5 with locks, later month completes step 3, locked step opens pricing, phone view, events in admin. |
 | `tests/e2e-web/landing.spec.ts` | REQ-4: on a 390x844 phone pricing starts within 4 screen-heights; See plans / nav / pill reach it; mobile card order; no section lost; landing events stored. |
+| `tests/e2e-web/login.spec.ts` | Sign-in card (19 Oct 2026): Continue with email → code → signed in; layout at 320/390/1440; Google button only when configured; focus ring; errors. |
 | `tests/e2e-web/privacy.spec.ts` | Data rights in the browser: research opt-in toggle, export my data (worker builds the ZIP, download works), delete my account. |
 | `tests/e2e-web/score-card.spec.ts` | REQ-1: the Progress score card's level labels never overlap, at every level and width, in Chromium (Chrome/Edge) and WebKit (Safari). |
 | `tests/e2e-web/workspace.spec.ts` | Browser end to end on the stack: sign in → upload with consent → loader → report (5 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete. |
