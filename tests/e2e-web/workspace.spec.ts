@@ -39,6 +39,14 @@ test('the full workspace flow, and a second device sees the same report', async 
     await expect(page.locator('#reportRoot .tabs').getByRole('tab', { name: t })).toHaveAttribute('aria-selected', 'true');
   }
   await expect(page.locator('.ws-plan')).toContainText('1 of 5 reports used');
+  // reports are view-only (owner, 19 Oct): no CSV/PDF downloads, and printing shows only a notice
+  await expect(page.getByRole('button', { name: 'CSV', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'PDF', exact: true })).toHaveCount(0);
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.locator('#reportRoot')).toBeHidden();
+  expect(await page.evaluate(() => getComputedStyle(document.body, '::before').content)).toContain('Reports can be viewed in the PnL Lens app');
+  await page.emulateMedia({ media: 'screen' });
+  await expect(page.locator('#reportRoot')).toBeVisible();
 
   // "+": a second statement opens as its own tab; All files combines both
   await page.locator('input[type=file]:not(#file)').setInputFiles(path.join(FIX, 'groww_pnl.csv'));

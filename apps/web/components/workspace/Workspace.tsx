@@ -269,16 +269,6 @@ function ReportView({ plan, plans, prices, reports, current, setLock }: { plan: 
   async function removeFile(i: number) {
     await change(async () => (await api<{ analysisId: string }>(`/reports/${current.id}/files/remove`, { body: { fileId: files[i].id } })).analysisId, files.length - 1, 'Could not remove ' + files[i].name);
   }
-  function exportCsv() {
-    if (!r) return;
-    const cols = ['symbol', 'group', 'market', 'direction', 'entryDate', 'exitDate', 'entryHour', 'holdDays', 'qty', 'avgBuy', 'buy', 'sell', 'pct', 'pnl', 'netEst'];
-    const q = (v: unknown) => (v == null ? '' : typeof v === 'number' ? String(Math.round(v * 100) / 100) : '"' + String(v).replace(/"/g, '""') + '"');
-    const rows = [cols.join(','), ...r.trades.map((t: any) => cols.map((c) => q(t[c])).join(','))];
-    const name = view === 'all' ? 'all-files' : (slot?.name || 'report').replace(/\.[^.]+$/, '').replace(/[^a-z0-9_-]+/gi, '-');
-    const url = URL.createObjectURL(new Blob([rows.join('\n')], { type: 'text/csv' }));
-    const a = document.createElement('a'); a.href = url; a.download = 'pnl-lens-' + name + '.csv'; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  }
   async function remove() {
     if (!confirm('Delete this report permanently? This can’t be undone, and the report isn’t returned to your plan.')) return;
     try { await api(`/reports/${current.id}`, { method: 'DELETE' }); router.push('/dashboard'); router.refresh(); }
@@ -330,8 +320,6 @@ function ReportView({ plan, plans, prices, reports, current, setLock }: { plan: 
               <div className="muted" style={{ fontSize: 13 }} suppressHydrationWarning>{meta}</div>
             </div>
             <div className="actions">
-              <button className="btn ghost" onClick={exportCsv} disabled={!r}>CSV</button>
-              <button className="btn ghost" onClick={() => window.print()}>PDF</button>
               <button className="btn ghost" onClick={remove}>Delete</button>
             </div>
           </div>

@@ -37,7 +37,7 @@ One Ubuntu 24.04 VM, planned at DigitalOcean Bengaluru (India), behind Cloudflar
 
 | Right | How |
 |---|---|
-| Access / portability | Dashboard → **Your data** → *Export my data*: ZIP with `pnl-lens-data.json` (everything in section 1 for that user) and the original statements still stored. Link valid for 7 days |
+| Access / portability | Reports themselves are view-only in the app (no CSV/PDF download, printing blocked, since 19 Oct 2026); the one download is Dashboard → **Your data** → *Export my data*: ZIP with `pnl-lens-data.json` (everything in section 1 for that user) and the original statements still stored. Link valid for 7 days |
 | Erasure | Delete a report (report page → Delete): payload, trades and metrics removed, files shredded. Delete the account (Dashboard → Your data → *Delete my account*, type DELETE): all reports, trades, files and analyses removed; account anonymised; sessions end at once; payments and consent proof kept |
 | Withdraw research consent | Dashboard → Your data → research checkbox (append-only record; the research views drop the user at once) |
 | Withdraw processing consent | Delete reports or the account (processing is needed to provide the service) |
