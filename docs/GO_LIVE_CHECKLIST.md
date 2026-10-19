@@ -8,7 +8,7 @@ Everything the code can do is built and tested (`docs/BACKEND_V2_PLAN.md`, Phase
 |---|---|---|
 | A1 | DigitalOcean account; Droplet (BLR1, Ubuntu 24.04, 4 vCPU / 8 GB), cloud firewall, Spaces bucket + key | `docs/DEPLOYMENT_VM.md` §1–3 |
 | A2 | Cloudflare: domain, proxied DNS, Full (strict), origin certificate | `DEPLOYMENT_VM.md` §4 |
-| A3 | Resend: verify `pnllens.com` (SPF/DKIM records in Cloudflare), API key, sender `no-reply@pnllens.com` | `.env` `RESEND_API_KEY`, `MAIL_FROM` |
+| A3 | Email, one of: **Resend** (verify `pnllens.com` with SPF/DKIM in Cloudflare, API key, sender `no-reply@pnllens.com`) or **Google Workspace SMTP** (`MAIL_DRIVER=smtp`, a mailbox with 2-Step Verification and an App password; `MAIL_FROM` = that mailbox or a "Send mail as" alias such as `no-reply@pnllens.com`; about 2,000 emails a day) | `.env` `RESEND_API_KEY` or `SMTP_USER`/`SMTP_PASS`, `MAIL_FROM` |
 | A4 | Google Cloud: OAuth consent screen (app name, logo, privacy/terms URLs) + Web client; redirect URI `https://pnllens.com/api/auth/google/callback` | `.env` `GOOGLE_*` |
 | A5 | Company registration and a Razorpay live account (KYC). Until then `PAYMENTS_MODE=off`; plans only through the owner grant | `docs/PAYMENTS_RAZORPAY.md` |
 | A6 | GitHub: Actions secrets `DEPLOY_*`, environment `production`, deploy key on the server, GHCR read token | `DEPLOYMENT_VM.md` §6–7 |

@@ -98,6 +98,10 @@ services:
       MAIL_DRIVER: ${MAIL_DRIVER:-resend}
       MAIL_FROM: ${MAIL_FROM:-PnL Lens <no-reply@pnllens.com>}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       PAYMENTS_MODE: ${PAYMENTS_MODE:-off}

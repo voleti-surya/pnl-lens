@@ -8,6 +8,7 @@ services:
     environment:
       AUTH_MODE: jwt
       ALLOW_DEV_AUTH_IN_PROD: "false"
+      MAIL_DRIVER: console                  # tests read the codes from the mail log; never send real email
   web:
     environment:
       AUTH_MODE: jwt

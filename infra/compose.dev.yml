@@ -82,7 +82,12 @@ services:
       FILE_KEK_K1: ${FILE_KEK_K1:?run npm run stack:env}
       APP_URL: http://localhost:${HTTP_PORT:-8080}
       EXTRA_ALLOWED_ORIGINS: http://127.0.0.1:${HTTP_PORT:-8080}   # the same dev site opened by IP (a different origin to the browser)
-      MAIL_DRIVER: console
+      MAIL_DRIVER: ${DEV_MAIL_DRIVER:-console}   # console = codes in .data/dev-mail.log; set DEV_MAIL_DRIVER=smtp in .env to really send
+      MAIL_FROM: ${MAIL_FROM:-PnL Lens <no-reply@localhost>}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-465}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
       PAYMENTS_MODE: "off"
       EXPOSE_OPENAPI: "true"                  # dev only: GET /api/v1/openapi.json
     networks: [edge, internal]             # edge = egress for email, Google, Razorpay

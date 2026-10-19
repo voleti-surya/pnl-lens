@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 205 files._
+_Generated from file headers by `npm run docs:index` — 206 files._
 
 ### Pages
 
@@ -239,7 +239,7 @@ _Generated from file headers by `npm run docs:index` — 205 files._
 | `packages/shared/src/file-crypto.ts` | Envelope encryption for raw statement files: AES-256-GCM with a random key per file, wrapped by a KEK from env (rule 7). |
 | `packages/shared/src/jobs.ts` | Queue names and job payloads shared by apps/api (producer) and apps/worker (consumer). |
 | `packages/shared/src/limits.ts` | App-wide limits (max files, file types, report lifetime). |
-| `packages/shared/src/mail.ts` | Email sender: Resend (DigitalOcean), Amazon SES, or a local log file. |
+| `packages/shared/src/mail.ts` | Email sender: SMTP (Google Workspace / Gmail), Resend, Amazon SES, or a local log file. |
 
 ### Styles
 
@@ -349,6 +349,7 @@ _Generated from file headers by `npm run docs:index` — 205 files._
 | `packages/engine/test/extract.test.ts` | PDF, DOCX and legacy DOC reading matches the CSV originals. |
 | `packages/engine/test/golden.test.ts` | Engine parity: every fixture through the Node runner must equal the stored golden JSON byte for byte. |
 | `packages/shared/test/journey.test.ts` | REQ-2 journey rules: steps done only when really met and included in the plan, locks name the unlocking plan, score line, next action. |
+| `packages/shared/test/mail.test.ts` | Email drivers: console writes the log; smtp (Google Workspace) connects with TLS and the App password from env, and sends the code email. |
 | `packages/shared/test/next.test.ts` | safeNext(): same-site paths pass; every off-site trick (//, /\, tabs/newlines, schemes) falls back. |
 | `packages/shared/test/otp.test.ts` | Email one-time code helpers. |
 | `packages/shared/test/payments.test.ts` | Razorpay checkout and webhook signature verification. |

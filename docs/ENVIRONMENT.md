@@ -24,6 +24,8 @@ Everything lives in one `.env` file at the repo root (git-ignored). `npm run sta
 |---|---|---|
 | `APP_URL` | api, web | Public URL, e.g. `https://pnllens.com` (redirects, CSRF origin) |
 | `MAIL_DRIVER` / `MAIL_FROM` / `RESEND_API_KEY` | api | Email: `resend` in production (`console` in dev writes `.data/dev-mail.log`) |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` | api | Email with `MAIL_DRIVER=smtp`, e.g. Google Workspace: `smtp.gmail.com`, 465, the mailbox, and a Google **App password** (needs 2-Step Verification; never the account password). `MAIL_FROM` must be that mailbox or a "Send mail as" alias. Gmail allows about 2,000 messages a day per mailbox |
+| `DEV_MAIL_DRIVER` | dev stack | `console` (default: codes go to the API's `.data/dev-mail.log`) or `smtp` to send real email from a local stack. The e2e overlay always uses `console` |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | api | Google sign-in (optional; the button hides without them). Redirect URI: `{APP_URL}/api/auth/google/callback` |
 | `PAYMENTS_MODE` | api | `off` (default) or `razorpay` (`docs/PAYMENTS_RAZORPAY.md`) |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | api | Razorpay (razorpay mode) |

@@ -48,6 +48,7 @@ host :8080 (127.0.0.1 only) ──► caddy ──┬── /api/v1/*  ──►
 | Stop and **delete all data** | `docker compose --env-file .env -f infra/compose.dev.yml down -v` |
 | Rebuild api/worker on code change | `docker compose --env-file .env -f infra/compose.dev.yml watch` |
 | Browser e2e: restart in jwt mode, then run | `npm run stack:e2e` → `npm run test:e2e` (back to dev mode: `npm run stack:up`) |
+| Try real sign-in with real emails (Google Workspace SMTP; needs `SMTP_USER`, `SMTP_PASS` = App password, `MAIL_FROM` in `.env`) | `npm run stack:signin` (don't run the Playwright tests on it; back to dev mode: `npm run stack:up`) |
 | Database, API and worker tests (throwaway Postgres on 127.0.0.1:55432 and Redis on 127.0.0.1:56379) | `npm run db:test:up` → `npm run test:db` → `npm run db:test:down` |
 | Debug ports on 127.0.0.1 (Postgres 5432, Redis 6379, S3 3900) | add `-f infra/compose.dev.ports.yml` to the compose command |
 | Load test (k6, 50 users) | `docker compose --env-file .env -f infra/compose.dev.yml -f infra/compose.load.yml up -d --build --wait` → `node tests/load/prepare.mjs` → `tests/load/run.sh` (`docs/LOAD_TEST.md`) |

@@ -27,7 +27,7 @@ Written from the code on branch `backend-v2` (Phases 1–7). This is the factual
 
 ## 2. Where
 
-One Ubuntu 24.04 VM, planned at DigitalOcean Bengaluru (India), behind Cloudflare. Only Caddy (80/443) is reachable. Postgres, Redis, storage and the worker sit on an internal Docker network with no internet route. Email goes out through Resend; card payments through Razorpay (PnL Lens never sees card data). **LAWYER:** list Cloudflare, Resend, Razorpay, Google (sign-in) and the backup provider as processors, with their locations (cross-border transfer for EU users).
+One Ubuntu 24.04 VM, planned at DigitalOcean Bengaluru (India), behind Cloudflare. Only Caddy (80/443) is reachable. Postgres, Redis, storage and the worker sit on an internal Docker network with no internet route. Email goes out through Resend, or through Google Workspace SMTP when `MAIL_DRIVER=smtp` (sign-in codes then pass through Google); card payments through Razorpay (PnL Lens never sees card data). **LAWYER:** list Cloudflare, Resend, Razorpay, Google (sign-in, and email if Workspace SMTP is used) and the backup provider as processors, with their locations (cross-border transfer for EU users).
 
 ## 3. Rights, as built
 

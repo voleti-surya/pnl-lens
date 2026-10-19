@@ -32,7 +32,11 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@aws-sdk/client-sesv2": "^3.1142.0",
     "jose": "^5.9.0",
-    "@aws-sdk/client-sesv2": "^3.1142.0"
+    "nodemailer": "10.0.14"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "8.0.2"
   }
 }

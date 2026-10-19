@@ -1,7 +1,7 @@
 /**
  * @file  packages/shared/src/mail.ts
  * @area  Core
- * @what  Email sender: Resend (DigitalOcean), Amazon SES, or a local log file.
+ * @what  Email sender: SMTP (Google Workspace / Gmail), Resend, Amazon SES, or a local log file.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,10 +10,16 @@ import path from 'node:path';
  * Transactional email. MAIL_DRIVER:
  *   ses     → Amazon SES v2 (default in production; stays on AWS). Needs MAIL_FROM on a verified domain,
  *             SES production access, and the ECS task role allowed ses:SendEmail.
+ *   smtp    → any SMTP server; for Google Workspace: SMTP_HOST=smtp.gmail.com, SMTP_PORT=465,
+ *             SMTP_USER=<mailbox>, SMTP_PASS=<a Google App password, never the account password>.
+ *             MAIL_FROM must be that mailbox or one of its "Send mail as" aliases (Gmail rewrites anything else).
  *   resend  → Resend HTTP API (RESEND_API_KEY)
  *   console → writes to .data/dev-mail.log (local development and e2e tests)
  */
 export interface Mail { to: string; subject: string; text: string; html: string }
+
+/** One SMTP connection setup per process (reused for every code email). */
+let transport: { sendMail(o: object): Promise<unknown> } | undefined;
 
 export async function sendMail(m: Mail): Promise<void> {
   const driver = process.env.MAIL_DRIVER || (process.env.NODE_ENV === 'production' ? 'ses' : 'console');
@@ -23,6 +29,17 @@ export async function sendMail(m: Mail): Promise<void> {
     const file = path.join(process.cwd(), '.data', 'dev-mail.log');
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.appendFileSync(file, JSON.stringify({ at: new Date().toISOString(), from, ...m }) + '\n');
+    return;
+  }
+  if (driver === 'smtp') {
+    const nodemailer = (await import('nodemailer')).default;
+    transport ??= nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com', port: Number(process.env.SMTP_PORT || 465),
+      secure: Number(process.env.SMTP_PORT || 465) === 465,              // 465 = TLS from the start; 587 = STARTTLS
+      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+      requireTLS: true,
+    });
+    await transport.sendMail({ from, to: m.to, subject: m.subject, text: m.text, html: m.html });
     return;
   }
   if (driver === 'resend') {
