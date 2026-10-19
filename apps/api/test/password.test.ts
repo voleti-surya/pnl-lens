@@ -3,7 +3,7 @@
  * @area  Tests
  * @what  Email + password sign-in: start → code for new emails, required password after the first code, password login, lockout, forgot, change needs a fresh sign-in, other devices signed out, no hash leaks.
  */
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { SignJWT } from 'jose';
 import { testDbAvailable } from '@pnl-lens/db/testing';
 import { testApp, ORIGIN, type TestApp } from './helpers.js';
@@ -97,6 +97,18 @@ describe.skipIf(!ok)('email + password sign-in', () => {
     expect((await me(otherDevice)).statusCode).toBe(401);                          // the other device is signed out
     expect((await post('/auth/password/login', { email, password: PW })).statusCode).toBe(401);
     expect((await post('/auth/password/login', { email, password: PW2 })).statusCode).toBe(200);
+  });
+
+  it('a database clock ahead of the API clock does not end the fresh session after setting a password', async () => {
+    const email = 'skew@t.local';
+    await post('/auth/start', { email }); const { cookie } = await codeSignIn(email);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() - 5000);                                          // the API clock runs 5 s behind the database
+    try {
+      const set = await post('/auth/password/set', { password: PW }, cookie);
+      expect(set.statusCode).toBe(200);
+      expect((await me(cookieOf(set))).statusCode).toBe(200);                       // the new session stays valid
+    } finally { vi.useRealTimers(); }
   });
 
   it('changing an existing password needs a recent sign-in', async () => {

@@ -165,8 +165,10 @@ export async function authRoutes(app: App, deps: Deps, opts: { googleCallbackOnl
     if (rows[0]?.has && (user.iat ?? 0) * 1000 < Date.now() - 10 * 60_000) {
       return fail(reply, 403, 'reauth_required', 'For your security, sign in with an emailed code to change your password.');
     }
+    // sessions_valid_after uses the API's clock, the same clock that stamps session tokens (iat): the database clock can
+    // differ by seconds (seen in Docker), which would end the fresh session issued just below
     await deps.pool.query(`update public.users set password_hash = $2, password_set_at = now(), password_failed = 0, password_locked_until = null,
-        sessions_valid_after = now() where id = $1`, [user.id, await hashPassword(password)]);
+        sessions_valid_after = $3 where id = $1`, [user.id, await hashPassword(password), new Date()]);
     await store.audit(user.id, rows[0]?.has ? 'password_changed' : 'password_set', undefined, ipOf(req));
     await startSession(reply, user);
     return reply.send({ ok: true });
