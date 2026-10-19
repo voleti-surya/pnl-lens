@@ -22,6 +22,13 @@ export function sql(q: string): string {
   return r.stdout.trim();
 }
 
+/** The newest email sent to this address (from the API's console mail log), or null. */
+export function lastMail(email: string): { subject: string; text: string; html: string } | null {
+  const r = dc('exec', '-T', 'api', 'sh', '-c', 'cat /app/.data/dev-mail.log 2>/dev/null || true');
+  const all = r.stdout.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)).filter((m) => m.to === email);
+  return all.length ? all[all.length - 1] : null;
+}
+
 function latestCode(email: string): string | null {
   const r = dc('exec', '-T', 'api', 'sh', '-c', 'cat /app/.data/dev-mail.log 2>/dev/null || true');
   const lines = r.stdout.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l)).filter((m) => m.to === email);

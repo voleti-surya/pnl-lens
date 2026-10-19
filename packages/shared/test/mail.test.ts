@@ -25,3 +25,16 @@ describe('sendMail', () => {
     expect(configs).toHaveLength(1);                                   // one transport, reused
   });
 });
+
+describe('researchInviteEmail', () => {
+  it('has both choices on the personal link, the reassurances, and no images or tracking', async () => {
+    const { researchInviteEmail } = await import('../src/mail');
+    const m = researchInviteEmail('https://pnllens.com/research/consent?t=abc123');
+    expect(m.subject).toBe('Help us make PnL Lens better for traders like you');
+    expect(m.html).toContain('href="https://pnllens.com/research/consent?t=abc123&amp;choice=yes"');
+    expect(m.html).toContain('href="https://pnllens.com/research/consent?t=abc123&amp;choice=no"');
+    expect(m.text).toContain('Yes, include my reports: https://pnllens.com/research/consent?t=abc123&choice=yes');
+    expect(m.text).toMatch(/name and email removed/); expect(m.text).toMatch(/Nothing changes if you ignore this email/);
+    expect(m.html).not.toMatch(/<img|<script|pixel/i);
+  });
+});

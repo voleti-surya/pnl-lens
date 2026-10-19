@@ -47,6 +47,9 @@ export interface UsersTable {
   password_failed: Generated<number>;
   password_locked_until: TimestampNull;
   sessions_valid_after: TimestampNull;
+  restricted_reason: string | null;
+  restricted_at: TimestampNull;
+  restricted_by: string | null;
 }
 
 export interface CreditsTable {
@@ -358,7 +361,20 @@ export interface ResearchExportsTable {
   deleted_at: TimestampNull;
 }
 
+export interface ResearchInvitesTable {
+  id: Generated<string>;
+  user_id: string;
+  sent_by: string | null;
+  token_sha256: string;
+  created_at: Generated<Date>;
+  expires_at: Generated<Date>;
+  answered_at: TimestampNull;
+  answer: boolean | null;
+  ip_hash: string | null;
+}
+
 export interface Database {
+  research_invites: ResearchInvitesTable;
   research_exports: ResearchExportsTable;
   users: UsersTable;
   credits: CreditsTable;

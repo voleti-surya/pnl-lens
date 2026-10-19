@@ -12,3 +12,4 @@ export * from './queries/reports.js';
 export * from './queries/plans.js';
 export * from './queries/privacy.js';
 export * from './queries/blog.js';
+export * from './queries/users-admin.js';

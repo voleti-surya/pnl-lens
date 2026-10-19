@@ -207,3 +207,7 @@ a{color:inherit}
 
 /* motion: everything stops for people who ask for less motion */
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+/* research consent page (email link, 19 Oct 2026) */
+.rc-quote{margin:0 0 14px;padding:12px 14px;border-left:3px solid var(--y);background:var(--s2);border-radius:0 var(--r-sm) var(--r-sm) 0;color:var(--ink);font-size:14px;line-height:1.5}
+.rc-list{margin:0 0 18px;padding-left:18px;color:var(--ink-2);font-size:14px;line-height:1.6}
+

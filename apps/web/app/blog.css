@@ -111,3 +111,17 @@ a.bl-tag:hover { background: var(--y); color: var(--on-y); }
 @media (max-width: 960px) { .ab-cols { grid-template-columns: 1fr; } .ab-side { position: static; } }
 .bl-preview-bar { max-width: 720px; margin: 0 auto 24px; padding: 10px 14px; border: 1px dashed var(--y-line); border-radius: var(--r-sm); color: var(--y); font-size: 13px; font-weight: 600; text-transform: none; }
 .rs-intro { margin: 0 0 12px; font-size: 14px; line-height: 1.55; } .rs-intro b { color: var(--ink); }
+
+/* admin User management tab (19 Oct 2026) */
+.um-search { max-width: 320px; min-height: 38px; }
+.um-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.um-chips button { align-self: center; line-height: 1.2; background: none; border: 1px solid var(--line-strong); color: var(--ink-2); border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.um-chips button:hover { border-color: var(--line-hover); color: var(--ink); }
+.um-chips button.on { background: var(--y); border-color: var(--y); color: var(--on-y); }
+.um-role { margin-left: 8px; text-transform: capitalize; }
+.um-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.um-actions .btn { min-height: 32px; padding: 6px 10px; font-size: 13px; }
+.um-modal { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 16px; }
+.um-modal-card { width: 100%; max-width: 460px; background: var(--s1); border: 1px solid var(--line-strong); border-radius: var(--r-lg); padding: 24px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 12px; }
+.um-modal-card h3 { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+

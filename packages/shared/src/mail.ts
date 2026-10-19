@@ -1,7 +1,7 @@
 /**
  * @file  packages/shared/src/mail.ts
  * @area  Core
- * @what  Email sender: SMTP (Google Workspace / Gmail), Resend, Amazon SES, or a local log file.
+ * @what  Email sender (SMTP / Google Workspace, Resend, Amazon SES, or a local log file) and the email templates (sign-in code, research invite).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -75,3 +75,42 @@ export function otpEmail(code: string): Omit<Mail, 'to'> {
       <p style="color:#666;font-size:13px;margin-top:18px">It expires in 10 minutes. If you didn't ask for it, you can ignore this email.</p></div>`,
   };
 }
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * The owner's "Request reports" email: asks, once, whether the user's past reports may be included (pseudonymised) to
+ * improve PnL Lens. Both buttons open the consent page (the choice is made there, never by opening the email). No
+ * tracking pixels, no third-party images.
+ */
+export function researchInviteEmail(link: string): Omit<Mail, 'to'> {
+  const yes = `${link}&choice=yes`, no = `${link}&choice=no`;
+  return {
+    subject: 'Help us make PnL Lens better for traders like you',
+    text: [
+      'Hi,',
+      '',
+      'Thank you for using PnL Lens. Your past reports could help us spot trading patterns more accurately for everyone.',
+      '',
+      'If you agree, we include the trades and statistics from your reports in the data we use to improve our analysis,',
+      'with your name and email removed. It is never sold and never shown to anyone else.',
+      '',
+      `Yes, include my reports: ${yes}`,
+      `No thanks: ${no}`,
+      '',
+      'Nothing changes if you ignore this email. You can change your choice anytime in Dashboard → Your data.',
+      'The link works for 30 days.',
+      '',
+      'PnL Lens',
+    ].join('\n'),
+    html: `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#222;line-height:1.55">
+      <div style="font-weight:800;font-size:18px">PnL Lens</div>
+      <p style="margin:18px 0 10px">Hi,</p>
+      <p style="margin:0 0 10px">Thank you for using PnL Lens. Your past reports could help us spot trading patterns more accurately for everyone.</p>
+      <p style="margin:0 0 18px">If you agree, we include the trades and statistics from your reports in the data we use to improve our analysis, <b>with your name and email removed</b>. It is never sold and never shown to anyone else.</p>
+      <a href="${esc(yes)}" style="display:inline-block;background:#FFD60A;color:#000;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:10px">Yes, include my reports</a>
+      <a href="${esc(no)}" style="display:inline-block;color:#555;text-decoration:underline;padding:12px 14px">No thanks</a>
+      <p style="color:#666;font-size:13px;margin-top:20px">Nothing changes if you ignore this email. You can change your choice anytime in Dashboard → Your data. The link works for 30 days.</p></div>`,
+  };
+}
+

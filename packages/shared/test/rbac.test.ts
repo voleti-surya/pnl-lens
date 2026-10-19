@@ -18,6 +18,12 @@ describe('role-based access', () => {
   it('analyst sees metrics without personal data', () => {
     expect(can('analyst', 'tab:users')).toBe(true); expect(can('analyst', 'user:pii')).toBe(false); expect(can('analyst', 'user:lookup')).toBe(false);
   });
+  it('user management: owner and admin list and restrict; only the owner deletes and asks for research consent', () => {
+    for (const r of ['owner', 'admin'] as const) { expect(can(r, 'tab:usermgmt')).toBe(true); expect(can(r, 'users:restrict')).toBe(true); }
+    expect(can('owner', 'users:delete')).toBe(true); expect(can('owner', 'research:invite')).toBe(true);
+    expect(can('admin', 'users:delete')).toBe(false); expect(can('admin', 'research:invite')).toBe(false);
+    for (const r of ['support', 'finance', 'analyst', 'user'] as const) for (const p of ['tab:usermgmt', 'users:restrict', 'users:delete', 'research:invite'] as const) expect(can(r, p)).toBe(false);
+  });
   it('only the owner can open the research tab and download datasets', () => {
     expect(can('owner', 'tab:research')).toBe(true); expect(can('owner', 'research:export')).toBe(true);
     for (const r of ['admin', 'support', 'finance', 'analyst', 'user'] as const) { expect(can(r, 'tab:research')).toBe(false); expect(can(r, 'research:export')).toBe(false); }

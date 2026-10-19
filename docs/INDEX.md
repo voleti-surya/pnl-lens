@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 218 files._
+_Generated from file headers by `npm run docs:index` — 227 files._
 
 ### Pages
 
@@ -189,11 +189,13 @@ _Generated from file headers by `npm run docs:index` — 218 files._
 | `apps/api/src/routes/admin.ts` | Admin console API ported from apps/web/app/api/admin/* (role read from the DB each request, every read audited) plus the owner-only manual plan grant (D5). |
 | `apps/api/src/routes/research.ts` | Research datasets (owner only): list, "Build now", and download (decrypted from the exports bucket, every download audited). |
 | `apps/api/src/routes/telemetry.ts` | POST /events (allow-listed product events; two landing events also from visitors) and POST /errors (browser errors); always 204. |
+| `apps/api/src/routes/users-admin.ts` | Admin user management: user list with research status, "Request reports" email (owner), restrict / unrestrict (owner, admin), delete (owner); the public one-click consent link. |
 | `apps/web/app/admin/blog/preview/[id]/page.tsx` | REQ-7 private article preview (any status) for owner/admin: the public article layout with a "Preview" banner; never indexed. |
 | `apps/web/app/admin/page.tsx` | Admin console page: staff only (role from the API, read from the database on every request). |
-| `apps/web/components/admin/AdminConsole.tsx` | Admin console UI: Users, Finance, Errors, Support, Product, Blog and Research tabs (shown per role). |
+| `apps/web/components/admin/AdminConsole.tsx` | Admin console UI: Users, User management, Finance, Errors, Support, Product, Blog and Research tabs (shown per role). |
 | `apps/web/components/admin/BlogAdmin.tsx` | REQ-7 admin "Blog" tab (owner/admin): post list with views, Markdown editor with live preview, cover upload, SEO panel, publish/schedule/unpublish/archive/delete. |
 | `apps/web/components/admin/ResearchAdmin.tsx` | Admin "Research" tab (owner only): research datasets built on the 1st and 16th from opted-in users, Build now, download. |
+| `apps/web/components/admin/UserAdmin.tsx` | Admin "User management" tab: search and filter users, see whose reports are in the research dataset, Request reports (owner), Restrict / Unrestrict (owner, admin), Delete (owner). |
 | `apps/web/components/ErrorReporter.tsx` | Sends browser errors to /api/v1/errors (max 5 per page load). |
 | `packages/shared/src/admin/queries.ts` | SQL behind each admin tab (DAU/MAU, revenue, errors, tickets, product). |
 | `packages/shared/src/admin/rbac.ts` | Roles and permissions (owner, admin, support, finance, analyst): the rules only. The guards live in apps/web and apps/api. |
@@ -244,7 +246,7 @@ _Generated from file headers by `npm run docs:index` — 218 files._
 | `packages/shared/src/file-crypto.ts` | Envelope encryption for raw statement files: AES-256-GCM with a random key per file, wrapped by a KEK from env (rule 7). |
 | `packages/shared/src/jobs.ts` | Queue names and job payloads shared by apps/api (producer) and apps/worker (consumer). |
 | `packages/shared/src/limits.ts` | App-wide limits (max files, file types, report lifetime). |
-| `packages/shared/src/mail.ts` | Email sender: SMTP (Google Workspace / Gmail), Resend, Amazon SES, or a local log file. |
+| `packages/shared/src/mail.ts` | Email sender (SMTP / Google Workspace, Resend, Amazon SES, or a local log file) and the email templates (sign-in code, research invite). |
 
 ### Styles
 
@@ -281,6 +283,7 @@ _Generated from file headers by `npm run docs:index` — 218 files._
 | `packages/db/migrations/0019_blog.sql` | REQ-7 blog: posts, slug redirects, a public view (the only thing the app role can read), and owner/admin-only SECURITY DEFINER functions that write the audit log. |
 | `packages/db/migrations/0020_passwords.sql` | Email + password sign-in: password hash (scrypt), lockout counters, and sessions_valid_after (a password change signs out other devices). |
 | `packages/db/migrations/0021_research_exports.sql` | Research datasets every 15 days: research_exports records, and read access for the worker to the pseudonymised research views (0014) only. |
+| `packages/db/migrations/0022_user_admin.sql` | Admin user management: restrict / unrestrict (owner, admin) and delete (owner) as role-checked, audited functions; research consent invites sent by email. |
 | `packages/db/optional/pg_cron.sql` | Optional: schedule the purge inside Postgres if pg_cron is available. |
 | `packages/db/scripts/seed-dev.mjs` | Applies seed.sql (dev user with credits) — only when SEED_DEV_DATA=true (set by infra/compose.dev.yml only). |
 | `packages/db/scripts/setup-roles.mjs` | Creates/updates the login roles lens_app and lens_worker with passwords from env (runs after migrations, as superuser). |
@@ -294,6 +297,7 @@ _Generated from file headers by `npm run docs:index` — 218 files._
 | `packages/db/src/queries/plans.ts` | Plans: the user's plan card (allowance, validity, statements per report) and the owner-only manual grant (D5). |
 | `packages/db/src/queries/privacy.ts` | Consent history, data export/delete requests, account deletion, and the scheduled purge/sweep jobs (worker). |
 | `packages/db/src/queries/reports.ts` | Reports (api, lens_app): claim an analysis, add files (file-set lock), rename, delete, MON-YY history, Progress history, trades. |
+| `packages/db/src/queries/users-admin.ts` | Admin user management: restrict / unrestrict and delete through the role-checked database functions (0022). |
 | `packages/db/src/types.ts` | Kysely table types for the schema after migration 0019 (hand-written; every table is exercised through these types by test/db/*). |
 
 ### Ops
@@ -337,6 +341,7 @@ _Generated from file headers by `npm run docs:index` — 218 files._
 | `apps/api/test/research.test.ts` | Research dataset routes: owner only (403 for admin, support, finance, analyst, user), Build now (one at a time), download decrypts and is audited, expired → 404. |
 | `apps/api/test/sniff.test.ts` | Upload type check: every engine fixture is accepted with the engine's kind; executables, images, wrong ZIPs and binaries posing as CSV are refused. |
 | `apps/api/test/uploads.test.ts` | Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete. |
+| `apps/api/test/users-admin.test.ts` | User management API: permissions, list + research statuses, "Request reports" rules and email, one-click consent link (single use, expiry), restrict ends sessions and sign-in, delete with typed email. |
 | `apps/worker/test/export.test.ts` | "Export my data" on a real database: complete archive (JSON + original statements), encrypted at rest, access logged, expires after 7 days. |
 | `apps/worker/test/global-setup.ts` | Builds the worker bundles once before the tests (the engine child process runs from dist/, as in the image). |
 | `apps/worker/test/helpers.ts` | Worker test helpers: encrypted uploads of real fixtures (as the API stores them), pipeline deps with the real engine child, golden cases. |
@@ -352,6 +357,7 @@ _Generated from file headers by `npm run docs:index` — 218 files._
 | `packages/db/test/db/rewrap.test.ts` | Key rotation: rewrap-keys.mjs moves every file key from k1 to k2; files still decrypt; dry run changes nothing; re-running is safe. |
 | `packages/db/test/db/roles.test.ts` | Least privilege (rule 4): what lens_app, lens_worker, lens_research and PUBLIC can and cannot do after migration 0014. |
 | `packages/db/test/db/store.test.ts` | Worker store step on a real database: every golden report stored as payload + trades + metrics + traits in one transaction, idempotent. |
+| `packages/db/test/db/user-admin.test.ts` | User management functions (0022): who may restrict or delete whom, sessions end on restrict, delete anonymises, audit rows; research_invites grants. |
 | `packages/db/test/normalise.test.ts` | Engine output -> table rows, for every golden report (no database needed); file fingerprint matches the offline tool. |
 | `packages/db/tests/01_functions.sql` | SQL tests for the database functions and the app role restrictions. |
 | `packages/engine/test/behaviour.test.ts` | 100-trait library: uniqueness, wording, variety. |
@@ -375,6 +381,7 @@ _Generated from file headers by `npm run docs:index` — 218 files._
 | `tests/e2e-web/privacy.spec.ts` | Data rights in the browser: research opt-in toggle, export my data (worker builds the ZIP, download works), delete my account. |
 | `tests/e2e-web/research.spec.ts` | Research datasets end to end: the owner builds one now (the real worker, storage and encryption), downloads the ZIP; an admin has no Research tab. |
 | `tests/e2e-web/score-card.spec.ts` | REQ-1: the Progress score card's level labels never overlap, at every level and width, in Chromium (Chrome/Edge) and WebKit (Safari). |
+| `tests/e2e-web/user-admin.spec.ts` | User management end to end: owner requests reports → email → one-click Yes → Included; restrict signs the user out; delete with typed email; admin and support limits. |
 | `tests/e2e-web/workspace.spec.ts` | Browser end to end on the stack: sign in → upload with consent → loader → report (5 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete. |
 | `tests/load/prepare.mjs` | Load test setup: creates N test accounts (load-NN@load.invalid) in the running dev stack and writes a session token for each to .load/tokens.json. |
 | `tests/load/uploads.js` | k6 scenario: N users each upload statements at the same moment and follow their analysis to ready (latency, time to ready, failures). |
@@ -395,5 +402,12 @@ _Generated from file headers by `npm run docs:index` — 218 files._
 | `apps/web/components/blog/BlogTrack.tsx` | REQ-7 article events: blog_view once per page view and blog_cta_click on "Analyse my trades" (anonymous, allow-listed by the API). |
 | `apps/web/components/blog/PostCard.tsx` | REQ-7 article card (tag, read time, title, excerpt, "Read article →") used on /blog and in the landing preview. |
 | `apps/web/lib/blog.ts` | REQ-7 blog data for server components: which site (India/Global) the visitor sees, public posts from the API, image URLs, dates in IST. |
+
+### Privacy
+
+| File | What it does |
+|---|---|
+| `apps/web/app/research/consent/page.tsx` | The link in the "Request reports" email: the exact research consent wording with Yes / No thanks; works without signing in; never indexed. |
+| `apps/web/components/privacy/ConsentChoice.tsx` | Research consent from the email link: shows the exact wording, records Yes / No thanks once, then a thank-you; expired / answered / invalid states. |
 
 <!-- FILES:END -->
