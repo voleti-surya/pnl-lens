@@ -92,7 +92,7 @@ a.bl-tag:hover { background: var(--y); color: var(--on-y); }
   .bl-grid > .bl-card { animation: mo-rise 600ms var(--ease-out-expo) both; }
   .bl-grid > .bl-card:nth-child(2) { animation-delay: 70ms; } .bl-grid > .bl-card:nth-child(3) { animation-delay: 140ms; } .bl-grid > .bl-card:nth-child(n+4) { animation-delay: 200ms; }
   .lp-blog .bl-grid > .bl-card { animation: none; }                  /* on the landing page the scroll reveal does it */
-  @keyframes bl-unblur { from { filter: blur(14px); transform: scale(1.03); opacity: .6; } to { filter: none; transform: none; opacity: 1; } }
+  @keyframes bl-unblur { from { transform: scale(1.04); opacity: 0; } to { transform: none; opacity: 1; } }
   .bl-cover { animation: bl-unblur 900ms var(--ease-out-expo) both; }
   .bl-article-head h1 { animation: mo-rise 700ms var(--ease-out-expo) both; }
   .bl-cta { transition: transform 520ms var(--ease-spring), border-color var(--d-2) var(--ease-out-expo); }

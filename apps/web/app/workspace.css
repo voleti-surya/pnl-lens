@@ -187,12 +187,10 @@
   /* journey bar settles in */
   [data-journey] { animation: mo-rise 600ms var(--ease-out-expo) 120ms both; }
 
-  /* free preview: tiles rise in one by one, the insights follow, the locked area shimmers slowly */
+  /* free preview: tiles rise in one by one, the insights follow */
   .pv { animation: mo-scale 560ms var(--ease-spring) both; }
   .pv .tile { animation: mo-rise 600ms var(--ease-out-expo) both; }
   .pv .tile:nth-child(2) { animation-delay: 90ms; } .pv .tile:nth-child(3) { animation-delay: 180ms; }
   .pv-insights li { animation: mo-rise 600ms var(--ease-out-expo) both; animation-delay: 320ms; } .pv-insights li:nth-child(2) { animation-delay: 440ms; }
-  @keyframes pv-drift { 0%, 100% { transform: translate3d(0, 0, 0); } 50% { transform: translate3d(0, -6px, 0); } }
-  .pv-blur { animation: pv-drift 7s var(--ease-in-out) infinite; }
   .pv-cta .btn { animation: mo-scale 620ms var(--ease-spring) 520ms both; }
 }

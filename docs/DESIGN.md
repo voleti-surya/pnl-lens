@@ -47,7 +47,8 @@ Replaces the PR #3 rule of colour-only hovers and 6px fades. The landing page te
 - stagger 60–70ms.
 
 **Rules:**
-- Animate only transform, opacity, filter and clip-path, so there's no layout shift and REQ-4 pricing depth is unchanged.
+- Animate only transform, opacity and clip-path, so there's no layout shift and REQ-4 pricing depth is unchanged. **Never animate `filter`**: animated blur crashes Linux WebKit (found in CI). A static blur is fine.
+- No animation that holds its final transform on a wrapper of `position: fixed` elements (use `backwards`): in WebKit it re-anchors fixed children (the "See plans" pill).
 - Content is fully visible within about 600ms.
 - Nothing is hidden without JavaScript: reveal states apply only under `html.mo`, which the runtime sets after marking what's already on screen.
 - `prefers-reduced-motion` makes everything static (checked in `motion.spec.ts`).

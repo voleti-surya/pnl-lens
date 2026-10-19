@@ -4,7 +4,7 @@
  * @what  Motion system (19 Oct 2026): easing/duration tokens, a CSS spring, page and view transitions, entrances, reveal-on-scroll, press/lift, sliding tab ink, shimmer, sheets. Reduced motion turns it all off.
  */
 /*
- * Rules: animate only transform, opacity, filter and clip-path (GPU, no layout shift). Entrances never delay
+ * Rules: animate only transform, opacity and clip-path (never filter: animated blur crashes Linux WebKit) (GPU, no layout shift). Entrances never delay
  * content for long: everything is fully visible within ~600 ms. Without JavaScript nothing is hidden (reveal
  * states only apply under html.mo, set by an inline script in the layout). prefers-reduced-motion = static.
  */
@@ -22,7 +22,9 @@
 
 /* ---------------------------------------------------------------- page transitions (app/template.tsx) */
 @keyframes mo-page { from { opacity: 0; transform: translate3d(0, 10px, 0); } to { opacity: 1; transform: none; } }
-.mo-page { animation: mo-page 460ms var(--ease-out-expo) both; }
+/* backwards, not both: a held transform animation would make this wrapper the containing block of position:fixed
+   children (the "See plans" pill, modals) in WebKit */
+.mo-page { animation: mo-page 460ms var(--ease-out-expo) backwards; }
 
 /* in-place swaps (document.startViewTransition): report tabs, sign-in steps, admin tabs */
 @keyframes mo-vt-out { to { opacity: 0; transform: translate3d(0, -4px, 0); } }
@@ -41,7 +43,7 @@
 @keyframes mo-rise { from { opacity: 0; transform: translate3d(0, 14px, 0); } to { opacity: 1; transform: none; } }
 @keyframes mo-fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes mo-scale { from { opacity: 0; transform: scale(.96); } to { opacity: 1; transform: none; } }
-@keyframes mo-blur { from { opacity: 0; filter: blur(10px); transform: translate3d(0, 10px, 0); } to { opacity: 1; filter: none; transform: none; } }
+@keyframes mo-blur { from { opacity: 0; transform: translate3d(0, 10px, 0) scale(.985); } to { opacity: 1; transform: none; } }
 @keyframes mo-mask { from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translate3d(0, 40%, 0); } to { opacity: 1; clip-path: inset(0 0 -20% 0); transform: none; } }
 .mo-rise { animation: mo-rise var(--d-3) var(--ease-out-expo) both; }
 .mo-fade { animation: mo-fade var(--d-3) var(--ease-out-expo) both; }
@@ -52,8 +54,8 @@
 /* ---------------------------------------------------------------- reveal on scroll (motion runtime adds .in) */
 html.mo [data-reveal]:not(.in) { opacity: 0; transform: translate3d(0, 18px, 0); }
 html.mo [data-reveal="scale"]:not(.in) { transform: scale(.94); }
-html.mo [data-reveal="blur"]:not(.in) { filter: blur(8px); }
-html.mo [data-reveal] { transition: opacity 640ms var(--ease-out-expo), transform 760ms var(--ease-out-expo), filter 640ms var(--ease-out-expo);
+html.mo [data-reveal="blur"]:not(.in) { transform: translate3d(0, 10px, 0) scale(.985); }
+html.mo [data-reveal] { transition: opacity 640ms var(--ease-out-expo), transform 760ms var(--ease-out-expo);
   transition-delay: calc(var(--i, 0) * var(--stagger)); }
 
 /* ---------------------------------------------------------------- touch feedback */
@@ -104,7 +106,7 @@ html.mo [data-reveal] { transition: opacity 640ms var(--ease-out-expo), transfor
 /* ---------------------------------------------------------------- reduced motion: everything static */
 @media (prefers-reduced-motion: reduce) {
   .mo-page, .mo-rise, .mo-fade, .mo-scale, [data-stagger] > *, .status, .sheet, .sheet-backdrop, .credits-pill { animation: none !important; }
-  html.mo [data-reveal]:not(.in) { opacity: 1; transform: none; filter: none; }
+  html.mo [data-reveal]:not(.in) { opacity: 1; transform: none; }
   .lift:hover { transform: none; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   .mo-ink { transition: none; }

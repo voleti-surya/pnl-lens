@@ -303,7 +303,7 @@ a.ig-card:hover { border-color: var(--line-hover); }
  * ========================================================================== */
 @media (prefers-reduced-motion: no-preference) {
   /* hero: the headline rises line by line, then the copy, buttons and trust line; the ledger card settles in */
-  @keyframes lp-line { from { opacity: 0; transform: translate3d(0, .55em, 0); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+  @keyframes lp-line { from { opacity: 0; transform: translate3d(0, .55em, 0); } to { opacity: 1; transform: none; } }   /* no animated filter: it crashes Linux WebKit */
   @keyframes lp-card-in { from { opacity: 0; transform: perspective(1200px) translate3d(0, 28px, 0) rotateX(6deg) scale(.97); } to { opacity: 1; transform: none; } }
   .lp-h1 span { animation: lp-line 900ms var(--ease-out-expo) both; }
   .lp-h1 span:nth-child(2) { animation-delay: 140ms; }
@@ -341,8 +341,8 @@ a.ig-card:hover { border-color: var(--line-hover); }
   .lp-card h3 { transition: color var(--d-2) var(--ease-out-expo); }
 
   /* the sample dashboard tilts up and scales into place as it scrolls in (desktop; phones get a simple reveal) */
-  @keyframes lp-dx-scene { from { transform: perspective(1600px) rotateX(14deg) scale(.9) translate3d(0, 40px, 0); opacity: .35; filter: saturate(.6); }
-                           to { transform: none; opacity: 1; filter: none; } }
+  @keyframes lp-dx-scene { from { transform: perspective(1600px) rotateX(14deg) scale(.9) translate3d(0, 40px, 0); opacity: .35; }
+                           to { transform: none; opacity: 1; } }
   @supports (animation-timeline: view()) {
     @media (min-width: 1081px) {
       .dx { animation: lp-dx-scene linear both; animation-timeline: view(); animation-range: entry 5% cover 42%; transform-origin: 50% 0; }
@@ -390,9 +390,9 @@ a.ig-card:hover { border-color: var(--line-hover); }
     .lp-links > a::after { display: none; }
   }
 
-  /* "See plans" pill springs in */
-  .lp-pill { transition: opacity 360ms var(--ease-out-expo), transform 520ms var(--ease-spring), display 360ms allow-discrete; }
-  @starting-style { .lp-pill { opacity: 0; transform: translate3d(-50%, 18px, 0) scale(.92); } }
+  /* "See plans" pill rises in (a keyframe animation: discrete display transitions and @starting-style break it in some WebKit builds) */
+  @keyframes lp-pill-in { from { opacity: 0; transform: translate3d(-50%, 18px, 0) scale(.92); } to { opacity: 1; transform: translate3d(-50%, 0, 0); } }
+  .lp-pill:not([hidden]) { animation: lp-pill-in 520ms var(--ease-spring) both; }
   .lp-pill:hover { box-shadow: 0 14px 34px rgba(0,0,0,.6), 0 0 0 6px rgba(255,214,10,.12); }
 
   /* Instagram cards and blog cards: a little depth on hover */
