@@ -5,6 +5,8 @@
  */
 'use client';
 import { useEffect, useState } from 'react';
+import Loading from '@/components/motion/Loading';
+import { withViewTransition } from '@/lib/motion/viewTransition';
 import BlogAdmin from './BlogAdmin';
 import ResearchAdmin from './ResearchAdmin';
 import UserAdmin from './UserAdmin';
@@ -21,7 +23,7 @@ const money = (minor: any, cur = 'INR') => (cur === 'USD' ? '$' : '₹') + (n(mi
 const ago = (d: string) => { const s = (Date.now() - new Date(d).getTime()) / 1000; return s < 3600 ? `${Math.max(1, Math.round(s / 60))}m ago` : s < 86400 ? `${Math.round(s / 3600)}h ago` : `${Math.round(s / 86400)}d ago`; };
 
 function Kpi({ label, value, sub, tone }: { label: string; value: any; sub?: string; tone?: 'gain' | 'loss' }) {
-  return <div className="rv-kpi"><div className="rv-kl">{label}</div><div className={`rv-kv ${tone || ''}`}>{value}</div><div className="rv-ks">{sub || ''}</div></div>;
+  return <div className="rv-kpi"><div className="rv-kl">{label}</div><div className={`rv-kv ${tone || ''}`} data-count-up>{value}</div><div className="rv-ks">{sub || ''}</div></div>;
 }
 function Bars({ rows, k, label, color = 'var(--y)' }: { rows: any[]; k: string; label: (r: any) => string; color?: string }) {
   const max = Math.max(1, ...rows.map((r) => n(r[k])));
@@ -45,10 +47,10 @@ export default function AdminConsole({ role, perms, pg }: { role: string; perms:
     <div className="ad">
       <div className="ad-head"><div><h1 className="page-title">Admin</h1><p className="muted" style={{ margin: 0 }}>Signed in as <b className="ad-role">{role}</b></p></div>
         {tab !== 'blog' && tab !== 'research' && tab !== 'usermgmt' && <button className="btn ghost" onClick={() => tab && load(tab)}>Refresh</button>}</div>
-      <nav className="tabs" role="tablist">{tabs.map((t) => <button key={t.id} role="tab" aria-selected={tab === t.id} data-tab={t.id} onClick={() => setTab(t.id)}>{t.name}</button>)}</nav>
+      <nav className="tabs" role="tablist">{tabs.map((t) => <button key={t.id} role="tab" aria-selected={tab === t.id} data-tab={t.id} onClick={() => withViewTransition(() => setTab(t.id), { react: true })}>{t.name}</button>)}</nav>
       {err && <p className="status err">{err}</p>}
-      {tab === 'blog' ? <div className="rv-grid" style={{ marginTop: 16 }}><BlogAdmin /></div> : tab === 'research' ? <div className="rv-grid" style={{ marginTop: 16 }}><ResearchAdmin /></div> : tab === 'usermgmt' ? <div className="rv-grid" style={{ marginTop: 16 }}><UserAdmin /></div> : !d ? <p className="muted" style={{ padding: 20 }}>Loading…</p> : (
-        <div className="rv-grid" style={{ marginTop: 16 }}>
+      {tab === 'blog' ? <div className="rv-grid" style={{ marginTop: 16, viewTransitionName: 'mo-swap' }}><BlogAdmin /></div> : tab === 'research' ? <div className="rv-grid" style={{ marginTop: 16, viewTransitionName: 'mo-swap' }}><ResearchAdmin /></div> : tab === 'usermgmt' ? <div className="rv-grid" style={{ marginTop: 16, viewTransitionName: 'mo-swap' }}><UserAdmin /></div> : !d ? <div style={{ padding: 20 }}><Loading /></div> : (
+        <div className="rv-grid" style={{ marginTop: 16, viewTransitionName: 'mo-swap' }}>
           {tab === 'users' && <UsersTab d={d} canRoles={perms.includes('roles:manage')} />}
           {tab === 'finance' && <FinanceTab d={d} />}
           {tab === 'errors' && <ErrorsTab d={d} />}

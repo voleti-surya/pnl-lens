@@ -6,6 +6,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { api, type ApiError } from '@/lib/api-browser';
+import Loading from '@/components/motion/Loading';
 
 type Filter = 'all' | 'included' | 'not_included' | 'restricted';
 interface U {
@@ -54,7 +55,7 @@ export default function UserAdmin() {
         </nav>
       </div>
       {msg && <p className={`status ${msg.ok ? 'ok' : 'err'}`} role="status">{msg.text}</p>}
-      {!d ? <p className="muted">Loading…</p> : (
+      {!d ? <Loading /> : (
         <div className="rv-tw"><table className="rv-t um-table">
           <thead><tr><th>User</th><th>Sign-in</th><th>Plan</th><th className="n">Reports</th><th>Research</th><th>Status</th><th>Actions</th></tr></thead>
           <tbody>{d.users.length ? d.users.map((u) => (
@@ -102,8 +103,8 @@ function DeleteDialog({ u, onClose, onDone }: { u: U; onClose: () => void; onDon
     catch (e) { setErr(msgOf(e)); setBusy(false); }
   };
   return (
-    <div className="um-modal" role="dialog" aria-modal="true" aria-labelledby="um-del-title">
-      <div className="um-modal-card">
+    <div className="um-modal sheet-backdrop" role="dialog" aria-modal="true" aria-labelledby="um-del-title">
+      <div className="um-modal-card sheet">
         <h3 id="um-del-title">Delete {u.email}?</h3>
         <p className="dr-warn">This permanently deletes their reports, trades and statements and anonymises the account. Payment records are kept as the law requires. It can’t be undone.</p>
         <label className="field-label">Reason (kept in the audit log)<input className="field" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} /></label>

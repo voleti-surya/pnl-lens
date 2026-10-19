@@ -6,6 +6,7 @@
 import './globals.css';
 import './report.css';
 import './workspace.css';
+import './motion.css';
 import localFont from 'next/font/local';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -16,6 +17,7 @@ import NavLinks from '@/components/nav/NavLinks';
 import { LogoMark } from '@/components/brand/Logo';
 import ErrorReporter from '@/components/ErrorReporter';
 import LogoutButton from '@/components/auth/LogoutButton';
+import MotionRuntime from '@/components/motion/MotionRuntime';
 
 export const dynamic = 'force-dynamic';
 const manrope = localFont({ src: './fonts/manrope.woff2', variable: '--f-sans', weight: '200 800', display: 'swap', adjustFontFallback: false });
@@ -37,6 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head><meta name="color-scheme" content="dark" /></head>
       <body>
         <ErrorReporter />
+        <MotionRuntime />
         <header className="app-header">
           <div className="bar">
             <Link href="/" className="brand" style={{ textDecoration: 'none' }} aria-label="PnL Lens home"><LogoMark size={28} /><span>PnL Lens</span></Link>

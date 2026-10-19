@@ -6,6 +6,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { api, type ApiError } from '@/lib/api-browser';
+import Loading from '@/components/motion/Loading';
 
 type Status = 'draft' | 'scheduled' | 'published' | 'archived';
 type Site = 'india' | 'global' | 'both';
@@ -48,7 +49,7 @@ export default function BlogAdmin() {
       <div className="rv-ph"><h3>Blog</h3><small>owner and admin only · every change is in the audit log</small></div>
       <div className="ab-bar"><button className="btn" onClick={() => setEdit({ ...EMPTY })}>New article</button></div>
       {err && <p className="status err">{err}</p>}
-      {!rows ? <p className="muted">Loading…</p> : (
+      {!rows ? <Loading /> : (
         <div className="rv-tw"><table className="rv-t">
           <thead><tr><th>Title</th><th>Status</th><th>Site</th><th>Last edited</th><th className="n">Views</th><th /></tr></thead>
           <tbody>{rows.length ? rows.map((r) => (

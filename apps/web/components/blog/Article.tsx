@@ -15,6 +15,7 @@ export default function Article({ post }: { post: ArticleData }) {
   const tag = post.tags[0];
   return (
     <article className="bl-article">
+      <div className="bl-progress" aria-hidden="true" />
       <nav className="bl-crumbs" aria-label="Breadcrumb"><a href="/">Home</a><span aria-hidden="true">/</span><a href="/blog">Blog</a></nav>
       <div className="bl-article-head">
         <h1>{post.title}</h1>

@@ -295,7 +295,7 @@ function ReportView({ plan, plans, prices, reports, current, setLock }: { plan: 
           <div id="sideList" role="tablist" aria-orientation="vertical">
             {placesTotal > 1 && (combined
               ? <button className="ws-item all" role="tab" aria-selected={view === 'all'} onClick={() => setView('all')}><b>All files</b><small>{readable} files · {combined.m.n} positions · <Net v={combined.m.net} cur={combined.m.currency} /></small></button>
-              : <div className="ws-item all disabled" aria-disabled="true"><b>All files</b><small>{files.length < 2 ? 'Add another file to compare' : 'Needs 2 readable files'}</small></div>)}
+              : <div className="ws-item all disabled" role="tab" aria-selected="false" aria-disabled="true"><b>All files</b><small>{files.length < 2 ? 'Add another file to compare' : 'Needs 2 readable files'}</small></div>)}
             {files.map((f, i) => {
               const fr = fileReport(i);
               return (

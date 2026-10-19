@@ -76,7 +76,34 @@ a.bl-tag:hover { background: var(--y); color: var(--on-y); }
   .bl-body { font-size: 17px; }
   .bl-cta { padding: 18px; } .bl-cta .btn { width: 100%; }
 }
-@media (prefers-reduced-motion: reduce) { .bl-card, .bl-card:hover { transition: none; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .bl-card, .bl-card:hover { transition: none; transform: none; } .bl-progress { display: none; } }
+
+/* motion (19 Oct 2026): card depth and cover zoom, cover blur-up, reading progress, list stagger */
+.bl-progress { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .bl-card { overflow: hidden; transition: border-color var(--d-2) var(--ease-out-expo), transform 520ms var(--ease-spring), box-shadow 520ms var(--ease-out-expo); }
+  .bl-card-img { transition: transform 900ms var(--ease-out-expo); }
+  @media (hover: hover) {
+    .bl-card:hover { transform: translate3d(0, -4px, 0); box-shadow: 0 24px 48px -28px rgba(0,0,0,.95), 0 0 0 1px rgba(255,214,10,.10); }
+    .bl-card:hover .bl-card-img { transform: scale(1.03); }
+    .bl-card:hover .bl-more { letter-spacing: .01em; }
+  }
+  .bl-more { transition: letter-spacing var(--d-2) var(--ease-out-expo); }
+  .bl-grid > .bl-card { animation: mo-rise 600ms var(--ease-out-expo) both; }
+  .bl-grid > .bl-card:nth-child(2) { animation-delay: 70ms; } .bl-grid > .bl-card:nth-child(3) { animation-delay: 140ms; } .bl-grid > .bl-card:nth-child(n+4) { animation-delay: 200ms; }
+  .lp-blog .bl-grid > .bl-card { animation: none; }                  /* on the landing page the scroll reveal does it */
+  @keyframes bl-unblur { from { filter: blur(14px); transform: scale(1.03); opacity: .6; } to { filter: none; transform: none; opacity: 1; } }
+  .bl-cover { animation: bl-unblur 900ms var(--ease-out-expo) both; }
+  .bl-article-head h1 { animation: mo-rise 700ms var(--ease-out-expo) both; }
+  .bl-cta { transition: transform 520ms var(--ease-spring), border-color var(--d-2) var(--ease-out-expo); }
+  .bl-cta:hover { transform: translate3d(0, -2px, 0); border-color: var(--y); }
+  /* thin yellow reading-progress line (CSS scroll-driven animation; absent where unsupported) */
+  @supports (animation-timeline: scroll()) {
+    @keyframes bl-read { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    .bl-progress { display: block; position: fixed; left: 0; right: 0; top: 0; height: 3px; z-index: 60; background: var(--y); transform-origin: 0 50%;
+      animation: bl-read linear both; animation-timeline: scroll(root); pointer-events: none; }
+  }
+}
 
 /* admin Blog tab (REQ-7 §7.2) */
 .ab-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; }

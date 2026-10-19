@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 230 files._
+_Generated from file headers by `npm run docs:index` — 236 files._
 
 ### Pages
 
@@ -255,8 +255,13 @@ _Generated from file headers by `npm run docs:index` — 230 files._
 | `apps/web/app/blog.css` | REQ-7 blog: list, cards (also the landing preview), article typography, CTA card, editor preview. Uses the design tokens in globals.css. |
 | `apps/web/app/globals.css` | Base app styles: colours, header, panels, buttons, forms, print rules. |
 | `apps/web/app/landing.css` | Landing page styles: one system of centred titles, equal cards, sample dashboard, plans. |
+| `apps/web/app/motion.css` | Motion system (19 Oct 2026): easing/duration tokens, a CSS spring, page and view transitions, entrances, reveal-on-scroll, press/lift, sliding tab ink, shimmer, sheets. Reduced motion turns it all off. |
 | `apps/web/app/report.css` | Report, Progress tab, analysing loader and admin console styles (shared by website and offline tool). |
+| `apps/web/app/template.tsx` | Route transition: every navigation fades in and rises 10px (motion.css .mo-page); static with reduced motion. |
 | `apps/web/app/workspace.css` | Workspace styles (file tabs, All files, +, plan card, MON-YY history with rename, lock message), ported from the offline tool. |
+| `apps/web/components/motion/Loading.tsx` | Loading placeholder: a shimmering skeleton for sighted users; screen readers still hear "Loading…". |
+| `apps/web/components/motion/MotionRuntime.tsx` | One small runtime for the motion system: reveal-on-scroll ([data-reveal] → .in), stagger indexes, sliding tab ink under every .tabs bar, count-ups ([data-count-up]), header glass on scroll, smooth in-page anchors. |
+| `apps/web/lib/motion/viewTransition.ts` | withViewTransition(): runs a DOM/React update inside document.startViewTransition when available (cross-fade + slide, motion.css), otherwise directly. Never with reduced motion. |
 
 ### Database
 
@@ -381,6 +386,7 @@ _Generated from file headers by `npm run docs:index` — 230 files._
 | `tests/e2e-web/journey.spec.ts` | REQ-2 journey bar and "What's next" card end to end: Single 2/5 with locks, later month completes step 3, locked step opens pricing, phone view, events in admin. |
 | `tests/e2e-web/landing.spec.ts` | REQ-4: on a 390x844 phone pricing starts within 4 screen-heights; See plans / nav / pill reach it; mobile card order; no section lost; landing events stored. |
 | `tests/e2e-web/login.spec.ts` | Sign-in card: new email → code → required password → dashboard; password sign-in sends no code; wrong password; forgot → code → new password; the set step can't be skipped; layout at 320/390/1440. |
+| `tests/e2e-web/motion.spec.ts` | Motion system (19 Oct 2026): reduced motion = no animation and everything visible; reveal-on-scroll ends visible; sliding tab ink follows the selected tab; sign-in steps work with View Transitions. |
 | `tests/e2e-web/privacy.spec.ts` | Data rights in the browser: research opt-in toggle, export my data (worker builds the ZIP, download works), delete my account. |
 | `tests/e2e-web/research.spec.ts` | Research datasets end to end: the owner builds one now (the real worker, storage and encryption), downloads the ZIP; an admin has no Research tab. |
 | `tests/e2e-web/score-card.spec.ts` | REQ-1: the Progress score card's level labels never overlap, at every level and width, in Chromium (Chrome/Edge) and WebKit (Safari). |

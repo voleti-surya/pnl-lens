@@ -144,7 +144,7 @@ a.credits-pill:hover{border-color:var(--y);background:var(--y-tint)}a.credits-pi
 @media (max-width:380px){.pill-long{display:none}}  /* smallest phones: "See plans" only, so the header fits */
 .page-title{font-size:clamp(26px,3.4vw,34px);font-weight:700;line-height:1.15;letter-spacing:-.025em;margin:8px 0 6px}
 .page-sub{color:var(--ink-3);font-size:14px;margin:0 0 24px}
-.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 20px;overflow-x:auto}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin:0 0 20px;overflow-x:auto;position:relative}
 .tabs button{background:none;border:0;padding:12px 14px;color:var(--ink-3);font-size:14px;font-weight:500;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;transition:color var(--t) var(--ease),border-color var(--t) var(--ease)}
 .tabs button:hover{color:var(--ink)}
 .tabs button[aria-selected="true"]{color:var(--ink);font-weight:600;border-bottom-color:var(--y)}

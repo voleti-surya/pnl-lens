@@ -349,3 +349,45 @@
 .ad-kind { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--s3); color: var(--ink-2); }
 .ad-kind.error { background: var(--loss-dim); color: var(--loss); } .ad-kind.payment { background: var(--gain-dim); color: var(--gain); } .ad-kind.report { background: var(--y-tint); color: var(--y); }
 @media (max-width: 1000px) { .ad-k6, .ad-prof { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ============================================================================
+ * Motion (19 Oct 2026): report tiles, panels, loader. Static with prefers-reduced-motion.
+ * ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  /* KPI tiles and panels of the open tab enter one after another; they lift a little under the pointer */
+  .tab:not(.hide) .rv-kpis > .rv-kpi { animation: mo-rise 560ms var(--ease-out-expo) both; }
+  .tab:not(.hide) .rv-kpis > .rv-kpi:nth-child(2) { animation-delay: 50ms; } .tab:not(.hide) .rv-kpis > .rv-kpi:nth-child(3) { animation-delay: 100ms; }
+  .tab:not(.hide) .rv-kpis > .rv-kpi:nth-child(4) { animation-delay: 150ms; } .tab:not(.hide) .rv-kpis > .rv-kpi:nth-child(n+5) { animation-delay: 200ms; }
+  .rv-kpi, .rv-panel { transition: border-color var(--d-2) var(--ease-out-expo), transform 520ms var(--ease-spring), box-shadow 520ms var(--ease-out-expo); }
+  @media (hover: hover) { .rv-kpi:hover, .rv-panel:hover { transform: translate3d(0, -2px, 0); box-shadow: 0 18px 40px -26px rgba(0,0,0,.95); } }
+  /* table rows: a yellow tint sweeps in under the pointer */
+  .rv-t tbody tr { transition: background-color var(--d-2) var(--ease-out-expo); }
+  .rv-t tbody tr:hover { background: var(--y-tint); }
+  /* the "Analysing…" card springs in; the bar glows as it fills */
+  .an-card { transform: translate3d(0, 14px, 0) scale(.96); transition: transform 560ms var(--ease-spring); }
+  .an-wrap.in .an-card { transform: none; }
+  .an-bar i { transition: width 900ms var(--ease-out-expo); box-shadow: 0 0 12px rgba(255,214,10,.6); }
+  .an-steps li { transition: color var(--d-2) var(--ease-out-expo), transform 420ms var(--ease-spring); }
+  .an-steps li.on { transform: translate3d(3px, 0, 0); }
+  .an-status { animation: mo-fade 300ms var(--ease-out-expo) both; }
+  /* charts: lines draw and bars grow on the expo curve; bars stagger */
+  .rv-curve .line { animation: rv-draw 1.4s var(--ease-out-expo) forwards; }
+  .rv-track i { animation: rv-grow 900ms var(--ease-out-expo) both; }
+  .rv-tbar i { animation: rv-rise 900ms var(--ease-spring) both; }
+  .rv-tbar > *:nth-child(n+4) i { animation-delay: 60ms; } .rv-tbar > *:nth-child(n+8) i { animation-delay: 120ms; }
+  /* the tab content swap (View Transition) replaces the old 6px fade */
+  .tab.rv-enter > .rv-grid > *, .tab.rv-enter > .rv-panel, .rv-grid.rv-enter > * { animation: mo-rise 520ms var(--ease-out-expo) both; }
+}
+
+/* admin console motion (19 Oct 2026) */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes ad-grow { from { transform: scaleY(0); } }
+  .ad-bars i { transform-origin: 50% 100%; animation: ad-grow 900ms var(--ease-out-expo) both; }
+  .ad-bars > div:nth-child(n+8) i { animation-delay: 80ms; } .ad-bars > div:nth-child(n+16) i { animation-delay: 160ms; } .ad-bars > div:nth-child(n+24) i { animation-delay: 240ms; }
+  .rv-grid > .rv-kpis > .rv-kpi, .rv-grid > .rv-panel { animation: mo-rise 560ms var(--ease-out-expo) both; }
+  .rv-grid > .rv-panel:nth-child(2) { animation-delay: 60ms; } .rv-grid > .rv-panel:nth-child(3) { animation-delay: 120ms; } .rv-grid > .rv-panel:nth-child(n+4) { animation-delay: 180ms; }
+  .rv-tw tbody tr { animation: mo-fade 420ms var(--ease-out-expo) both; }
+  .rv-tw tbody tr:nth-child(2) { animation-delay: 30ms; } .rv-tw tbody tr:nth-child(3) { animation-delay: 60ms; } .rv-tw tbody tr:nth-child(4) { animation-delay: 90ms; }
+  .rv-tw tbody tr:nth-child(5) { animation-delay: 120ms; } .rv-tw tbody tr:nth-child(n+6) { animation-delay: 150ms; }
+}
+

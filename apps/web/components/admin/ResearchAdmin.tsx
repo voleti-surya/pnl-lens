@@ -6,6 +6,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { api, type ApiError } from '@/lib/api-browser';
+import Loading from '@/components/motion/Loading';
 
 interface Row {
   id: string; status: 'pending' | 'building' | 'ready' | 'failed'; subjects: number | null; reports: number | null; trades: number | null;
@@ -43,7 +44,7 @@ export default function ResearchAdmin() {
         Built automatically on the 1st and 16th of each month at 03:00 IST{next ? ` (next: ${when(next.toISOString())})` : ''}. Each file is kept 90 days.</p>
       <div className="ab-bar"><button className="btn" onClick={build} disabled={running}>{running ? 'Building…' : 'Build now'}</button></div>
       {msg && <p className="status err">{msg}</p>}
-      {!rows ? <p className="muted">Loading…</p> : (
+      {!rows ? <Loading /> : (
         <div className="rv-tw"><table className="rv-t">
           <thead><tr><th>Built</th><th>Status</th><th className="n">Traders</th><th className="n">Reports</th><th className="n">Trades</th><th className="n">Size</th><th>Available until</th><th /></tr></thead>
           <tbody>{rows.length ? rows.map((r) => (

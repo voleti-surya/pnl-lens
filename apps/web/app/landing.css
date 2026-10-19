@@ -296,3 +296,106 @@ a.ig-card:hover { border-color: var(--line-hover); }
   .dx-ring .val { stroke-dashoffset: var(--off) !important; } .dx-curve .line, .dx-mini path { stroke-dashoffset: 0 !important; } .dx-curve .area { opacity: 1 !important; }
   .dx-radar .now { transform: none !important; opacity: 1 !important; } .dx-costs i, .dx-leaks i, .dx-bars i, .dx-table span:last-child i { width: var(--w) !important; } .dx-months span { opacity: 1 !important; transform: none !important; }
 }
+
+/* ============================================================================
+ * Motion (19 Oct 2026): Apple-style scroll story. Transform/opacity/filter/clip-path only, so layout,
+ * pricing depth (REQ-4) and CLS are unchanged. Everything is off with prefers-reduced-motion.
+ * ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  /* hero: the headline rises line by line, then the copy, buttons and trust line; the ledger card settles in */
+  @keyframes lp-line { from { opacity: 0; transform: translate3d(0, .55em, 0); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+  @keyframes lp-card-in { from { opacity: 0; transform: perspective(1200px) translate3d(0, 28px, 0) rotateX(6deg) scale(.97); } to { opacity: 1; transform: none; } }
+  .lp-h1 span { animation: lp-line 900ms var(--ease-out-expo) both; }
+  .lp-h1 span:nth-child(2) { animation-delay: 140ms; }
+  .lp-lede { animation: lp-line 800ms var(--ease-out-expo) 260ms both; }
+  .lp-hero-cta { animation: lp-line 800ms var(--ease-out-expo) 360ms both; }
+  .lp-trustline { animation: mo-fade 900ms var(--ease-out-expo) 520ms both; }
+  .lp-scan { animation: lp-card-in 1100ms var(--ease-out-expo) 200ms backwards; transition: transform 600ms var(--ease-out-expo); }
+  @media (min-width: 1081px) and (hover: hover) {
+    /* the ledger card follows the pointer a little (landing.js sets --rx/--ry) */
+    .lp-scan.tilt { transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); }
+  }
+
+  /* sections: titles and cards rise in; siblings follow each other */
+  .lp-grid > [data-reveal]:nth-child(2), .lp-plans > [data-reveal]:nth-child(2) { --i: 1; }
+  .lp-grid > [data-reveal]:nth-child(3), .lp-plans > [data-reveal]:nth-child(3) { --i: 2; }
+  .lp-grid > [data-reveal]:nth-child(4), .lp-plans > [data-reveal]:nth-child(4) { --i: 3; }
+  .lp-grid > [data-reveal]:nth-child(5) { --i: 4; } .lp-grid > [data-reveal]:nth-child(6) { --i: 5; }
+  .js-motion [data-reveal] { transition: opacity 700ms var(--ease-out-expo), transform 800ms var(--ease-out-expo);
+    transition-delay: calc(var(--i, 0) * 70ms); transform: translate3d(0, 22px, 0); }
+  .js-motion [data-reveal].in { transform: none; }
+
+  /* how it works: a yellow line draws across the three steps */
+  .lp-steps.compact { position: relative; }
+  .lp-steps.compact::before { content: ''; position: absolute; left: 6%; right: 6%; top: -14px; height: 2px; border-radius: 2px;
+    background: linear-gradient(90deg, transparent, var(--y) 20%, var(--y) 80%, transparent); transform: scaleX(0); transform-origin: 0 50%;
+    transition: transform 1200ms var(--ease-out-expo) 200ms; opacity: .6; }
+  .lp-steps.compact:has(> .in)::before { transform: scaleX(1); }
+
+  /* cards respond to the pointer */
+  .lp-card, .lp-plan, .lp-src-col { transition: opacity 700ms var(--ease-out-expo), transform 520ms var(--ease-spring), border-color var(--d-2) var(--ease-out-expo), box-shadow 520ms var(--ease-out-expo); }
+  @media (hover: hover) {
+    .lp-card.in:hover, .lp-plan.in:hover { transform: translate3d(0, -4px, 0); box-shadow: 0 22px 44px -26px rgba(0,0,0,.95), 0 0 0 1px rgba(255,214,10,.10); }
+    .lp-card.in:hover h3 { color: var(--y); }
+  }
+  .lp-card h3 { transition: color var(--d-2) var(--ease-out-expo); }
+
+  /* the sample dashboard tilts up and scales into place as it scrolls in (desktop; phones get a simple reveal) */
+  @keyframes lp-dx-scene { from { transform: perspective(1600px) rotateX(14deg) scale(.9) translate3d(0, 40px, 0); opacity: .35; filter: saturate(.6); }
+                           to { transform: none; opacity: 1; filter: none; } }
+  @supports (animation-timeline: view()) {
+    @media (min-width: 1081px) {
+      .dx { animation: lp-dx-scene linear both; animation-timeline: view(); animation-range: entry 5% cover 42%; transform-origin: 50% 0; }
+    }
+  }
+
+  /* most popular plan: a slow light runs around its yellow border */
+  @property --lp-a { syntax: '<angle>'; initial-value: 0deg; inherits: false; }
+  @keyframes lp-sheen { to { --lp-a: 360deg; } }
+  .lp-plan.hot { isolation: isolate; }
+  .lp-plan.hot::after { content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none; z-index: -1;
+    background: conic-gradient(from var(--lp-a), var(--y) 0deg, rgba(255,214,10,.15) 90deg, var(--y) 180deg, rgba(255,214,10,.15) 270deg, var(--y) 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: lp-sheen 6s linear infinite; }
+  .lp-plan.hot.in { box-shadow: 0 30px 70px -40px rgba(255,214,10,.35); }
+
+  /* FAQ answers open smoothly where the browser can animate to height:auto; the answer fades up everywhere */
+  .lp-faq { interpolate-size: allow-keywords; }
+  .lp-faq details::details-content { height: 0; overflow: hidden; transition: height 420ms var(--ease-out-expo), content-visibility 420ms allow-discrete; }
+  .lp-faq details[open]::details-content { height: auto; }
+  .lp-faq details[open] p { animation: lp-line 520ms var(--ease-out-expo) both; }
+  .lp-faq summary { transition: color var(--d-2) var(--ease-out-expo); } .lp-faq summary:hover { color: var(--y); }
+  .lp-faq summary::after { transition: transform 420ms var(--ease-spring), top 420ms var(--ease-out-expo); }
+
+  /* final call to action: a soft yellow spotlight follows the pointer (landing.js sets --mx/--my) */
+  .lp-final { position: relative; overflow: hidden; }
+  .lp-final::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 600ms var(--ease-out-expo);
+    background: radial-gradient(520px circle at var(--mx, 50%) var(--my, 50%), rgba(255,214,10,.10), transparent 60%); }
+  .lp-final.lit::before { opacity: 1; }
+  .lp-final > * { position: relative; }
+
+  /* nav: the link of the section on screen is underlined (landing.js sets aria-current) */
+  .lp-links > a { position: relative; }
+  .lp-links > a::after { content: ''; position: absolute; left: 0; right: 0; bottom: -6px; height: 2px; border-radius: 2px; background: var(--y);
+    transform: scaleX(0); transition: transform 460ms var(--ease-spring); }
+  .lp-links > a[aria-current="true"] { color: var(--ink); } .lp-links > a[aria-current="true"]::after { transform: scaleX(1); }
+  .lp-nav { transition: border-color var(--d-3) var(--ease-out-expo), background-color var(--d-3) var(--ease-out-expo), box-shadow var(--d-3) var(--ease-out-expo); }
+  .lp-nav.scrolled { background: rgba(0,0,0,.82); box-shadow: 0 12px 30px -20px rgba(0,0,0,.95); }
+  @media (max-width: 1080px) {
+    @keyframes lp-menu { from { opacity: 0; transform: translate3d(0, -8px, 0); } to { opacity: 1; transform: none; } }
+    .lp-nav.open .lp-links > a, .lp-nav.open .lp-menu-cta { animation: lp-menu 420ms var(--ease-out-expo) both; }
+    .lp-nav.open .lp-links > a:nth-child(2) { animation-delay: 40ms; } .lp-nav.open .lp-links > a:nth-child(3) { animation-delay: 80ms; }
+    .lp-nav.open .lp-links > a:nth-child(4) { animation-delay: 120ms; } .lp-nav.open .lp-links > a:nth-child(5) { animation-delay: 160ms; }
+    .lp-nav.open .lp-menu-cta { animation-delay: 200ms; }
+    .lp-links > a::after { display: none; }
+  }
+
+  /* "See plans" pill springs in */
+  .lp-pill { transition: opacity 360ms var(--ease-out-expo), transform 520ms var(--ease-spring), display 360ms allow-discrete; }
+  @starting-style { .lp-pill { opacity: 0; transform: translate3d(-50%, 18px, 0) scale(.92); } }
+  .lp-pill:hover { box-shadow: 0 14px 34px rgba(0,0,0,.6), 0 0 0 6px rgba(255,214,10,.12); }
+
+  /* Instagram cards and blog cards: a little depth on hover */
+  .ig-card { transition: border-color var(--d-2) var(--ease-out-expo), transform 520ms var(--ease-spring), box-shadow 520ms var(--ease-out-expo); }
+  @media (hover: hover) { a.ig-card:hover { transform: translate3d(0, -4px, 0) scale(1.015); box-shadow: 0 26px 50px -28px rgba(0,0,0,.95); } }
+}

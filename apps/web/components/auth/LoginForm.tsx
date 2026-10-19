@@ -6,6 +6,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { withViewTransition } from '@/lib/motion/viewTransition';
 
 type Step = 'email' | 'password' | 'code' | 'set' | 'forgot';
 
@@ -40,7 +41,9 @@ function PasswordField({ value, onChange, label, autoComplete, autoFocus }: { va
 export default function LoginForm({ google, next, error, initialStep = 'email', initialEmail = '' }:
   { google: boolean; next: string; error: string; initialStep?: Step; initialEmail?: string }) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>(initialStep);
+  const [step, setStepNow] = useState<Step>(initialStep);
+  /** step changes morph inside the card (View Transition, motion.css); instant with reduced motion or older browsers */
+  const setStep = (next: Step) => withViewTransition(() => setStepNow(next), { react: true });
   const [reset, setReset] = useState(initialStep === 'forgot');          // code step leads to "Choose a new password"
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState('');

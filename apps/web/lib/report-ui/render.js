@@ -38,7 +38,7 @@ export function mountReport(root, R, fmt) {
   const panel = (key, title, sub, body, span = 's6', extra = '') =>
     `<div class="rv-panel ${span} ${extra}" data-behav="${key}"><div class="rv-ph"><h3>${title}</h3>${sub ? `<small>${sub}</small>` : ''}${info(key)}</div>${body}</div>`;
   const kpi = (key, lab, val, c, sub) =>
-    `<div class="rv-kpi" data-behav="${key}"><div class="rv-kl">${lab}${info(key)}</div><div class="rv-kv ${c}">${val}</div><div class="rv-ks">${sub || ''}</div></div>`;
+    `<div class="rv-kpi" data-behav="${key}"><div class="rv-kl">${lab}${info(key)}</div><div class="rv-kv ${c}" data-count-up>${val}</div><div class="rv-ks">${sub || ''}</div></div>`;
 
   function bars(rows, opts = {}) {
     if (!rows || !rows.length) return `<p class="rv-empty">${opts.empty || 'Not enough data for this view.'}</p>`;
@@ -387,10 +387,24 @@ export function mountReport(root, R, fmt) {
   on(document, 'keydown', (e) => { if (e.key === 'Escape') hideTip(); });
 
   /* ---------- navigation ---------- */
-  function show(id) {
+  function swap(id, enter) {
     $$('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === id)));
-    $$('.tab').forEach((t) => { const onTab = t.id === id; t.classList.toggle('hide', !onTab); if (onTab) { t.classList.remove('rv-enter'); void t.offsetWidth; t.classList.add('rv-enter'); } });
+    $$('.tab').forEach((t) => { const onTab = t.id === id; t.classList.toggle('hide', !onTab); if (onTab && enter) { t.classList.remove('rv-enter'); void t.offsetWidth; t.classList.add('rv-enter'); } });
     hideTip();
+  }
+  /* motion (19 Oct 2026): the tab content cross-fades with a View Transition where supported (the old rv-enter
+     animation otherwise); only the panel is named, so the header and the tab bar stay still */
+  function show(id) {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const cur = $$('.tab').find((t) => !t.classList.contains('hide'));
+    if (!document.startViewTransition || reduce || !cur || cur.id === id) { swap(id, true); return; }
+    cur.style.viewTransitionName = 'rv-tab';
+    const vt = document.startViewTransition(() => {
+      cur.style.viewTransitionName = '';
+      swap(id, false);
+      const next = document.getElementById(id); if (next) next.style.viewTransitionName = 'rv-tab';
+    });
+    vt.finished.finally(() => { const next = document.getElementById(id); if (next) next.style.viewTransitionName = ''; });
   }
   on(root, 'click', (e) => {
     const tb = e.target.closest('[data-tip]');

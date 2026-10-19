@@ -36,11 +36,49 @@ Rules:
 - **Radius:** 8 for controls (`--r-sm`), 10–12 for small cards and items (`--r`), 16 for panels (`--r-lg`). 999 only for real pills.
 - **Spacing:** panels pad 20px, grids gap 16px, and section rhythm on the landing page uses one ramp. Phones keep the REQ-4 rule: pricing within 4 screen-heights.
 
-## Motion
-- **Timing:** one easing, `--ease: cubic-bezier(.2,0,0,1)`; durations `--t-fast` 150ms (hover), `--t` 200ms (tabs, colour), `--t-slow` 250ms (overlays).
-- **Hover:** a colour or border change only. No lifts, scaling or wobble.
-- **Entrances:** at most 6px and 300–350ms. Charts draw once in ≤ 1s.
-- **Reduced motion:** `prefers-reduced-motion` stops every animation and transition, and charts render fully drawn (checked in the reduced-motion pass of the PR #3 verification).
+## Motion (19 Oct 2026, owner: "Apple-like")
+Replaces the PR #3 rule of colour-only hovers and 6px fades. The landing page tells a scroll story; inside the app, motion is quieter.
+
+**Tokens** (`apps/web/app/motion.css`):
+- `--ease-out-expo` `cubic-bezier(.16,1,.3,1)`: the default decelerate;
+- `--ease-spring`: a CSS `linear()` spring with about 4% overshoot, falling back to expo;
+- `--ease-in-out`;
+- durations `--d-1` 160ms (press), `--d-2` 280ms (hover, tabs), `--d-3` 520ms (entrances), `--d-4` 900ms (scenes);
+- stagger 60–70ms.
+
+**Rules:**
+- Animate only transform, opacity, filter and clip-path, so there's no layout shift and REQ-4 pricing depth is unchanged.
+- Content is fully visible within about 600ms.
+- Nothing is hidden without JavaScript: reveal states apply only under `html.mo`, which the runtime sets after marking what's already on screen.
+- `prefers-reduced-motion` makes everything static (checked in `motion.spec.ts`).
+
+**Where it's used:**
+- **Page navigation:** `app/template.tsx` fades in and rises 10px.
+- **In-place swaps** use View Transitions on named regions only, so the header never moves:
+  - report tabs (`rv-tab`);
+  - the sign-in card, which morphs to the next step's height (`mo-card`);
+  - admin tabs (`mo-swap`).
+- **Reveal on scroll:** `[data-reveal]`, with `.in` added by `components/motion/MotionRuntime.tsx` (one observer, plus a scroll-time safety net). `[data-count-up]` counts plain-text numbers up and ends on the exact original text.
+- **Tab bars:** a sliding yellow ink (`.mo-ink`) under every `.tabs`.
+- **Touch:** buttons scale to .97 when pressed; primary buttons get a soft yellow glow on hover; cards lift 2–4px with the spring (pointer devices only).
+- **Landing:**
+  - the hero rises in line by line with a blur;
+  - the ledger card settles in and tilts slightly with the pointer;
+  - the step line draws across;
+  - the sample dashboard tilts up and scales in on scroll (desktop, CSS scroll-driven animation);
+  - card grids stagger;
+  - the most popular plan has a slow light running round its border;
+  - FAQ answers open smoothly;
+  - the nav link of the section on screen is underlined;
+  - the final call to action has a pointer spotlight;
+  - the "See plans" pill springs in.
+- **App:**
+  - **Upload and preview:** the drop zone breathes and glows on drag; file rows slide in; the "Analysing…" card springs in; the free preview's tiles and insights stagger.
+  - **Plans and history:** the plan bar fills on load; history rows stagger.
+  - **Report:** chart lines draw on the expo curve and bars grow with the spring.
+  - **Admin:** bars grow and rows fade in.
+  - **Blog:** cards lift and their covers zoom; covers un-blur; a reading-progress line runs along the top of articles.
+  - **Messages and loading:** status messages slide in, and errors shake once; loading states are shimmer skeletons ("Loading…" is kept for screen readers).
 
 ## Components
 - **Buttons:**

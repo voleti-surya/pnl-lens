@@ -193,6 +193,41 @@
     });
   }
 
+  /* motion (19 Oct 2026): pointer tilt on the hero ledger, spotlight on the final call to action, active nav link */
+  if (!reduce && window.matchMedia('(hover: hover) and (min-width: 1081px)').matches) {
+    var scanCard = root.querySelector('.lp-scan');
+    if (scanCard) {
+      scanCard.addEventListener('pointermove', function (e) {
+        var r = scanCard.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+        scanCard.classList.add('tilt');
+        scanCard.style.setProperty('--ry', (x * 5).toFixed(2) + 'deg'); scanCard.style.setProperty('--rx', (-y * 4).toFixed(2) + 'deg');
+      });
+      scanCard.addEventListener('pointerleave', function () { scanCard.style.setProperty('--ry', '0deg'); scanCard.style.setProperty('--rx', '0deg'); });
+    }
+    var fin = root.querySelector('.lp-final');
+    if (fin) {
+      fin.addEventListener('pointermove', function (e) {
+        var r = fin.getBoundingClientRect();
+        fin.classList.add('lit'); fin.style.setProperty('--mx', (e.clientX - r.left) + 'px'); fin.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+      fin.addEventListener('pointerleave', function () { fin.classList.remove('lit'); });
+    }
+  }
+  if ('IntersectionObserver' in window) {
+    var navLinks = [].slice.call(root.querySelectorAll('.lp-links > a[href^="#"]'));
+    var bySection = {};
+    navLinks.forEach(function (a) { var s = document.getElementById(a.getAttribute('href').slice(1)); if (s) bySection[s.id] = a; });
+    var current = null;
+    var navIo = new IntersectionObserver(function (es) {
+      es.forEach(function (en) {
+        var a = bySection[en.target.id]; if (!a) return;
+        if (en.isIntersecting) { if (current && current !== a) current.removeAttribute('aria-current'); a.setAttribute('aria-current', 'true'); current = a; }
+        else if (current === a) { a.removeAttribute('aria-current'); current = null; }
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    Object.keys(bySection).forEach(function (id) { navIo.observe(document.getElementById(id)); });
+  }
+
   /* REQ-5: social icon clicks (header, footer, Instagram section) */
   root.addEventListener('click', function (e) {
     var a = e.target.closest && e.target.closest('[data-social]');
