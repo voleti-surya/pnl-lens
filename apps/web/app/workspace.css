@@ -85,7 +85,7 @@
 .ws-hist-m span { color: var(--ink-3); font-weight: 500; letter-spacing: 0; }
 .ws-hist-i { display: grid; grid-template-columns: minmax(0, 1fr) 26px; gap: 2px; align-items: center; border: 1px solid transparent; border-radius: 9px; }
 .ws-hist-open { display: grid; grid-template-columns: 44px minmax(0, 1fr) 30px; gap: 8px; align-items: center; width: 100%; text-align: left; background: transparent; border: 0; border-radius: 9px; padding: 7px 6px; color: var(--ink); font: inherit; cursor: pointer; }
-.ws-hist-ren { width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 13px; opacity: 0; transition: opacity var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
+.ws-hist-ren { width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--ink-3); cursor: pointer; font-size: 13px; opacity: 1; transition: opacity var(--t-fast) var(--ease), background-color var(--t-fast) var(--ease), color var(--t-fast) var(--ease); }
 .ws-hist-i:hover .ws-hist-ren, .ws-hist-ren:focus-visible { opacity: 1; } .ws-hist-ren:hover { background: var(--s3); color: var(--ink); }
 .ws-hist-i .n.named { color: var(--ink); font-weight: 600; }
 .ws-hist-edit { grid-column: 1 / -1; display: flex; gap: 6px; padding: 4px; }
@@ -194,3 +194,28 @@
   .pv-insights li { animation: mo-rise 600ms var(--ease-out-expo) both; animation-delay: 320ms; } .pv-insights li:nth-child(2) { animation-delay: 440ms; }
   .pv-cta .btn { animation: mo-scale 620ms var(--ease-spring) 520ms both; }
 }
+.consent label a { color: var(--y); text-decoration: underline; text-underline-offset: 2px; }
+
+/* dashboard report list (22 Oct 2026): search, sort, cards, always-visible rename */
+.rl { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.rl-bar { display: flex; gap: 8px; }
+.rl-search { flex: 1; min-height: 40px; }
+.rl-sort { background: var(--s2); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 0 10px; min-height: 40px; color: var(--ink); }
+.rl-count { margin: 0; } .rl-empty { margin: 8px 0; color: var(--ink-2); }
+.rl-group { display: flex; flex-direction: column; gap: 6px; }
+.rl-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: var(--r); background: var(--s1); padding: 4px 8px 4px 4px; }
+.rl-open { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; min-width: 0; text-align: left; background: none; border: 0; border-radius: var(--r-sm); padding: 8px 10px; color: var(--ink); font: inherit; cursor: pointer; }
+.rl-name { font-weight: 600; font-size: 15px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .rl-name.auto { color: var(--ink-2); font-weight: 500; }
+.rl-files { font-size: 12px; color: var(--ink-3); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rl-meta { font-size: 13px; color: var(--ink-2); } .rl-meta b { font-weight: 600; }
+.rl-ren { min-height: 32px; padding: 6px 10px; font-size: 13px; white-space: nowrap; }
+.rl .ws-hist-i { border: 1px solid var(--y-line); border-radius: var(--r); }
+@media (prefers-reduced-motion: no-preference) {
+  .rl-card { transition: border-color var(--d-2) var(--ease-out-expo), transform 420ms var(--ease-spring); animation: mo-rise 480ms var(--ease-out-expo) both; }
+  @media (hover: hover) { .rl-card:hover { border-color: var(--line-hover); transform: translate3d(0, -2px, 0); } }
+}
+/* report page: the report's name and Rename, above the view title */
+.rp-name { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; color: var(--y); font-weight: 600; font-size: 14px; min-width: 0; }
+.rp-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rp-rename { max-width: 420px; margin-bottom: 6px; } .rp-rename .ws-hist-i { border: 1px solid var(--y-line); border-radius: var(--r); }
+

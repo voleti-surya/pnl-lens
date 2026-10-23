@@ -41,7 +41,7 @@ test('owner: Request reports → email → Yes on the page → Included', async 
   const visitor = await (await browser.newContext()).newPage();                       // no sign-in needed
   await visitor.goto(link);
   await expect(visitor.getByRole('heading', { name: 'Help improve PnL Lens' })).toBeVisible();
-  await expect(visitor.locator('.rc-quote')).toHaveText('Also let PnL Lens use my data, anonymised, to improve its analysis. Optional — you can change this anytime.');
+  await expect(visitor.locator('.rc-quote')).toHaveText('Make my insights sharper: let PnL Lens learn from my trades, with my name and email removed. Optional — you can change this anytime.');
   await visitor.getByRole('button', { name: 'Yes, include my reports' }).click();
   await expect(visitor.getByRole('heading', { name: 'Thank you' })).toBeVisible();
   await visitor.reload();

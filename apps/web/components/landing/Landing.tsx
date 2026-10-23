@@ -108,7 +108,7 @@ const SOURCES_BY: Record<Region, Group[]> = { IN: [IN_BROKERS, { ...US_BROKERS, 
 type PlanCard = Plan & { price: { label: string } };
 /** Footer legal details. FILL BEFORE LAUNCH (docs/GO_LIVE_CHECKLIST.md): company legal name, registered address, and the
  *  policy pages once the lawyer-approved texts are published (e.g. ['/privacy', 'Privacy policy'], ['/terms', 'Terms of service']). */
-const LEGAL: { name: string; address: string; policies: [string, string][] } = { name: '[Company legal name]', address: '[Registered address]', policies: [] };
+const LEGAL: { name: string; address: string; policies: [string, string][] } = { name: '[Company legal name]', address: '[Registered address]', policies: [['/terms', 'Terms'], ['/privacy', 'Privacy']] };
 // Plan-specific copy only; durations, report counts and statements come from PLANS (packages/shared/src/pricing.ts).
 const PLAN_COPY: Record<string, { tag: string; feat: string[]; cta: string }> = {
   single: { tag: 'A first look', feat: ['Full dashboard and insights'], cta: 'Choose Single' },

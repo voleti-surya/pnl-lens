@@ -1,7 +1,7 @@
 /**
  * @file  apps/web/components/workspace/History.tsx
  * @area  Reports
- * @what  Report history grouped by month (MON-YY) with Progress score; rename in the history list only (PATCH /api/v1/reports/:id).
+ * @what  Report history (report page sidebar) grouped by month (MON-YY) with Progress score and an always-visible rename (PATCH /api/v1/reports/:id); RenameRow is shared with the dashboard list.
  */
 'use client';
 import { useState } from 'react';
@@ -51,7 +51,7 @@ export default function History({ reports, currentId }: { reports: HistoryItem[]
   );
 }
 
-function RenameRow({ initial, placeholder, onDone }: { initial: string; placeholder: string; onDone: (v: string | null) => void }) {
+export function RenameRow({ initial, placeholder, onDone }: { initial: string; placeholder: string; onDone: (v: string | null) => void }) {
   const [v, setV] = useState(initial);
   let done = false;
   const finish = (save: boolean) => { if (done) return; done = true; onDone(save ? v : null); };

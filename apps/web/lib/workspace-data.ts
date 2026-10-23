@@ -20,5 +20,6 @@ export async function loadPlanData(): Promise<{ plans: PlanRow[] | null; prices:
 export async function loadHistory(): Promise<HistoryItem[]> {
   const r = await apiServer<{ reports: any[] }>('/reports');
   if (!r.ok) return [];
-  return r.data.reports.map((x) => ({ id: x.id, title: x.title, monthLabel: x.monthLabel, createdAt: x.createdAt, fileNames: x.fileNames, progressScore: x.progressScore, to: x.to }));
+  return r.data.reports.map((x) => ({ id: x.id, title: x.title, monthLabel: x.monthLabel, createdAt: x.createdAt, fileNames: x.fileNames, progressScore: x.progressScore, to: x.to,
+    tradeCount: x.tradeCount, netPnl: x.netPnl, currency: x.currency, market: x.market }));
 }

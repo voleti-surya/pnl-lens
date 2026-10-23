@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 236 files._
+_Generated from file headers by `npm run docs:index` — 242 files._
 
 ### Pages
 
@@ -141,14 +141,15 @@ _Generated from file headers by `npm run docs:index` — 236 files._
 |---|---|
 | `apps/api/src/routes/analyses.ts` | POST /analyses (alias /uploads): consent, type sniffing, size/plan/D11 limits, encrypt, store, queue. GET /analyses/:id and /reports/:id/status. |
 | `apps/api/src/routes/reports.ts` | Reports: list (MON-YY history), save an analysis (spends one report from a valid plan), "+" add files (file-set lock), get, rename, delete. |
-| `apps/web/app/(app)/dashboard/page.tsx` | Signed-in dashboard: plan card, report history grouped by month (MON-YY) with rename; your data (research opt-in, export, delete account). |
+| `apps/web/app/(app)/dashboard/page.tsx` | Signed-in dashboard: plan card, reports (search, sort, rename); your data (research opt-in, export, delete account). |
 | `apps/web/app/(app)/report/[id]/page.tsx` | One report in the workspace: file tabs, All files, +, ×, the five dashboard tabs; a "deleted" page once removed. |
 | `apps/web/app/(app)/upload/page.tsx` | New report: the workspace upload view (consent, files, loader; the API and worker read the files). |
 | `apps/web/components/workspace/DataRights.tsx` | "Your data" panel: password (set or change), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account. |
-| `apps/web/components/workspace/History.tsx` | Report history grouped by month (MON-YY) with Progress score; rename in the history list only (PATCH /api/v1/reports/:id). |
+| `apps/web/components/workspace/History.tsx` | Report history (report page sidebar) grouped by month (MON-YY) with Progress score and an always-visible rename (PATCH /api/v1/reports/:id); RenameRow is shared with the dashboard list. |
 | `apps/web/components/workspace/JourneyBar.tsx` | REQ-2 journey bar above the workspace and dashboard: 5 steps (done / locked with the unlocking plan), score line, next action; one line on phones. |
 | `apps/web/components/workspace/model.ts` | Workspace data types (from the API) and the offline tool's wording, labels and plan rules, kept word for word. |
 | `apps/web/components/workspace/PlanCard.tsx` | Plan card (sidebar) and plan strip (upload view): "Snapshot · 2 of 5 reports used · use by 19-Jan-27", statements per report (credits spec wording). |
+| `apps/web/components/workspace/ReportList.tsx` | Dashboard report list: search (name, files, month, market, dates), sort (newest, oldest, name), clear cards with trades and net P&L, always-visible Rename. |
 | `apps/web/components/workspace/Workspace.tsx` | The report workspace (ported from the offline tool, now on the API): upload with consent, loader, file tabs + All files, "+" and ×, plan card, MON-YY history. |
 | `apps/web/lib/workspace-data.ts` | Server-side loaders for the workspace pages: my plans and my report history from the API, in the shapes the workspace uses. |
 | `packages/shared/src/journey.ts` | REQ-2 "trading journey": which of the 5 steps are done or locked, the score line and the next action, from real plans and saved reports only. |
@@ -241,7 +242,8 @@ _Generated from file headers by `npm run docs:index` — 236 files._
 | `apps/web/lib/api-client.ts` | How the website talks to the API: server components call it over the private network with the visitor's cookie; the browser calls /api/v1 on the same site. |
 | `apps/web/lib/auth/country.ts` | Visitor country for server components (Cloudflare CF-IPCountry / CloudFront / X-Country). |
 | `packages/shared/src/auth/request.ts` | Client IP and country for API routes. |
-| `packages/shared/src/consent.ts` | Upload consent wording (plan D2, W9/W10) and its version; the hash of the exact text is stored with each consent row. |
+| `packages/shared/src/consent-text.ts` | The exact consent sentences shown to users and their policy version (no Node imports, so the website can use them too). |
+| `packages/shared/src/consent.ts` | Consent wording and version (from consent-text.ts) plus the SHA-256 of the exact text, stored with each consent row. |
 | `packages/shared/src/db.ts` | Minimal query interface (pg.Pool / pg.Client satisfy it) so shared SQL helpers work with the web pool and the API pool. |
 | `packages/shared/src/file-crypto.ts` | Envelope encryption for raw statement files: AES-256-GCM with a random key per file, wrapped by a KEK from env (rule 7). |
 | `packages/shared/src/jobs.ts` | Queue names and job payloads shared by apps/api (producer) and apps/worker (consumer). |
@@ -388,6 +390,7 @@ _Generated from file headers by `npm run docs:index` — 236 files._
 | `tests/e2e-web/login.spec.ts` | Sign-in card: new email → code → required password → dashboard; password sign-in sends no code; wrong password; forgot → code → new password; the set step can't be skipped; layout at 320/390/1440. |
 | `tests/e2e-web/motion.spec.ts` | Motion system (19 Oct 2026): reduced motion = no animation and everything visible; reveal-on-scroll ends visible; sliding tab ink follows the selected tab; sign-in steps work with View Transitions. |
 | `tests/e2e-web/privacy.spec.ts` | Data rights in the browser: research opt-in toggle, export my data (worker builds the ZIP, download works), delete my account. |
+| `tests/e2e-web/reports.spec.ts` | Consent boxes (Terms/Privacy links, research unticked) and finding/renaming reports: dashboard search, sort, rename; rename on the report page. |
 | `tests/e2e-web/research.spec.ts` | Research datasets end to end: the owner builds one now (the real worker, storage and encryption), downloads the ZIP; an admin has no Research tab. |
 | `tests/e2e-web/score-card.spec.ts` | REQ-1: the Progress score card's level labels never overlap, at every level and width, in Chromium (Chrome/Edge) and WebKit (Safari). |
 | `tests/e2e-web/user-admin.spec.ts` | User management end to end: owner requests reports → email → one-click Yes → Included; restrict signs the user out; delete with typed email; admin and support limits. |
@@ -411,6 +414,14 @@ _Generated from file headers by `npm run docs:index` — 236 files._
 | `apps/web/components/blog/BlogTrack.tsx` | REQ-7 article events: blog_view once per page view and blog_cta_click on "Analyse my trades" (anonymous, allow-listed by the API). |
 | `apps/web/components/blog/PostCard.tsx` | REQ-7 article card (tag, read time, title, excerpt, "Read article →") used on /blog and in the landing preview. |
 | `apps/web/lib/blog.ts` | REQ-7 blog data for server components: which site (India/Global) the visitor sees, public posts from the API, image URLs, dates in IST. |
+
+### Legal
+
+| File | What it does |
+|---|---|
+| `apps/web/app/privacy/page.tsx` | Privacy Policy page (public): renders docs/legal/PRIVACY_POLICY.md; shows a draft notice while the text is under legal review. |
+| `apps/web/app/terms/page.tsx` | Terms of Service page (public): renders docs/legal/TERMS_OF_SERVICE.md; shows a draft notice while the text is under legal review. |
+| `apps/web/lib/legal.ts` | Reads a legal text from docs/legal (bundled into the image via outputFileTracingIncludes) and renders it to safe HTML. |
 
 ### Privacy
 

@@ -8,6 +8,7 @@
     "./limits": "./src/limits.ts",
     "./db": "./src/db.ts",
     "./consent": "./src/consent.ts",
+    "./consent-text": "./src/consent-text.ts",
     "./jobs": "./src/jobs.ts",
     "./mail": "./src/mail.ts",
     "./auth/otp": "./src/auth/otp.ts",

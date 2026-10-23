@@ -3,10 +3,15 @@
  * @area  Reports
  * @what  Workspace data types (from the API) and the offline tool's wording, labels and plan rules, kept word for word.
  */
+import { CONSENT_TEXT } from '@pnl-lens/shared/consent-text';
 import { PLANS } from '@pnl-lens/shared/pricing';
 
 export interface PlanRow { id: string; planId: string; reportsTotal: number; reportsUsed: number; filesPerReport: number; startsAt: string; endsAt: string; active: boolean }
-export interface HistoryItem { id: string; title: string | null; monthLabel: string | null; createdAt: string; fileNames: string[]; progressScore: number | null; to: string | null }
+export interface HistoryItem { id: string; title: string | null; monthLabel: string | null; createdAt: string; fileNames: string[]; progressScore: number | null; to: string | null;
+  tradeCount?: number; netPnl?: number; currency?: string | null; market?: string | null }
+/** A report's display name: its title, or "Report · 12 Oct 2026" when it has none. */
+export const reportName = (r: { title: string | null; createdAt: string }) =>
+  r.title || 'Report · ' + new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
 export interface FileTab { id: string; name: string; position: number; stored: boolean; report: any | null }
 export interface CurrentReport { id: string; createdAt: string; title: string | null; report: any; files: FileTab[]; places: { total: number; used: number } }
 
@@ -36,7 +41,8 @@ export const planEndedText = (p: PlanRow) => expired(p)
   : 'You’ve used all ' + p.reportsTotal + ' report' + (p.reportsTotal === 1 ? '' : 's') + ' in your ' + planName(p.planId) + ' plan. Your reports are still here. Choose a plan to create new ones.';
 export const filesFullText = (files: number) => 'This report already holds its ' + files + ' broker statement' + (files === 1 ? '' : 's') + '. You can re-open a statement already in this report, or start a new report.';
 
-/* Approved wording (plan §2.1): W5 upload line, W9/W10 consent. */
+/* Approved wording (plan §2.1): W5 upload line; consent wording updated by the owner on 22 Oct 2026. */
 export const UPLOAD_SUB = 'Your files are encrypted, processed on our secure servers, and deleted automatically after 30 days. You can delete them anytime.';
-export const CONSENT_PROCESSING = 'I agree to PnL Lens processing these files to build my report.';
-export const CONSENT_RESEARCH = 'Also let PnL Lens use my data, anonymised, to improve its analysis. Optional — you can change this anytime.';
+/* Consent sentences come from the one shared source (the server stores the hash of these exact words). */
+export const CONSENT_PROCESSING = CONSENT_TEXT.processing;
+export const CONSENT_RESEARCH = CONSENT_TEXT.research;

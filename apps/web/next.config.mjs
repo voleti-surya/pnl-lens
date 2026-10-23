@@ -13,7 +13,11 @@ const nextConfig = {
   // Workspace packages ship TypeScript/ESM source; Next compiles them like app code.
   transpilePackages: ['@pnl-lens/engine', '@pnl-lens/shared'],
   // Trace dependencies from the monorepo root so the standalone bundle includes workspace packages.
-  experimental: { outputFileTracingRoot: repoRoot },
+  experimental: {
+    outputFileTracingRoot: repoRoot,
+    // the Terms and Privacy pages read the legal texts from docs/legal at runtime: bundle them into the image
+    outputFileTracingIncludes: { '/terms': ['../../docs/legal/TERMS_OF_SERVICE.md'], '/privacy': ['../../docs/legal/PRIVACY_POLICY.md'] },
+  },
 };
 
 export default nextConfig;

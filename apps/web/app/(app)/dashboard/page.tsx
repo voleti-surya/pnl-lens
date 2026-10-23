@@ -1,14 +1,14 @@
 /**
  * @file  apps/web/app/(app)/dashboard/page.tsx
  * @area  Reports
- * @what  Signed-in dashboard: plan card, report history grouped by month (MON-YY) with rename; your data (research opt-in, export, delete account).
+ * @what  Signed-in dashboard: plan card, reports (search, sort, rename); your data (research opt-in, export, delete account).
  */
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getMe } from '@/lib/api-client';
 import { loadPlanData, loadHistory } from '@/lib/workspace-data';
 import { PlanCard } from '@/components/workspace/PlanCard';
-import History from '@/components/workspace/History';
+import ReportList from '@/components/workspace/ReportList';
 import DataRights from '@/components/workspace/DataRights';
 import JourneyBar from '@/components/workspace/JourneyBar';
 import { currentPlan } from '@/components/workspace/model';
@@ -35,7 +35,7 @@ export default async function Dashboard() {
         <PlanCard plan={currentPlan(plans)} />
         {reports.length === 0
           ? <div className="empty">No reports yet. <Link href="/upload" style={{ color: 'var(--y)' }}>Upload your first file</Link>.</div>
-          : <History reports={reports} />}
+          : <ReportList reports={reports} />}
       </div>
       <DataRights />
     </>

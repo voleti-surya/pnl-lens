@@ -50,13 +50,13 @@ The CSP allows `'unsafe-inline'` scripts and styles, because Next.js App Router 
 
 ## 5. For the lawyer (DPDP Act / GDPR)
 
-1. **Lawful basis and consent text.** Processing consent is a required checkbox at upload ("I agree to PnL Lens processing these files to build my report."). Research is a separate, optional, unticked checkbox. Is consent the right basis for processing, or contract/legitimate use? Is the wording specific and informed enough (DPDP s. 6; GDPR Art. 6/7)?
+1. **Lawful basis and consent text.** Processing consent (with Terms and Privacy Policy) is a required checkbox at upload. Research is a separate, optional, unticked checkbox ("Make my insights sharper: let PnL Lens learn from my trades, with my name and email removed. Optional — you can change this anytime."). Is consent the right basis for processing, or contract/legitimate use? Is the wording specific and informed enough (DPDP s. 6; GDPR Art. 6/7)?
 2. **Files added with "+"** reuse the processing consent the user ticked when starting that report (no new checkbox). Confirm this is acceptable.
 3. **Research data is pseudonymised, not anonymised.** The HMAC key is in the database and in backups. Confirm it is described correctly and that the opt-in is sufficient, including for the **research datasets** downloaded every 15 days for model training and consent given through the **one-click email link** (no sign-in; a personal 30-day link) (copies kept up to 90 days, so a withdrawal reaches older datasets only when they expire).
 4. **Retention periods:** raw files 30 days; previews 24 h; export archives 7 days; sign-in codes 7 days; usage/error logs 12 months; audit/file-access logs 24 months; reports until deleted; backups up to 12 months; payments kept after deletion. Confirm each period and the legal reason for keeping payments and consent records.
 5. **Account deletion keeps** payment rows and consent rows (without IP hash or user agent), and an anonymised user row. Confirm this satisfies erasure while meeting billing and proof obligations.
 6. **Children:** no age check is built. The Terms and Policy drafts propose an 18+ confirmation at sign-up. Wording and mechanism are needed (DPDP verifiable parental consent).
-7. **Terms acceptance** at sign-up/checkout is not built yet. Wording and mechanism are needed (checkbox or "By continuing…" line).
+7. **Terms acceptance** is built at upload (since 22 Oct 2026): the required box reads "I agree to the Terms of Service and Privacy Policy, and to PnL Lens processing these files to build my report.", with links to `/terms` and `/privacy`. Confirm this is sufficient, or whether acceptance is also needed at sign-up or checkout.
 8. **Breach notification:** the DPDP Board and the affected users; GDPR 72 hours. The runbook has an incident section; confirm the duties and the contact.
 9. **Grievance officer / DPO** name and contact for the policy and the site footer.
 10. **Cross-border transfers** for non-Indian users (data stored in India; processors in other countries).

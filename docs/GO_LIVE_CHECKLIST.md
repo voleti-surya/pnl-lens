@@ -47,3 +47,4 @@ The drafts are in `docs/legal/`. The factual basis written from the code is `doc
 4. Export my data → the ZIP downloads. Delete a test account → signed out, data gone.
 5. If payments are on: buy the cheapest plan with a real card, check that the webhook granted it (admin console), then refund it in Razorpay and check that the refund shows.
 6. The next morning: `/var/log/pnl-lens-backup.log` shows `backup_ok`; the health log shows no alerts.
+- [ ] Replace the drafts in `docs/legal` with the lawyer-approved Terms and Privacy Policy (they're shown at /terms and /privacy). Remove the LAWYER/BUILD CHECK markers so the "Draft — under legal review" note disappears.

@@ -21,12 +21,12 @@ import { mountReport } from '@/lib/report-ui/render.js';
 import { withAnalysing } from '@/lib/report-ui/loader.js';
 import { api, uploadStatements, waitForAnalysis, type AnalysisStatus, type ApiError } from '@/lib/api-browser';
 import { PlanCard, PlanStrip } from './PlanCard';
-import History from './History';
+import History, { RenameRow } from './History';
 import JourneyBar from './JourneyBar';
 import { journey } from '@pnl-lens/shared/journey';
 import type { PlanId } from '@pnl-lens/shared/pricing';
 import {
-  currentPlan, reportsLeft, expired, planEndedText, planName, filesFullText, dayLabel, st, UPLOAD_SUB, CONSENT_PROCESSING, CONSENT_RESEARCH,
+  currentPlan, reportsLeft, expired, reportName, planEndedText, planName, filesFullText, dayLabel, st, UPLOAD_SUB, CONSENT_PROCESSING, CONSENT_RESEARCH,
   type PlanRow, type HistoryItem, type CurrentReport,
 } from './model';
 
@@ -66,6 +66,13 @@ export default function Workspace(props: { mode: 'upload' | 'report'; plans: Pla
         : <ReportView plan={plan} plans={props.plans} prices={props.prices || {}} reports={props.reports} current={props.current} setLock={setLock} />}
     </>
   );
+}
+
+/** The required consent sentence, with "Terms of Service" and "Privacy Policy" linked (they open in a new tab). */
+function ConsentText() {
+  const parts = CONSENT_PROCESSING.split(/(Terms of Service|Privacy Policy)/);
+  return <>{parts.map((p, i) => p === 'Terms of Service' ? <a key={i} href="/terms" target="_blank" rel="noopener">{p}</a>
+    : p === 'Privacy Policy' ? <a key={i} href="/privacy" target="_blank" rel="noopener">{p}</a> : p)}</>;
 }
 
 /* ---------------------------------------------------------------- upload view */
@@ -157,7 +164,7 @@ function UploadView({ plan, reports, setLock, source, prices }: { plan: PlanRow 
         </ul>
       )}
       <div className="consent">
-        <label><input type="checkbox" name="consent" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> <span>{CONSENT_PROCESSING}</span></label>
+        <label><input type="checkbox" name="consent" checked={consent} onChange={(e) => setConsent(e.target.checked)} /> <span><ConsentText /></span></label>
         <label><input type="checkbox" name="research" checked={research} onChange={(e) => setResearch(e.target.checked)} /> <span>{CONSENT_RESEARCH}</span></label>
       </div>
       <div className="filters" style={{ marginTop: 16, alignItems: 'center' }}>
@@ -242,7 +249,16 @@ function ReportView({ plan, plans, prices, reports, current, setLock }: { plan: 
     return () => { nav?.removeEventListener('click', onTab); el.removeEventListener('click', onCard); h.destroy(); };
   }, [r]);
 
-  const stamp = (current.title ? '“' + current.title + '”  ·  ' : '') + 'Report of ' + dayLabel(current.createdAt) + ' ' + new Date(current.createdAt).getFullYear();
+  const [rtitle, setRtitle] = useState<string | null>(current.title);
+  const [renaming, setRenaming] = useState(false);
+  async function rename(value: string | null) {
+    setRenaming(false);
+    if (value === null) return;
+    const v = value.replace(/\s+/g, ' ').trim().slice(0, 60) || null;
+    setRtitle(v);
+    try { await api(`/reports/${current.id}`, { method: 'PATCH', body: { title: v } }); } finally { router.refresh(); }
+  }
+  const stamp = (rtitle ? '“' + rtitle + '”  ·  ' : '') + 'Report of ' + dayLabel(current.createdAt) + ' ' + new Date(current.createdAt).getFullYear();
   const title = view === 'all' ? 'All files' : slot ? slot.name : 'Report';
   const meta = view === 'all' ? stamp + '  ·  ' + files.filter((_, i) => fileReport(i)).map((f) => f.name).join(' + ') : stamp + (r?.m?.from ? '  ·  trades ' + r.m.from + ' to ' + r.m.to : '');
 
@@ -316,6 +332,10 @@ function ReportView({ plan, plans, prices, reports, current, setLock }: { plan: 
         <div className="ws-main">
           <div className="report-head">
             <div>
+              {renaming
+                ? <div className="rp-rename"><RenameRow initial={rtitle || ''} placeholder={reportName({ title: null, createdAt: current.createdAt })} onDone={rename} /></div>
+                : <div className="rp-name"><span>{reportName({ title: rtitle, createdAt: current.createdAt })}</span>
+                    <button className="btn ghost rl-ren" onClick={() => setRenaming(true)} aria-label="Rename this report">✎ Rename</button></div>}
               <h1 className="page-title">{title}</h1>
               <div className="muted" style={{ fontSize: 13 }} suppressHydrationWarning>{meta}</div>
             </div>
