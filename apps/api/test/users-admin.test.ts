@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { testDbAvailable, makeUser } from '@pnl-lens/db/testing';
 import { testApp, as, ORIGIN, cookieFor, type TestApp } from './helpers.js';
+import { CONSENT_POLICY_VERSION } from '@pnl-lens/shared/consent';
 
 const ok = await testDbAvailable();
 
@@ -65,7 +66,7 @@ describe.skipIf(!ok)('user management', () => {
     const yes = await post(`/research/invite/${token}`, null, { answer: 'yes' });
     expect(yes.json()).toEqual({ ok: true, answer: 'yes' });
     const c = (await x.t.admin.query(`select granted, policy_version, ip_hash from consents where user_id = $1 and purpose = 'research'`, [u])).rows;
-    expect(c).toHaveLength(1); expect(c[0].granted).toBe(true); expect(c[0].policy_version).toBe('2026-10');
+    expect(c).toHaveLength(1); expect(c[0].granted).toBe(true); expect(c[0].policy_version).toBe(CONSENT_POLICY_VERSION);
     expect(await row(u)).toMatchObject({ research: 'included' });
     expect((await x.app.inject({ method: 'GET', url: `/api/v1/research/invite/${token}` })).json()).toEqual({ state: 'answered', answer: 'yes' });
     expect((await post(`/research/invite/${token}`, null, { answer: 'no' })).statusCode).toBe(409);

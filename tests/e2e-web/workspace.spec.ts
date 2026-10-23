@@ -70,7 +70,7 @@ test('the full workspace flow, and a second device sees the same report', async 
   const other = await browser.newContext();
   const p2 = await other.newPage();
   await signIn(p2, email, '/dashboard');
-  await expect(p2.locator('.ws-hist .n.named')).toHaveText('Q1 review');
+  await expect(p2.locator('[data-report-list] .rl-name').first()).toHaveText('Q1 review');   // the dashboard list (search, sort, rename)
   await p2.goto(reportUrl);
   await expect(p2.locator('.ws-item.all')).toContainText('2 files · 101 positions');
   await other.close();
