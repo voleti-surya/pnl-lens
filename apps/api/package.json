@@ -24,11 +24,13 @@
     "fastify-type-provider-zod": "7.0.0",
     "ioredis": "5.11.1",
     "markdown-it": "15.0.2",
+    "pdfkit": "0.20.2",
     "pg": "^8.23.0",
     "sharp": "0.35.5",
-    "zod": "4.6.5"
+    "zod": "4.6.7"
   },
   "devDependencies": {
+    "@types/pdfkit": "0.17.6",
     "@types/pg": "^8.23.1",
     "esbuild": "0.28.2",
     "openapi-types": "12.1.3"

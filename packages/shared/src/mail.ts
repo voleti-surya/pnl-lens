@@ -114,3 +114,29 @@ export function researchInviteEmail(link: string): Omit<Mail, 'to'> {
   };
 }
 
+
+/** The check-up reminder a user turns on from their 30-day plan (sent once by the worker at 09:00 IST). */
+export function planReminderEmail(appUrl: string): Omit<Mail, 'to'> {
+  const upload = `${appUrl.replace(/\/$/, '')}/upload`;
+  return {
+    subject: 'Your 30-day check-up is today',
+    text: [
+      'Hi,',
+      '',
+      'It has been 30 days since your PnL Lens plan. Upload this month’s P&L statement or tradebook to see how your numbers moved',
+      'and get your next 30-day plan.',
+      '',
+      `Upload this month’s statement: ${upload}`,
+      '',
+      'You set this reminder from your 30-day plan. We send it once.',
+      '',
+      'PnL Lens',
+    ].join('\n'),
+    html: `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#222;line-height:1.55">
+      <div style="font-weight:800;font-size:18px">PnL Lens</div>
+      <p style="margin:18px 0 10px">Hi,</p>
+      <p style="margin:0 0 18px">It has been 30 days since your PnL Lens plan. Upload this month’s P&amp;L statement or tradebook to see how your numbers moved and get your next 30-day plan.</p>
+      <a href="${esc(upload)}" style="display:inline-block;background:#FFD60A;color:#000;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:10px">Upload this month’s statement</a>
+      <p style="color:#666;font-size:13px;margin-top:20px">You set this reminder from your 30-day plan. We send it once.</p></div>`,
+  };
+}

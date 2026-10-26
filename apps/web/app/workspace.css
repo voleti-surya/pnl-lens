@@ -219,3 +219,4 @@
 .rp-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rp-rename { max-width: 420px; margin-bottom: 6px; } .rp-rename .ws-hist-i { border: 1px solid var(--y-line); border-radius: var(--r); }
 
+.btn.plan-dl[disabled]{opacity:.75;cursor:progress}

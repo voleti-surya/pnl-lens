@@ -22,6 +22,7 @@ import { withAnalysing } from '@/lib/report-ui/loader.js';
 import { api, uploadStatements, waitForAnalysis, type AnalysisStatus, type ApiError } from '@/lib/api-browser';
 import { PlanCard, PlanStrip } from './PlanCard';
 import History, { RenameRow } from './History';
+import PlanButton from './PlanButton';
 import JourneyBar from './JourneyBar';
 import { journey } from '@pnl-lens/shared/journey';
 import type { PlanId } from '@pnl-lens/shared/pricing';
@@ -340,6 +341,7 @@ function ReportView({ plan, plans, prices, reports, current, setLock }: { plan: 
               <div className="muted" style={{ fontSize: 13 }} suppressHydrationWarning>{meta}</div>
             </div>
             <div className="actions">
+              <PlanButton reportId={current.id} onError={(text) => setLock({ title: 'Could not prepare your plan', text })} />
               <button className="btn ghost" onClick={remove}>Delete</button>
             </div>
           </div>

@@ -13,6 +13,8 @@ services:
       # local and Docker addresses are exempt here only (compose.prod.yml never passes it). Sign-in code limits still apply.
       RATE_LIMIT_EXEMPT_IPS: 127.0.0.1,::1,172.16.0.0/12,192.168.0.0/16
       OTP_PER_IP_PER_HOUR_OVERRIDE: "200"     # the suite signs up ~20 accounts per run from one address (production: 20)
+      PLAN_REMINDER_INTERVAL_MS: "2000"       # check-up reminders: checked every 2 s, any hour (production: 10 min, from 09:00 IST)
+      PLAN_REMINDER_FROM_HOUR: "0"
   web:
     environment:
       AUTH_MODE: jwt

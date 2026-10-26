@@ -1,12 +1,13 @@
 /**
  * @file  apps/web/components/workspace/DataRights.tsx
  * @area  Reports
- * @what  "Your data" panel: password (set or change), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account.
+ * @what  "Your data" panel: password (set or change), 30-day plan check-up reminder (cancel), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account.
  */
 'use client';
 import { useEffect, useState } from 'react';
 import { api, type ApiError } from '@/lib/api-browser';
 import { CONSENT_RESEARCH } from './model';
+import { longDate } from './ReminderConfirm';
 
 interface ExportRow { id: string; status: string; requestedAt: string; expiresAt: string | null; downloadable: boolean; sizeBytes: number | null }
 
@@ -17,11 +18,13 @@ export default function DataRights() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [typed, setTyped] = useState('');
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+  const [reminder, setReminder] = useState<{ id: string; remindOn: string } | null>(null);
 
   const loadExports = () => api<{ exports: ExportRow[] }>('/me/exports').then((r) => setExports(r.exports)).catch(() => {});
   useEffect(() => {
     api<{ research: boolean }>('/me/consents').then((c) => setResearch(c.research)).catch(() => setResearch(false));
     api<{ hasPassword?: boolean }>('/me').then((m) => setHasPassword(!!m.hasPassword)).catch(() => {});
+    api<{ reminder: { id: string; remindOn: string } | null }>('/me/reminders').then((r) => setReminder(r.reminder)).catch(() => {});
     loadExports();
   }, []);
   // refresh while an export is being prepared
@@ -35,6 +38,11 @@ export default function DataRights() {
     setResearch(v);
     try { const r = await api<{ research: boolean }>('/me/consents', { body: { purpose: 'research', granted: v } }); setResearch(r.research); }
     catch (e) { setMsg((e as ApiError).message); setResearch(!v); }
+  }
+  async function cancelReminder() {
+    if (!reminder) return;
+    try { await api(`/me/reminders/${reminder.id}`, { method: 'DELETE' }); setReminder(null); }
+    catch (e) { setMsg((e as ApiError).message); }
   }
   async function requestExport() {
     setMsg('');
@@ -55,6 +63,12 @@ export default function DataRights() {
           {hasPassword
             ? <><a className="btn ghost" href="/login?step=forgot&next=/dashboard">Change password</a><span className="muted small">We’ll email you a code to confirm it’s you.</span></>
             : <><a className="btn ghost" href="/login?step=set&next=/dashboard">Set a password</a><span className="muted small">Sign in with your email and a password, as well as Google.</span></>}
+        </div>
+      )}
+      {reminder && (
+        <div className="filters dr-actions dr-reminder" data-reminder>
+          <span>Check-up reminder: <b>{longDate(reminder.remindOn)}</b></span>
+          <button className="btn ghost" onClick={cancelReminder}>Cancel</button>
         </div>
       )}
       <div className="consent dr-consent">

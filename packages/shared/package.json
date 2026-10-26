@@ -27,7 +27,8 @@
     "./file-crypto": "./src/file-crypto.ts",
     "./auth/next": "./src/auth/next.ts",
     "./journey": "./src/journey.ts",
-    "./site": "./src/site.ts"
+    "./site": "./src/site.ts",
+    "./plan": "./src/plan/build.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

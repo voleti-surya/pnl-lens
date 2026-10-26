@@ -31,6 +31,7 @@ import { telemetryRoutes } from './routes/telemetry.js';
 import { blogRoutes } from './routes/blog.js';
 import { researchRoutes } from './routes/research.js';
 import { usersAdminRoutes } from './routes/users-admin.js';
+import { planRoutes } from './routes/plan.js';
 
 export interface Deps {
   config: Config;
@@ -134,6 +135,7 @@ export async function buildApp(deps: Deps): Promise<App> {
     await blogRoutes(v1 as App, deps);
     await researchRoutes(v1 as App, deps);
     await usersAdminRoutes(v1 as App, deps);
+    await planRoutes(v1 as App, deps);
     if (deps.config.exposeOpenApi) v1.get('/openapi.json', { schema: { hide: true } }, async () => app.swagger());
   }, { prefix: '/api/v1' });
 

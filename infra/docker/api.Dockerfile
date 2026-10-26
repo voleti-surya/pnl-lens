@@ -34,6 +34,8 @@ ENV NODE_ENV=production TZ=Asia/Kolkata PORT=4000
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY apps/api/package.json apps/api/package.json
 COPY --from=build /app/apps/api/dist apps/api/dist
+# fonts embedded in the 30-day plan PDF (Manrope, OFL; the ₹ glyph from DejaVu)
+COPY apps/api/assets apps/api/assets
 # MAIL_DRIVER=console writes .data/dev-mail.log (dev stack); the rest of the filesystem stays root-owned
 RUN mkdir -p /app/.data && chown node:node /app/.data
 USER node

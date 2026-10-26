@@ -373,7 +373,18 @@ export interface ResearchInvitesTable {
   ip_hash: string | null;
 }
 
+export interface PlanRemindersTable {
+  id: Generated<string>;
+  user_id: string;
+  report_id: string | null;
+  remind_on: string;
+  created_at: Generated<Date>;
+  sent_at: TimestampNull;
+  cancelled_at: TimestampNull;
+}
+
 export interface Database {
+  plan_reminders: PlanRemindersTable;
   research_invites: ResearchInvitesTable;
   research_exports: ResearchExportsTable;
   users: UsersTable;
