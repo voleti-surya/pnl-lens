@@ -1,7 +1,7 @@
 /**
  * @file  apps/web/components/admin/ResearchAdmin.tsx
  * @area  Admin
- * @what  Admin "Research" tab (owner only): research datasets built on the 1st and 16th from opted-in users, Build now, download.
+ * @what  Admin "Research" tab (owner only): research datasets built on the 1st and 16th from opted-in users, Build now, download; find who a subject or report code belongs to (reason required, audited).
  */
 'use client';
 import { useEffect, useState } from 'react';
@@ -38,6 +38,7 @@ export default function ResearchAdmin() {
   const next = nextBuild();
 
   return (
+    <>
     <div className="rv-panel s12" data-research-admin>
       <div className="rv-ph"><h3>Research datasets</h3><small>owner only · every download is in the audit log</small></div>
       <p className="muted rs-intro">Trades, report statistics and habits of the <b>{optedIn}</b> user{optedIn === 1 ? '' : 's'} who opted in to research, pseudonymised.
@@ -61,6 +62,49 @@ export default function ResearchAdmin() {
       <p className="rv-note">Inside each ZIP: subjects.csv, reports.csv, trades.csv, habits.csv and a README describing the columns. No emails, names, file names
         or internal ids; a trader is a stable pseudonym, a report a pseudonym valid in that file only. Only users whose research consent is on at build time are
         included. Use it only to improve PnL Lens’s analysis: do not try to re-identify anyone and do not share it outside PnL Lens.</p>
+    </div>
+    <Lookup datasets={(rows || []).filter((r) => r.status === 'ready' && (r.reports ?? 0) > 0)} />
+    </>
+  );
+}
+
+interface Found { kind: 'subject' | 'report'; user: { id: string; email: string; status: string }; report: { id: string; name: string | null; createdAt: string; deleted: boolean } | null }
+
+/** Subject (64 hex) or report (24 hex, from one dataset) code → the account; the database checks the owner role and audits it. */
+function Lookup({ datasets }: { datasets: Row[] }) {
+  const [code, setCode] = useState(''), [exportId, setExportId] = useState(''), [reason, setReason] = useState('');
+  const [found, setFound] = useState<Found | null>(null), [err, setErr] = useState(''), [busy, setBusy] = useState(false);
+  const clean = code.trim().toLowerCase();
+  const isReport = /^[0-9a-f]{24}$/.test(clean);
+  async function look(e: React.FormEvent) {
+    e.preventDefault(); setBusy(true); setErr(''); setFound(null);
+    try { setFound(await api<Found>('/admin/research/lookup', { body: { code: clean, exportId: isReport ? exportId || null : null, reason } })); }
+    catch (x) { setErr((x as ApiError).message); }
+    finally { setBusy(false); }
+  }
+  return (
+    <div className="rv-panel s12" data-research-lookup>
+      <div className="rv-ph"><h3>Find who a row belongs to</h3><small>owner only · every lookup is recorded with your reason</small></div>
+      <p className="muted rs-intro">The downloaded files are pseudonymised, but PnL Lens keeps the link. Paste a <b>subject</b> (64 characters, any dataset) or
+        a <b>report</b> code (24 characters) and choose the dataset it came from.</p>
+      <form className="rs-lookup" onSubmit={look}>
+        <input aria-label="Subject or report code" placeholder="Subject or report code" value={code} onChange={(e) => setCode(e.target.value)} spellCheck={false} />
+        {isReport && (
+          <select aria-label="Dataset" value={exportId} onChange={(e) => setExportId(e.target.value)} required>
+            <option value="">Dataset…</option>
+            {datasets.map((d) => <option key={d.id} value={d.id}>{when(d.created_at)} · {d.reports} reports</option>)}
+          </select>
+        )}
+        <input aria-label="Reason" placeholder="Reason (e.g. consent withdrawal, data request)" value={reason} onChange={(e) => setReason(e.target.value)} />
+        <button className="btn" disabled={busy || !clean || reason.trim().length < 3}>{busy ? 'Looking up…' : 'Look up'}</button>
+      </form>
+      {err && <p className="status err">{err}</p>}
+      {found && (
+        <div className="rs-found" data-lookup-result>
+          <div><span className="mut">Account</span> <b>{found.user.email}</b>{found.user.status !== 'active' && <span className="mut"> · {found.user.status}</span>}</div>
+          {found.report && <div><span className="mut">Report</span> <b>{found.report.name || 'Untitled'}</b> · {day(found.report.createdAt)}{found.report.deleted && <span className="mut"> · deleted</span>}</div>}
+        </div>
+      )}
     </div>
   );
 }

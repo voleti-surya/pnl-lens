@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 255 files._
+_Generated from file headers by `npm run docs:index` — 257 files._
 
 ### Pages
 
@@ -196,14 +196,14 @@ _Generated from file headers by `npm run docs:index` — 255 files._
 | File | What it does |
 |---|---|
 | `apps/api/src/routes/admin.ts` | Admin console API ported from apps/web/app/api/admin/* (role read from the DB each request, every read audited) plus the owner-only manual plan grant (D5). |
-| `apps/api/src/routes/research.ts` | Research datasets (owner only): list, "Build now", and download (decrypted from the exports bucket, every download audited). |
+| `apps/api/src/routes/research.ts` | Research datasets (owner only): list, "Build now", download (decrypted from the exports bucket, every download audited), and find who a subject or report code belongs to (reason required, audited). |
 | `apps/api/src/routes/telemetry.ts` | POST /events (allow-listed product events; two landing events also from visitors) and POST /errors (browser errors); always 204. |
 | `apps/api/src/routes/users-admin.ts` | Admin user management: user list with research status, "Request reports" email (owner), restrict / unrestrict (owner, admin), delete (owner); the public one-click consent link. |
 | `apps/web/app/admin/blog/preview/[id]/page.tsx` | REQ-7 private article preview (any status) for owner/admin: the public article layout with a "Preview" banner; never indexed. |
 | `apps/web/app/admin/page.tsx` | Admin console page: staff only (role from the API, read from the database on every request). |
 | `apps/web/components/admin/AdminConsole.tsx` | Admin console UI: Users, User management, Finance, Errors, Support, Product, Blog and Research tabs (shown per role). |
 | `apps/web/components/admin/BlogAdmin.tsx` | REQ-7 admin "Blog" tab (owner/admin): post list with views, Markdown editor with live preview, cover upload, SEO panel, publish/schedule/unpublish/archive/delete. |
-| `apps/web/components/admin/ResearchAdmin.tsx` | Admin "Research" tab (owner only): research datasets built on the 1st and 16th from opted-in users, Build now, download. |
+| `apps/web/components/admin/ResearchAdmin.tsx` | Admin "Research" tab (owner only): research datasets built on the 1st and 16th from opted-in users, Build now, download; find who a subject or report code belongs to (reason required, audited). |
 | `apps/web/components/admin/UserAdmin.tsx` | Admin "User management" tab: search and filter users, see whose reports are in the research dataset, Request reports (owner), Restrict / Unrestrict (owner, admin), Delete (owner). |
 | `apps/web/components/ErrorReporter.tsx` | Sends browser errors to /api/v1/errors (max 5 per page load). |
 | `packages/shared/src/admin/queries.ts` | SQL behind each admin tab (DAU/MAU, revenue, errors, tickets, product). |
@@ -238,7 +238,7 @@ _Generated from file headers by `npm run docs:index` — 255 files._
 | `apps/worker/src/maintenance.ts` | Scheduled jobs: nightly purge (raw files after 30 days, unsaved drafts after 24 h, old sign-in codes) and the storage sweep that deletes shredded objects. |
 | `apps/worker/src/pipeline.ts` | One analysis job: fetch + decrypt files (logged) → engine in a child process → store payload, trades, fills, metrics, traits, parse runs in one transaction. |
 | `apps/worker/src/queue-worker.ts` | BullMQ consumer for analysis jobs: runs the pipeline, retries infrastructure errors, and on the final failure marks the analysis failed (dead letter). |
-| `apps/worker/src/research.ts` | Research dataset (every 1st and 16th, or "Build now"): CSVs from the pseudonymised research views (opted-in users only), zipped, encrypted, kept 90 days; expiry sweep. |
+| `apps/worker/src/research.ts` | Research dataset (every 1st and 16th, or "Build now"): CSVs from the pseudonymised research views (opted-in users only), zipped, encrypted, kept 90 days; report links kept for the owner's lookup; expiry sweep. |
 | `apps/worker/src/storage.ts` | Object storage for the worker (S3 API on Garage): read encrypted files, delete shredded ones. In-memory version for tests. |
 | `apps/worker/src/zip.ts` | Minimal ZIP writer (deflate, CRC-32 from node:zlib) for the data-export archive; no third-party dependency. |
 
@@ -301,6 +301,7 @@ _Generated from file headers by `npm run docs:index` — 255 files._
 | `packages/db/migrations/0022_user_admin.sql` | Admin user management: restrict / unrestrict (owner, admin) and delete (owner) as role-checked, audited functions; research consent invites sent by email. |
 | `packages/db/migrations/0023_credits_spec.sql` | Credits spec (19 Oct 2026): "+" refused once the report's plan window has ended; user_reports_left() = usable reports (active plans only). |
 | `packages/db/migrations/0024_plan_reminders.sql` | 30-day plan check-up reminders: one active reminder per user (a date), sent once from 09:00 IST by the api (the only service with mail egress). |
+| `packages/db/migrations/0025_research_links.sql` | Research datasets stay pseudonymised for download, but PnL Lens keeps the link: research_export_reports (report pseudonym → report) and an owner-only, audited research_lookup(). |
 | `packages/db/optional/pg_cron.sql` | Optional: schedule the purge inside Postgres if pg_cron is available. |
 | `packages/db/scripts/seed-dev.mjs` | Applies seed.sql (dev user with credits) — only when SEED_DEV_DATA=true (set by infra/compose.dev.yml only). |
 | `packages/db/scripts/setup-roles.mjs` | Creates/updates the login roles lens_app and lens_worker with passwords from env (runs after migrations, as superuser). |
@@ -366,7 +367,7 @@ _Generated from file headers by `npm run docs:index` — 255 files._
 | `apps/worker/test/hostile.test.ts` | Hostile files: a parse that runs too long is killed, one that exhausts memory crashes only its child; the worker carries on and the job fails cleanly. |
 | `apps/worker/test/pipeline.test.ts` | Every golden case through the real pipeline (encrypted storage → engine child → DB): stored report equals the parity output; failures cost no credit. |
 | `apps/worker/test/queue.test.ts` | Real sample files through the real queue (API producer → Redis → worker consumer); retries then dead letter; nightly purge and storage sweep. |
-| `apps/worker/test/research.test.ts` | Research dataset: only opted-in users, encrypted at rest, 4 CSVs + README, no emails/names/file names/internal ids, per-export report pseudonyms, consent withdrawal, expiry sweep, worker role limits. |
+| `apps/worker/test/research.test.ts` | Research dataset: only opted-in users, encrypted at rest, 4 CSVs + README, no emails/names/file names/internal ids, per-export report pseudonyms, links kept for the owner's audited lookup, consent withdrawal, expiry sweep, worker role limits. |
 | `packages/db/test/db/blog.test.ts` | REQ-7 blog in the database: app role reads the public view only, owner/admin-only functions, audit rows, visibility rules, slug redirects. |
 | `packages/db/test/db/credits.test.ts` | Credits spec (19 Oct 2026) acceptance checks in the database: reports left, "+" free up to the limit, failed files and deletes spend/return nothing, plan window, soonest-expiring first. |
 | `packages/db/test/db/harness.ts` | DB test harness: fresh database per suite on the throwaway test Postgres, real migrate + setup-roles scripts, role-scoped clients, fixtures. |
@@ -374,6 +375,7 @@ _Generated from file headers by `npm run docs:index` — 255 files._
 | `packages/db/test/db/plan-reminders.test.ts` | Check-up reminders (0024): one active per user, lens_app may only cancel (not change dates or mark sent), worker has no access, claim is once-only. |
 | `packages/db/test/db/plans.test.ts` | Server-side plan rules: create_report_from_analysis (all refusal reasons, races), file-set lock, owner-only manual grant, webhook replay. |
 | `packages/db/test/db/privacy.test.ts` | Rule 7 in the database: consents, 30-day file purge with key shredding, draft purge, report delete, account delete, research views. |
+| `packages/db/test/db/research-links.test.ts` | Research links (0025): worker may insert but not read report links; research_lookup is owner-only, needs a reason, needs the dataset for report codes, audits every lookup, shows deleted accounts as deleted. |
 | `packages/db/test/db/rewrap.test.ts` | Key rotation: rewrap-keys.mjs moves every file key from k1 to k2; files still decrypt; dry run changes nothing; re-running is safe. |
 | `packages/db/test/db/roles.test.ts` | Least privilege (rule 4): what lens_app, lens_worker, lens_research and PUBLIC can and cannot do after migration 0014. |
 | `packages/db/test/db/store.test.ts` | Worker store step on a real database: every golden report stored as payload + trades + metrics + traits in one transaction, idempotent. |
@@ -403,8 +405,8 @@ _Generated from file headers by `npm run docs:index` — 255 files._
 | `tests/e2e-web/motion.spec.ts` | Motion system (19 Oct 2026): reduced motion = no animation and everything visible; reveal-on-scroll ends visible; sliding tab ink follows the selected tab; sign-in steps work with View Transitions. |
 | `tests/e2e-web/plan.spec.ts` | 30-day plan: "30-day plan" button at the top right of a report downloads the PDF; "Remind me" turns on a check-up email, shown in Your data, sent once when due. |
 | `tests/e2e-web/privacy.spec.ts` | Data rights in the browser: research opt-in toggle, export my data (worker builds the ZIP, download works), delete my account. |
-| `tests/e2e-web/reports.spec.ts` | Consent boxes (Terms/Privacy links, research unticked) and finding/renaming reports: dashboard search, sort, rename; rename on the report page. |
-| `tests/e2e-web/research.spec.ts` | Research datasets end to end: the owner builds one now (the real worker, storage and encryption), downloads the ZIP; an admin has no Research tab. |
+| `tests/e2e-web/reports.spec.ts` | Consent boxes (Terms/Privacy links, research unticked) and finding/renaming reports: dashboard search, sort, rename; rename on the report page; the dashboard is one centred column. |
+| `tests/e2e-web/research.spec.ts` | Research datasets end to end: the owner builds one now (the real worker, storage and encryption), downloads the ZIP; finds who a subject or report code belongs to (audited); an admin has no Research tab. |
 | `tests/e2e-web/score-card.spec.ts` | REQ-1: the Progress score card's level labels never overlap, at every level and width, in Chromium (Chrome/Edge) and WebKit (Safari). |
 | `tests/e2e-web/user-admin.spec.ts` | User management end to end: owner requests reports → email → one-click Yes → Included; restrict signs the user out; delete with typed email; admin and support limits. |
 | `tests/e2e-web/workspace.spec.ts` | Browser end to end on the stack: sign in → upload with consent → loader → report (5 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete. |

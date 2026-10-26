@@ -20,7 +20,7 @@ export default async function Dashboard() {
   if (!me) redirect('/login?next=/dashboard');
   const [{ plans, prices }, reports] = await Promise.all([loadPlanData(), loadHistory()]);
   return (
-    <>
+    <div className="dash">
       <JourneyBar plans={plans} reports={reports} prices={prices} />
       <div className="report-head">
         <div>
@@ -31,13 +31,13 @@ export default async function Dashboard() {
           {(me.reportsLeft ?? 0) > 0 ? <Link className="btn" href="/upload">New report</Link> : <Link className="btn" href="/pricing">See plans</Link>}
         </div>
       </div>
-      <div className="panel" style={{ maxWidth: 620 }}>
+      <div className="panel dash-reports">
         <PlanCard plan={currentPlan(plans)} />
         {reports.length === 0
           ? <div className="empty">No reports yet. <Link href="/upload" style={{ color: 'var(--y)' }}>Upload your first file</Link>.</div>
           : <ReportList reports={reports} />}
       </div>
       <DataRights />
-    </>
+    </div>
   );
 }

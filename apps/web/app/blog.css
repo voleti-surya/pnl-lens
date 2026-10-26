@@ -138,6 +138,8 @@ a.bl-tag:hover { background: var(--y); color: var(--on-y); }
 @media (max-width: 960px) { .ab-cols { grid-template-columns: 1fr; } .ab-side { position: static; } }
 .bl-preview-bar { max-width: 720px; margin: 0 auto 24px; padding: 10px 14px; border: 1px dashed var(--y-line); border-radius: var(--r-sm); color: var(--y); font-size: 13px; font-weight: 600; text-transform: none; }
 .rs-intro { margin: 0 0 12px; font-size: 14px; line-height: 1.55; } .rs-intro b { color: var(--ink); }
+.rs-lookup { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .rs-lookup input { flex: 1 1 220px; min-height: 38px; } .rs-lookup select { min-height: 38px; background: var(--s2); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 0 10px; }
+.rs-found { margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--s2); display: grid; gap: 4px; font-size: 14px; }
 
 /* admin User management tab (19 Oct 2026) */
 .um-search { max-width: 320px; min-height: 38px; }

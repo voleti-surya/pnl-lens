@@ -1,7 +1,7 @@
 /**
  * @file  tests/e2e-web/reports.spec.ts
  * @area  Tests
- * @what  Consent boxes (Terms/Privacy links, research unticked) and finding/renaming reports: dashboard search, sort, rename; rename on the report page.
+ * @what  Consent boxes (Terms/Privacy links, research unticked) and finding/renaming reports: dashboard search, sort, rename; rename on the report page; the dashboard is one centred column.
  */
 import { test, expect } from '@playwright/test';
 import path from 'node:path';
@@ -72,4 +72,18 @@ test('dashboard: search, sort and rename; report page: rename', async ({ page })
   await expect(list.locator('.rl-name').first()).toHaveText('Alpha (renamed)');
   await page.reload();
   await expect(page.locator('[data-report-list] .rl-name').filter({ hasText: 'Alpha (renamed)' })).toHaveCount(1);
+});
+
+test('dashboard: one centred column on a wide screen; no sideways scroll on a phone', async ({ page }) => {
+  await signIn(page, email, '/dashboard');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/dashboard');
+  const reports = await page.locator('.dash-reports').boundingBox(), data = await page.locator('.data-rights').boundingBox();
+  const mid = await page.evaluate(() => document.documentElement.clientWidth / 2);
+  expect(Math.abs(reports!.x + reports!.width / 2 - mid)).toBeLessThanOrEqual(2);
+  expect(Math.abs(data!.x - reports!.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(data!.width - reports!.width)).toBeLessThanOrEqual(1);
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto('/dashboard');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });

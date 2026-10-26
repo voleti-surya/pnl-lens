@@ -203,7 +203,9 @@ a.credits-pill:hover{border-color:var(--y);background:var(--y-tint)}a.credits-pi
 .buy-note{margin:10px 0 0}
 .btn-danger{background:var(--loss);color:var(--on-y)}.btn-danger:hover{background:#FF7F78}.btn-danger:active{background:#E85A53}
 .btn.ghost.btn-danger-quiet{color:var(--loss)}.btn.ghost.btn-danger-quiet:hover{border-color:rgba(255,105,97,.5);background:var(--loss-dim)}
-.data-rights{max-width:620px;margin-top:16px}.dr-consent{margin-top:8px}.dr-actions{margin-top:16px;align-items:center}.dr-note{margin:6px 0 0}
+/* dashboard: one centred column (tester feedback 26 Oct) */
+.dash{max-width:720px;margin:0 auto}
+.data-rights{margin-top:16px}.dr-consent{margin-top:8px}.dr-actions{margin-top:16px;align-items:center}.dr-note{margin:6px 0 0}
 .dr-danger{margin-top:20px;border-top:1px solid var(--line);padding-top:16px}.dr-warn{margin:0 0 10px;font-size:14px;color:var(--ink-2)}
 .mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}.mt-20{margin-top:20px}
 

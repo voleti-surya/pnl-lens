@@ -1880,6 +1880,52 @@
         }
       }
     },
+    "/api/v1/admin/research/lookup": {
+      "post": {
+        "summary": "Find the account behind a subject or report code (owner only, audited)",
+        "tags": [
+          "admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "maxLength": 80
+                  },
+                  "exportId": {
+                    "nullable": true,
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "code",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/v1/admin/users": {
       "get": {
         "summary": "Users with research status (50 per page)",

@@ -57,4 +57,27 @@ describe.skipIf(!ok)('research datasets (admin)', () => {
     expect((await get(`/admin/research/exports/${id}/download`, owner)).statusCode).toBe(404);
     expect((await get('/admin/research/exports/00000000-0000-0000-0000-000000000000/download', owner)).statusCode).toBe(404);
   });
+
+  it('lookup: owner only; a subject or report code (with its dataset) resolves to the account; reasons required; audited', async () => {
+    const lookup = async (by: string, payload: object) => x.app.inject({ method: 'POST', url: '/api/v1/admin/research/lookup', headers: await as(by), payload });
+    const u = await makeUser(x.t);
+    const email = (await x.t.admin.query('select email from users where id = $1', [u])).rows[0].email;
+    const report = (await x.t.admin.query(`insert into reports (user_id, title, file_names, file_hashes, expires_at) values ($1, 'Q3', '{a.csv}', '{h}', 'infinity') returning id`, [u])).rows[0].id;
+    const exp = (await x.t.admin.query(`insert into research_exports (status) values ('failed') returning id`)).rows[0].id;
+    await x.t.admin.query(`insert into research_export_reports values ($1, $2, $3)`, [exp, 'ab'.repeat(12), report]);
+    const subject = (await x.t.admin.query(`select encode(hmac(convert_to($1::text, 'UTF8'), k.key, 'sha256'), 'hex') s from research.pseudonym_key k`, [u])).rows[0].s;
+
+    for (const role of ['admin', 'support'] as const) expect((await lookup(await makeUser(x.t, { role }), { code: subject, reason: 'test' })).statusCode).toBe(403);
+    expect((await x.app.inject({ method: 'POST', url: '/api/v1/admin/research/lookup', headers: await as(), payload: { code: subject, reason: 'x' } })).statusCode).toBe(401);
+    expect((await lookup(owner, { code: subject, reason: '' })).json().error).toBe('reason_required');
+    expect((await lookup(owner, { code: 'ab'.repeat(12), reason: 'ticket 4' })).json().error).toBe('export_required');
+    expect((await lookup(owner, { code: 'nope', reason: 'ticket 4' })).json().error).toBe('invalid_code');
+
+    const s = await lookup(owner, { code: subject, reason: 'ticket 4' });
+    expect(s.json()).toEqual({ kind: 'subject', user: { id: u, email, status: 'active' }, report: null });
+    const r = await lookup(owner, { code: 'ab'.repeat(12), exportId: exp, reason: 'consent withdrawal' });
+    expect(r.json()).toMatchObject({ kind: 'report', user: { id: u, email }, report: { id: report, name: 'Q3', deleted: false } });
+    expect((await lookup(owner, { code: 'c'.repeat(64), reason: 'ticket 4' })).statusCode).toBe(404);
+    expect((await x.t.admin.query(`select count(*)::int n from audit_log where action = 'research_lookup' and user_id = $1`, [owner])).rows[0].n).toBe(3);
+  });
 });

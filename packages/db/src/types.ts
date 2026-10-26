@@ -383,7 +383,14 @@ export interface PlanRemindersTable {
   cancelled_at: TimestampNull;
 }
 
+export interface ResearchExportReportsTable {
+  export_id: string;
+  report: string;
+  report_id: string;
+}
+
 export interface Database {
+  research_export_reports: ResearchExportReportsTable;
   plan_reminders: PlanRemindersTable;
   research_invites: ResearchInvitesTable;
   research_exports: ResearchExportsTable;

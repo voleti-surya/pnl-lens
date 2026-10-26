@@ -1,13 +1,14 @@
 /**
  * @file  apps/worker/src/research.ts
  * @area  Worker
- * @what  Research dataset (every 1st and 16th, or "Build now"): CSVs from the pseudonymised research views (opted-in users only), zipped, encrypted, kept 90 days; expiry sweep.
+ * @what  Research dataset (every 1st and 16th, or "Build now"): CSVs from the pseudonymised research views (opted-in users only), zipped, encrypted, kept 90 days; report links kept for the owner's lookup; expiry sweep.
  */
 /**
  * Reads only research.subjects / trades / report_metrics / report_traits (0014): users whose current research consent
  * is yes, user id replaced by a stable HMAC pseudonym ("subject"). Internal report ids never leave the database: each
  * export replaces them with HMAC(report id, a random key made for this export and then discarded), so files from one
- * export line up but cannot be joined back to the database or to another export's report ids.
+ * export line up but cannot be joined to another export's report ids by whoever holds the file. The database keeps
+ * the link (research_export_reports, 0025; the worker may insert, never read) for the owner's audited lookup.
  * Pseudonymised, not anonymous: the subject key lives in the database. Stored like the data exports (encrypted, in the
  * exports bucket under research/), readable only by the API's read-only key, downloaded by the owner (audited).
  */
@@ -40,12 +41,14 @@ Built: ${at.toISOString()} · traders: ${counts.subjects} · reports: ${counts.r
 Engine version(s): ${engines.join(', ') || '—'}
 
 ## Who is in it
-Only users whose research consent ("Also let PnL Lens use my data, anonymised, to improve its analysis") was ON when
+Only users whose research consent ("Make my insights sharper: let PnL Lens learn from my trades, with my name and email removed") was ON when
 this file was built, with an active account and at least one report (traders with no reports are left out). Each file is a full snapshot: someone who withdraws consent is left out
 of the next dataset. Delete old datasets when they are no longer needed (they are kept 90 days on the server).
 
 ## Privacy
 Pseudonymised, not anonymous. There are no emails, names, file names, broker client ids or internal ids.
+PnL Lens can link a subject or report code back to the account (the owner only, with a reason, and every lookup is
+recorded); whoever holds this file cannot.
 - subject   = a stable pseudonym for one trader (the same in every dataset)
 - report    = a pseudonym for one report, valid inside THIS dataset only
 Do not try to re-identify anyone, do not combine with other data to do so, and do not share outside PnL Lens.
@@ -87,7 +90,7 @@ export async function buildResearchExport(deps: ResearchDeps, id?: string): Prom
       };
     });
 
-    // per-export report pseudonyms; the key is never stored
+    // per-export report pseudonyms; the key is never stored (the links are, below)
     const key = crypto.randomBytes(32);
     const pseudo = new Map<string, string>();
     const report = (id: unknown) => {
@@ -115,10 +118,15 @@ export async function buildResearchExport(deps: ResearchDeps, id?: string): Prom
     const enc = encryptFile(zip, deps.currentKek);
     const storageKey = `research/${crypto.randomUUID()}`;
     await deps.storage.putExport(storageKey, enc.body);
-    await deps.db.updateTable('research_exports').set({
-      status: 'ready', ...counts, storage_key: storageKey, enc_key_id: enc.encKeyId, wrapped_dek: enc.wrappedDek, iv: enc.iv, size_bytes: zip.length,
-      completed_at: sql`now()` as any, expires_at: sql`now() + make_interval(days => ${RESEARCH_KEEP_DAYS})` as any, error: null,
-    }).where('id', '=', rowId).execute();
+    // the link back to each report stays in the database (0025, owner-only lookup); the ZIP never has it
+    const links = [...pseudo.entries()].map(([reportId, code]) => ({ export_id: rowId!, report: code, report_id: reportId }));
+    await deps.db.transaction().execute(async (trx) => {
+      for (let i = 0; i < links.length; i += 500) await trx.insertInto('research_export_reports').values(links.slice(i, i + 500)).execute();
+      await trx.updateTable('research_exports').set({
+        status: 'ready', ...counts, storage_key: storageKey, enc_key_id: enc.encKeyId, wrapped_dek: enc.wrappedDek, iv: enc.iv, size_bytes: zip.length,
+        completed_at: sql`now()` as any, expires_at: sql`now() + make_interval(days => ${RESEARCH_KEEP_DAYS})` as any, error: null,
+      }).where('id', '=', rowId!).execute();
+    });
     return { id: rowId, status: 'ready' };
   } catch (e) {
     await deps.db.updateTable('research_exports').set({ status: 'failed', error: String((e as Error).message || e).slice(0, 200), completed_at: sql`now()` as any })

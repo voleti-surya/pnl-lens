@@ -1,7 +1,7 @@
 /**
  * @file  apps/worker/test/research.test.ts
  * @area  Tests
- * @what  Research dataset: only opted-in users, encrypted at rest, 4 CSVs + README, no emails/names/file names/internal ids, per-export report pseudonyms, consent withdrawal, expiry sweep, worker role limits.
+ * @what  Research dataset: only opted-in users, encrypted at rest, 4 CSVs + README, no emails/names/file names/internal ids, per-export report pseudonyms, links kept for the owner's audited lookup, consent withdrawal, expiry sweep, worker role limits.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'node:fs';
@@ -104,6 +104,24 @@ describe.skipIf(!ok)('research dataset', () => {
     expect(csvRows(a.files['subjects.csv'])[1][0]).toBe(csvRows(b.files['subjects.csv'])[1][0]);
   });
 
+  it('the database keeps the link from each report code to its report; the owner can trace subject and report codes back (audited)', async () => {
+    const { row, files } = await open((await buildResearchExport(deps())).id);
+    const codes = new Set(['reports.csv', 'trades.csv', 'habits.csv'].flatMap((f) => csvRows(files[f]).slice(1).map((c) => c[1])));
+    const links = (await t.admin.query('select report, report_id from research_export_reports where export_id = $1', [row.id])).rows;
+    expect(new Set(links.map((l) => l.report))).toEqual(codes);
+    expect(links.map((l) => l.report_id)).toEqual([ids.yes.report]);
+    const owner = await makeUser(t, { role: 'owner' });
+    const subject = csvRows(files['subjects.csv'])[1][0];
+    const bySubject = (await t.admin.query('select * from research_lookup($1, $2, null, $3)', [owner, subject, 'support ticket 12'])).rows;
+    expect(bySubject).toEqual([expect.objectContaining({ kind: 'subject', user_id: ids.yes.user, email: ids.yes.email, report_id: null })]);
+    const byReport = (await t.admin.query('select * from research_lookup($1, $2, $3, $4)', [owner, [...codes][0], row.id, 'consent withdrawal'])).rows;
+    expect(byReport).toEqual([expect.objectContaining({ kind: 'report', user_id: ids.yes.user, report_id: ids.yes.report, report_name: 'March', report_deleted: false })]);
+    expect((await t.admin.query(`select count(*)::int n from audit_log where action = 'research_lookup' and user_id = $1`, [owner])).rows[0].n).toBe(2);
+    // the worker writes links but cannot read them back; the app cannot touch them
+    await expectPgError(asRole(t, 'lens_worker', 'select * from research_export_reports'), '42501');
+    await expectPgError(asRole(t, 'lens_app', 'select * from research_export_reports'), '42501');
+  });
+
   it('a "Build now" row is built once; the schedule skips while one is pending', async () => {
     const pending = (await t.admin.query(`insert into research_exports (requested_by) values ($1) returning id`, [ids.yes.user])).rows[0].id;
     expect((await buildResearchExport(deps())).status).toBe('skipped');
@@ -125,6 +143,8 @@ describe.skipIf(!ok)('research dataset', () => {
     expect(store.size).toBeLessThan(before);
     const left = (await t.admin.query(`select count(*)::int n from research_exports where status = 'ready' and deleted_at is null`)).rows[0].n;
     expect(left).toBe(0);
+    // the links outlive the file, so a row from an old download can still be traced
+    expect((await t.admin.query('select count(*)::int n from research_export_reports')).rows[0].n).toBeGreaterThan(0);
   });
 
   it('the worker reads only the pseudonymised views; the app can list exports but not read research data', async () => {
