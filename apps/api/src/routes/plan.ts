@@ -10,7 +10,8 @@
 import { z } from 'zod';
 import { trackWith } from '@pnl-lens/shared/admin/telemetry';
 import { buildPlan, istDate, addDays } from '@pnl-lens/shared/plan';
-import { getReport, activeReminder, setReminder, cancelReminder } from '@pnl-lens/db';
+import { scorePlan } from '@pnl-lens/shared/plan/score';
+import { getReport, activeReminder, setReminder, cancelReminder, savePlanSnapshot, planToCheck } from '@pnl-lens/db';
 import type { App, Deps } from '../app.js';
 import { fail, ok, requireUser, UUID, ipOf } from '../lib/http.js';
 import { renderPlanPdf, planDateLabel } from '../lib/plan-pdf.js';
@@ -42,7 +43,12 @@ export async function planRoutes(app: App, deps: Deps) {
     const r = await getReport(deps.db, user.id, req.params.id);
     if (!r) return fail(reply, 404, 'not_found');
     if (r.purged_at || !r.report) return fail(reply, 410, 'expired');
-    const plan = buildPlan(r.report);
+    // last month's plan, scored on this report, opens the new plan ("Your last plan: 6 of 8 met")
+    const prev = await planToCheck(deps.db, user.id, r.id, new Date(r.created_at));
+    const lastCheck = prev ? scorePlan(prev.plan, r.report) : null;
+    const plan = buildPlan(r.report, { lastCheck: lastCheck && lastCheck.measured ? lastCheck : null });
+    // kept so the next report can score this plan (check-up)
+    await savePlanSnapshot(deps.db, user.id, r.id, { generatedAt: plan.generatedAt, checkupOn: plan.checkupOn, dos: plan.dos, donts: plan.donts } as any);
     const pdf = await renderPlanPdf({ plan, reportId: r.id, appUrl: appUrlOf(req) });
     await deps.pool.query(`insert into public.audit_log (user_id, action, meta, ip) values ($1, 'plan_downloaded', $2, $3::inet)`, [user.id, JSON.stringify({ report_id: r.id }), ipOf(req)]);
     await trackWith(deps.pool, user.id, 'plan_downloaded', { checkupOn: plan.checkupOn });

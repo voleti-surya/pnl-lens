@@ -10,7 +10,8 @@
  */
 import { z } from 'zod';
 import { trackWith } from '@pnl-lens/shared/admin/telemetry';
-import { createReportFromAnalysis, addAnalysisToReport, listReports, getReport, renameReport, deleteReport, progressHistory, reportFiles, isDbError, type DbErrorCode } from '@pnl-lens/db';
+import { createReportFromAnalysis, addAnalysisToReport, listReports, getReport, renameReport, deleteReport, progressHistory, reportFiles, planToCheck, isDbError, type DbErrorCode } from '@pnl-lens/db';
+import { scorePlan } from '@pnl-lens/shared/plan/score';
 import type { App, Deps } from '../app.js';
 import { fail, ok, requireUser, UUID } from '../lib/http.js';
 
@@ -102,7 +103,10 @@ export async function reportRoutes(app: App, deps: Deps) {
     // file places: how many statements this report's plan allows, and how many it has ever used (lock)
     const sub = r.subscription_id ? await deps.db.selectFrom('subscriptions').select('files_per_report').where('id', '=', r.subscription_id).executeTakeFirst() : undefined;
     const places = { total: sub?.files_per_report ?? files.length, used: r.used_fingerprints?.length ?? files.length };
-    return ok(reply, { summary: sm, report: r.report, history, files, places });
+    // 30-day plan check-up: the newest plan downloaded before this report, scored on it (Met / Missed per rule)
+    const prev = await planToCheck(deps.db, user.id, r.id, new Date(r.created_at));
+    const planCheck = prev ? { ...scorePlan(prev.plan, r.report), fromReportId: prev.reportId, fromReportName: prev.reportName } : null;
+    return ok(reply, { summary: sm, report: r.report, history, files, places, planCheck });
   });
 
   /** Rename (history only). An empty title clears it. */

@@ -1,7 +1,7 @@
 /**
  * @file  tests/e2e-web/plan.spec.ts
  * @area  Tests
- * @what  30-day plan: "30-day plan" button at the top right of a report downloads the PDF; "Remind me" turns on a check-up email, shown in Your data, sent once when due.
+ * @what  30-day plan: "30-day plan" button at the top right of a report downloads the PDF; "Remind me" turns on a check-up email, shown in Your data, sent once when due; the next report's Progress tab scores the plan.
  */
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
@@ -54,6 +54,23 @@ test('"Remind me" turns on one check-up email; Your data shows and sends it once
   expect(sql(`select count(*) from plan_reminders where user_id = (select id from users where email = '${email}') and sent_at is not null`)).toBe('1');
   await page.reload();
   await expect(page.locator('[data-reminder]')).toHaveCount(0);
+});
+
+test('next report: Progress opens with the 30-day plan check-up (Met / Missed per rule)', async ({ page }) => {
+  await signIn(page, email, '/upload');
+  await page.goto('/upload');
+  await page.setInputFiles('#file', path.join(FIX, 'dhan_tradebook.csv'));
+  await page.check('input[name=consent]');
+  await page.getByRole('button', { name: 'Analyse' }).click();
+  await page.waitForURL(/\/report\//, { timeout: 90_000 });
+  expect(page.url()).not.toBe(reportUrl);
+  await page.getByRole('tab', { name: 'Progress' }).click();
+  const panel = page.locator('[data-plan-check]');
+  await expect(panel).toBeVisible();
+  await expect(panel.getByRole('heading', { name: 'Your 30-day plan check-up' })).toBeVisible();
+  await expect(panel).toContainText(/of \d+ measurable rules met/);
+  await expect(panel.locator('.pc-row')).toHaveCount(10);
+  expect(await panel.locator('.pc-row.met, .pc-row.missed').count()).toBeGreaterThan(0);
 });
 
 test('signed out: the reminder link goes through sign-in and comes back', async ({ browser }) => {

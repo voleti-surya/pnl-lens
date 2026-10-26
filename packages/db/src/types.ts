@@ -389,7 +389,18 @@ export interface ResearchExportReportsTable {
   report_id: string;
 }
 
+export interface PlanSnapshotsTable {
+  id: Generated<string>;
+  user_id: string;
+  report_id: string | null;
+  generated_on: string;
+  checkup_on: string;
+  plan: unknown;
+  created_at: Generated<Date>;
+}
+
 export interface Database {
+  plan_snapshots: PlanSnapshotsTable;
   research_export_reports: ResearchExportReportsTable;
   plan_reminders: PlanRemindersTable;
   research_invites: ResearchInvitesTable;

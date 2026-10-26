@@ -1,7 +1,7 @@
 /**
  * @file  apps/api/test/plan.test.ts
  * @area  Tests
- * @what  30-day plan: owner-only PDF (2 pages, links, audited, no-store), public .ics, reminders (set/replace/cancel/validate), sender claims before sending and sends once.
+ * @what  30-day plan: owner-only PDF (2 pages, links, audited, no-store), plan snapshot + check-up on the next report, public .ics, reminders (set/replace/cancel/validate), sender claims before sending and sends once.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { testDbAvailable, makeUser, givePlan, readyAnalysis } from '@pnl-lens/db/testing';
@@ -55,6 +55,25 @@ describe.skipIf(!ok)('30-day plan (api)', () => {
     const audit = await x.t.admin.query(`select meta from audit_log where user_id = $1 and action = 'plan_downloaded'`, [u]);
     expect(audit.rows[0].meta).toEqual({ report_id: reportId });
     expect((await x.t.admin.query(`select count(*)::int n from events where user_id = $1 and name = 'plan_downloaded'`, [u])).rows[0].n).toBe(1);
+  });
+
+  it('check-up: the plan downloaded from one report is scored on the next report (Met / Missed per rule)', async () => {
+    const owner = await makeUser(x.t);
+    await givePlan(x.t, owner, { reports: 3 });
+    const save = async () => (await x.app.inject({ method: 'POST', url: '/api/v1/reports', headers: await as(owner), payload: { analysisId: (await readyAnalysis(x.t, owner)).analysisId } })).json().id as string;
+    const first = await save();
+    expect((await get(`/reports/${first}`, owner)).json().planCheck).toBeNull();          // no plan downloaded yet
+    expect((await get(`/reports/${first}/plan.pdf`, owner)).statusCode).toBe(200);
+    expect((await x.t.admin.query('select count(*)::int n from plan_snapshots where user_id = $1 and report_id = $2', [owner, first])).rows[0].n).toBe(1);
+    expect((await get(`/reports/${first}`, owner)).json().planCheck).toBeNull();          // a report never checks its own plan
+    const second = await save();
+    const check = (await get(`/reports/${second}`, owner)).json().planCheck;
+    expect(check).toMatchObject({ generatedOn: istDate(new Date()), fromReportId: first, scope: 'all' });
+    expect(check.items).toHaveLength(10);
+    expect(check.measured).toBeGreaterThan(0);
+    expect(check.items.every((i: any) => ['do', 'dont'].includes(i.kind) && (i.met === null || typeof i.met === 'boolean'))).toBe(true);
+    // the same trades again: the plan's targets were improvements on them, so most rules are missed
+    expect(check.met).toBeLessThan(check.measured);
   });
 
   it('nobody else gets it; a deleted report is gone', async () => {

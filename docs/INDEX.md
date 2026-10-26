@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 257 files._
+_Generated from file headers by `npm run docs:index` — 262 files._
 
 ### Pages
 
@@ -158,9 +158,11 @@ _Generated from file headers by `npm run docs:index` — 257 files._
 | `apps/web/components/workspace/ReportList.tsx` | Dashboard report list: search (name, files, month, market, dates), sort (newest, oldest, name), clear cards with trades and net P&L, always-visible Rename. |
 | `apps/web/components/workspace/Workspace.tsx` | The report workspace (ported from the offline tool, now on the API): upload with consent, loader, file tabs + All files, "+" and ×, plan card, MON-YY history. |
 | `apps/web/lib/workspace-data.ts` | Server-side loaders for the workspace pages: my plans and my report history from the API, in the shapes the workspace uses. |
+| `packages/db/src/queries/plan-snapshots.ts` | 30-day plan snapshots (0026): saved when the plan PDF is downloaded; the newest one made before a report is what that report's check-up scores. |
 | `packages/db/src/queries/reminders.ts` | 30-day plan check-up reminders: set (replaces the active one), read, cancel (app); due list and claim-before-send (api sender, via 0024 functions). |
 | `packages/shared/src/journey.ts` | REQ-2 "trading journey": which of the 5 steps are done or locked, the score line and the next action, from real plans and saved reports only. |
 | `packages/shared/src/plan/build.ts` | 30-day plan from a stored report: 5 Do and 5 Don't rules (each with Why and Now → Target), a scorecard, a weekly check-in and the check-up date. Habits only, no buy/sell advice. |
+| `packages/shared/src/plan/score.ts` | 30-day plan check-up: scores each measurable rule of an earlier plan against a newer report (Met / Missed / not measurable), on the trades since the plan when there are enough. |
 
 ### Engine
 
@@ -302,6 +304,7 @@ _Generated from file headers by `npm run docs:index` — 257 files._
 | `packages/db/migrations/0023_credits_spec.sql` | Credits spec (19 Oct 2026): "+" refused once the report's plan window has ended; user_reports_left() = usable reports (active plans only). |
 | `packages/db/migrations/0024_plan_reminders.sql` | 30-day plan check-up reminders: one active reminder per user (a date), sent once from 09:00 IST by the api (the only service with mail egress). |
 | `packages/db/migrations/0025_research_links.sql` | Research datasets stay pseudonymised for download, but PnL Lens keeps the link: research_export_reports (report pseudonym → report) and an owner-only, audited research_lookup(). |
+| `packages/db/migrations/0026_plan_snapshots.sql` | The 30-day plan as it was given to the user (rules, metrics, targets), kept so the next report can score it (check-up: Met / Missed per rule). |
 | `packages/db/optional/pg_cron.sql` | Optional: schedule the purge inside Postgres if pg_cron is available. |
 | `packages/db/scripts/seed-dev.mjs` | Applies seed.sql (dev user with credits) — only when SEED_DEV_DATA=true (set by infra/compose.dev.yml only). |
 | `packages/db/scripts/setup-roles.mjs` | Creates/updates the login roles lens_app and lens_worker with passwords from env (runs after migrations, as superuser). |
@@ -356,7 +359,7 @@ _Generated from file headers by `npm run docs:index` — 257 files._
 | `apps/api/test/openapi.test.ts` | apps/api/openapi.json matches the routes (regenerate: npm run openapi -w @pnl-lens/api); global and sign-in rate limits. |
 | `apps/api/test/password.test.ts` | Email + password sign-in: start → code for new emails, required password after the first code, password login, lockout, forgot, change needs a fresh sign-in, other devices signed out, no hash leaks. |
 | `apps/api/test/payments-admin.test.ts` | Payments (off mode, Checkout verify, webhook signature, replay idempotency, legacy path) and admin RBAC (tabs, roles, audit, owner-only grant). |
-| `apps/api/test/plan.test.ts` | 30-day plan: owner-only PDF (2 pages, links, audited, no-store), public .ics, reminders (set/replace/cancel/validate), sender claims before sending and sends once. |
+| `apps/api/test/plan.test.ts` | 30-day plan: owner-only PDF (2 pages, links, audited, no-store), plan snapshot + check-up on the next report, public .ics, reminders (set/replace/cancel/validate), sender claims before sending and sends once. |
 | `apps/api/test/research.test.ts` | Research dataset routes: owner only (403 for admin, support, finance, analyst, user), Build now (one at a time), download decrypts and is audited, expired → 404. |
 | `apps/api/test/sniff.test.ts` | Upload type check: every engine fixture is accepted with the engine's kind; executables, images, wrong ZIPs and binaries posing as CSV are refused. |
 | `apps/api/test/uploads.test.ts` | Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete. |
@@ -373,6 +376,7 @@ _Generated from file headers by `npm run docs:index` — 257 files._
 | `packages/db/test/db/harness.ts` | DB test harness: fresh database per suite on the throwaway test Postgres, real migrate + setup-roles scripts, role-scoped clients, fixtures. |
 | `packages/db/test/db/migrations.test.ts` | Migrations apply from 0001 on an empty database and on top of a 0007 database with old data; the old web flow keeps working. |
 | `packages/db/test/db/plan-reminders.test.ts` | Check-up reminders (0024): one active per user, lens_app may only cancel (not change dates or mark sent), worker has no access, claim is once-only. |
+| `packages/db/test/db/plan-snapshots.test.ts` | Plan snapshots (0026): app may save and read but not change; one per report and day; the check-up picks the newest plan made before a report; closing the account removes plans and reminders. |
 | `packages/db/test/db/plans.test.ts` | Server-side plan rules: create_report_from_analysis (all refusal reasons, races), file-set lock, owner-only manual grant, webhook replay. |
 | `packages/db/test/db/privacy.test.ts` | Rule 7 in the database: consents, 30-day file purge with key shredding, draft purge, report delete, account delete, research views. |
 | `packages/db/test/db/research-links.test.ts` | Research links (0025): worker may insert but not read report links; research_lookup is owner-only, needs a reason, needs the dataset for report codes, audits every lookup, shows deleted accounts as deleted. |
@@ -392,6 +396,7 @@ _Generated from file headers by `npm run docs:index` — 257 files._
 | `packages/shared/test/otp.test.ts` | Email one-time code helpers. |
 | `packages/shared/test/password.test.ts` | scrypt password hashing: round trip, wrong password, unique salts, the dummy hash never matches, and the password rules. |
 | `packages/shared/test/payments.test.ts` | Razorpay checkout and webhook signature verification. |
+| `packages/shared/test/plan-score.test.ts` | 30-day plan check-up scoring on the golden reports: metrics match the plan's own numbers, better trading scores Met, habit-only rules are not measurable, trades since the plan are used when there are enough. |
 | `packages/shared/test/plan.test.ts` | 30-day plan generator on every golden report: always 5 Do + 5 Don't, real numbers, deterministic, habits only. |
 | `packages/shared/test/pricing.test.ts` | REQ-3: plan durations and prices from the single source of truth, the wording built from them, and no stale copy left in the repo. |
 | `packages/shared/test/rbac.test.ts` | Role permissions and error fingerprinting. |
@@ -403,7 +408,7 @@ _Generated from file headers by `npm run docs:index` — 257 files._
 | `tests/e2e-web/landing.spec.ts` | REQ-4: on a 390x844 phone pricing starts within 4 screen-heights; See plans / nav / pill reach it; mobile card order; no section lost; landing events stored. |
 | `tests/e2e-web/login.spec.ts` | Sign-in card: new email → code → required password → dashboard; password sign-in sends no code; wrong password; forgot → code → new password; the set step can't be skipped; layout at 320/390/1440. |
 | `tests/e2e-web/motion.spec.ts` | Motion system (19 Oct 2026): reduced motion = no animation and everything visible; reveal-on-scroll ends visible; sliding tab ink follows the selected tab; sign-in steps work with View Transitions. |
-| `tests/e2e-web/plan.spec.ts` | 30-day plan: "30-day plan" button at the top right of a report downloads the PDF; "Remind me" turns on a check-up email, shown in Your data, sent once when due. |
+| `tests/e2e-web/plan.spec.ts` | 30-day plan: "30-day plan" button at the top right of a report downloads the PDF; "Remind me" turns on a check-up email, shown in Your data, sent once when due; the next report's Progress tab scores the plan. |
 | `tests/e2e-web/privacy.spec.ts` | Data rights in the browser: research opt-in toggle, export my data (worker builds the ZIP, download works), delete my account. |
 | `tests/e2e-web/reports.spec.ts` | Consent boxes (Terms/Privacy links, research unticked) and finding/renaming reports: dashboard search, sort, rename; rename on the report page; the dashboard is one centred column. |
 | `tests/e2e-web/research.spec.ts` | Research datasets end to end: the owner builds one now (the real worker, storage and encryption), downloads the ZIP; finds who a subject or report code belongs to (audited); an admin has no Research tab. |

@@ -13,7 +13,13 @@ export interface HistoryItem { id: string; title: string | null; monthLabel: str
 export const reportName = (r: { title: string | null; createdAt: string }) =>
   r.title || 'Report · ' + new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
 export interface FileTab { id: string; name: string; position: number; stored: boolean; report: any | null }
-export interface CurrentReport { id: string; createdAt: string; title: string | null; report: any; files: FileTab[]; places: { total: number; used: number } }
+/** 30-day plan check-up from the API (packages/shared/src/plan/score.ts PlanCheck + where the plan came from) */
+export interface PlanCheckView {
+  generatedOn: string; checkupOn: string; scope: 'since' | 'all'; trades: number; met: number; measured: number;
+  fromReportId: string | null; fromReportName: string | null;
+  items: { id: string; kind: 'do' | 'dont'; title: string; habit: string; before: string; target: string; now: string | null; met: boolean | null }[];
+}
+export interface CurrentReport { id: string; createdAt: string; title: string | null; report: any; files: FileTab[]; places: { total: number; used: number }; planCheck?: PlanCheckView | null }
 
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 export const monthTag = (d: string) => { const x = new Date(d); return MON[x.getMonth()] + '-' + String(x.getFullYear()).slice(2); };

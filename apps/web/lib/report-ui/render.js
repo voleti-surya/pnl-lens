@@ -239,9 +239,29 @@ export function mountReport(root, R, fmt) {
     return `<svg viewBox="0 0 ${W} ${Hh}" class="pg-spark ${good ? 'good' : 'bad'}"><path d="${d}"/></svg>`;
   }
   const STATUS = { fixed: ['Fixed', '✓'], improving: ['Improving', '↗'], same: ['Same', '→'], worse: ['Worse', '↘'], new: ['New', '!'], present: ['Present', '•'], clean: ['Clean', '✓'] };
+  /** 30-day plan check-up (website): the last plan's rules scored on this report. Met / Missed / not visible in a statement. */
+  function planCheckPanel() {
+    const c = fmt.planCheck; if (!c || !c.items || !c.items.length) return '';
+    const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const dm = (iso) => { const [, m, d] = String(iso).split('-'); return `${Number(d)} ${MON[Number(m) - 1]}`; };
+    const scope = c.scope === 'since' ? `scored on the ${c.trades} trades since ${dm(c.generatedOn)}` : `scored on this whole statement (${c.trades} trades)`;
+    const row = (i) => {
+      const st = i.met === true ? 'met' : i.met === false ? 'missed' : 'self';
+      const tag = i.met === true ? 'Met' : i.met === false ? 'Missed' : 'Self-check';
+      return `<li class="pc-row ${st}"><span class="pc-st" aria-label="${tag}">${tag}</span><div class="pc-body"><b>${esc(i.title)}</b>
+        <span class="pc-nums">${i.now ? `Then ${esc(i.before)} <i>→</i> now <b>${esc(i.now)}</b> · target ${esc(i.target)}` : 'Not visible in a statement: tick it yourself on your plan.'}</span></div></li>`;
+    };
+    const dos = c.items.filter((i) => i.kind === 'do'), donts = c.items.filter((i) => i.kind === 'dont');
+    return `<div class="rv-panel s12 pc" data-plan-check><div class="rv-ph"><h3>Your 30-day plan check-up</h3><small>plan from ${esc(dm(c.generatedOn))}${c.fromReportName ? ` (${esc(c.fromReportName)})` : ''} · ${esc(scope)}</small></div>
+      <div class="pc-head"><div class="pc-score"><b>${c.met}</b><span>of ${c.measured} measurable rules met</span></div>
+        <div class="pc-bar" role="img" aria-label="${c.met} of ${c.measured} met"><i style="width:${c.measured ? Math.round((c.met / c.measured) * 100) : 0}%"></i></div>
+        <p class="pc-note">${c.measured && c.met === c.measured ? 'Every measurable rule held. Keep the same process and download your next plan.' : c.met ? 'Keep what held; the missed rules are your focus for the next 30 days.' : 'None held yet. Pick the one rule that cost the most and start there.'}</p></div>
+      <div class="pc-cols"><div><h4>Do</h4><ul class="pc-list">${dos.map(row).join('')}</ul></div><div><h4>Don’t</h4><ul class="pc-list">${donts.map(row).join('')}</ul></div></div></div>`;
+  }
+
   function progressTab() {
     const el = $('#progress'); if (!el) return;
-    if (!P) { el.innerHTML = '<div class="rv-panel"><p class="rv-empty">Progress tracking is available for reports created with the latest version.</p></div>'; return; }
+    if (!P) { el.innerHTML = `<div class="rv-grid">${planCheckPanel()}<div class="rv-panel s12"><p class="rv-empty">Progress tracking is available for reports created with the latest version.</p></div></div>`; return; }
     const ms = P.months, cur = ms[ms.length - 1] || null, prev = ms[ms.length - 2] || null, first = ms[0] || null;
     const headScore = cur ? cur.score : P.overall.score;
     const lab = (k) => { const [y, mo] = k.split('-'); return new Date(Date.UTC(+y, +mo - 1, 1)).toLocaleString('en', { month: 'short', timeZone: 'UTC' }) + ' ' + y.slice(2); };
@@ -255,6 +275,8 @@ export function mountReport(root, R, fmt) {
         <p class="pg-next">${lv.next ? `<b>${lv.next.gap}</b> point${lv.next.gap === 1 ? '' : 's'} to <b>${esc(lv.next.name)}</b>` : 'Top level reached. Keep it steady.'}</p></div>
       <div class="pg-hero-note"><span class="pg-kicker">${cur ? esc(lab(cur.key)) + ' summary' : 'Summary'}</span><p>${esc(P.summary || '')}</p>
         ${(P.badges || []).length ? `<div class="pg-badges">${P.badges.map((b) => `<span class="pg-badge" title="${esc(b.desc)}"><i></i>${esc(b.name)}</span>`).join('')}</div>` : ''}</div></div>`;
+    // 30-day plan check-up, right under the score
+    h += planCheckPanel();
     // 2 — radar + goals
     h += `<div class="rv-panel s7" data-behav="radar"><div class="rv-ph"><h3>Your six habits</h3><small>0–100, higher is better</small>${info('radar')}</div>${radar(cur ? cur.d : P.overall.d, prev ? prev.d : null)}</div>`;
     const gfmt = (g, v) => (g.fmt === 'x' ? Number(v).toFixed(2) : g.fmt === '%' ? Math.round(v) + '%' : Number(v).toFixed(1));

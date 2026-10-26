@@ -402,3 +402,25 @@
   body:has(#reportRoot), body:has([data-preview]) { background: #fff !important; }
 }
 
+
+/* 30-day plan check-up (Progress tab; lib/report-ui/render.js planCheckPanel) */
+.pc-head { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 20px; align-items: center; margin-bottom: 18px; }
+.pc-score { display: flex; align-items: baseline; gap: 8px; grid-row: span 2; }
+.pc-score b { font-size: 44px; line-height: 1; color: var(--y); font-variant-numeric: tabular-nums; }
+.pc-score span { color: var(--ink-2); font-size: 14px; max-width: 18ch; line-height: 1.35; }
+.pc-bar { height: 8px; border-radius: 999px; background: var(--s3); overflow: hidden; }
+.pc-bar i { display: block; height: 100%; background: var(--y); border-radius: inherit; }
+.pc-note { margin: 0; color: var(--ink-2); font-size: 14px; }
+.pc-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.pc-cols h4 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
+.pc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pc-row { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; align-items: start; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--s1); }
+.pc-st { font-size: 12px; font-weight: 700; text-align: center; padding: 3px 0; border-radius: 999px; }
+.pc-row.met .pc-st { background: var(--gain-dim); color: var(--gain); }
+.pc-row.missed .pc-st { background: var(--loss-dim); color: var(--loss); }
+.pc-row.self .pc-st { background: var(--s3); color: var(--ink-3); }
+.pc-body b { display: block; font-size: 14px; }
+.pc-nums { display: block; margin-top: 3px; color: var(--ink-2); font-size: 13px; line-height: 1.45; }
+.pc-nums b { display: inline; color: var(--ink); }
+.pc-nums i { font-style: normal; color: var(--ink-3); }
+@media (max-width: 760px) { .pc-cols { grid-template-columns: 1fr; } .pc-head { grid-template-columns: 1fr; } .pc-score { grid-row: auto; } }

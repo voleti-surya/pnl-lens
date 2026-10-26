@@ -9,5 +9,7 @@ export function mountReport(
     /** where check-ups are kept: 'on this device' (offline tool, default) or 'in your account' (website) */
     historyWhere?: string;
     /** REQ-2 "What's next" card (website): the journey's next action */
-    next?: { kind: 'upgrade' | 'checkup'; text: string; cta: string; href: string } }
+    next?: { kind: 'upgrade' | 'checkup'; text: string; cta: string; href: string };
+    /** 30-day plan check-up (website): the last plan scored on this report, shown first in Progress */
+    planCheck?: import('../../components/workspace/model').PlanCheckView | null }
 ): { show: (tab: string) => void; destroy: () => void };
