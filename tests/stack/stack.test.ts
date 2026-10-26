@@ -432,4 +432,8 @@ describe('hardening (Phase 7)', () => {
       expect(h.get('server'), p).toBeNull();
     }
   });
+
+  it('Next image optimizer is closed (not used; next <= 15.5.27 advisory)', async () => {
+    for (const q of ['/_next/image?url=%2Ficon.svg&w=64&q=75', '/_next/image']) expect((await fetch(`${BASE}${q}`)).status, q).toBe(404);
+  });
 });
