@@ -47,6 +47,8 @@ Everything lives in one `.env` file at the repo root (git-ignored). `npm run sta
 | `RATE_LIMIT_EXEMPT_IPS` | — | Load and e2e tests only (`infra/compose.load.yml`, `infra/compose.e2e.yml`: every test browser shares one address): IPs/CIDRs the rate limiter skips. `compose.prod.yml` never passes it |
 | `PLAN_REMINDERS` | on | `off` stops the API's check-up reminder sender |
 | `PLAN_REMINDER_INTERVAL_MS` / `PLAN_REMINDER_FROM_HOUR` | `600000` / `9` | How often the API looks for due check-up reminders, and the IST hour from which a reminder due today goes out. The e2e overlay uses `2000` / `0` |
+| `WEEKLY_DIGEST` | on | `off` stops the API's weekly summary sender |
+| `DIGEST_INTERVAL_MS` / `DIGEST_FROM_HOUR` | `900000` / `9` | How often the API looks for weekly summaries to send, and the IST hour on Monday from which they go out. The e2e overlay uses `2000` / `0` |
 | `PLAN_FONTS_DIR` | `apps/api/assets/fonts` | Fonts embedded in the 30-day plan PDF (found automatically) |
 | `RETENTION_USAGE_MONTHS` / `RETENTION_AUDIT_MONTHS` | `12` / `24` | Log retention (`purge_logs`, LAWYER CHECK) |
 | `EXTRA_ALLOWED_ORIGINS` | — | More origins allowed to send state-changing requests |

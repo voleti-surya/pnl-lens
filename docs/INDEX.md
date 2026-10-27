@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 296 files._
+_Generated from file headers by `npm run docs:index` — 304 files._
 
 ### Pages
 
@@ -139,9 +139,11 @@ _Generated from file headers by `npm run docs:index` — 296 files._
 
 | File | What it does |
 |---|---|
+| `apps/api/src/lib/digest.ts` | Weekly summary email (opt-in): from Monday 09:00 IST, once a week per user with a live report: focus rules from the latest 30-day plan, journal progress, check-up countdown. Claim first, then send. Unsubscribe tokens. |
 | `apps/api/src/lib/plan-pdf.ts` | Renders a 30-day plan (packages/shared/src/plan) as the 2-page A4 PDF of the owner's sample: Do/Don't cards, scorecard, weekly check-in, check-up box with links. |
 | `apps/api/src/lib/reminders.ts` | Sends due 30-day plan check-up reminders (from 09:00 IST, once each): claim first, then email. Runs on a timer in the api process. |
 | `apps/api/src/routes/analyses.ts` | POST /analyses (alias /uploads): consent, type sniffing, size/plan/D11 limits, encrypt, store, queue. GET /analyses/:id and /reports/:id/status. |
+| `apps/api/src/routes/digest.ts` | Weekly summary email settings: read and switch my opt-in; stop it from the link in an email (no sign-in, HMAC token). |
 | `apps/api/src/routes/journal.ts` | Trade journal API: list my notes, save a note on a trade (setup, tags, emotion, note; empty = removed), delete one. Private to the user. |
 | `apps/api/src/routes/plan.ts` | 30-day plan: the report owner's PDF download (the one download a report has), the check-up calendar file, and check-up email reminders. |
 | `apps/api/src/routes/reports.ts` | Reports: list (MON-YY history), save an analysis (spends one report from a valid plan), "+" add files (file-set lock), get, rename, delete. |
@@ -150,8 +152,9 @@ _Generated from file headers by `npm run docs:index` — 296 files._
 | `apps/web/app/(app)/reminders/new/page.tsx` | "Remind me on <date>" from the 30-day plan PDF: confirms and turns on one check-up email (signs in first if needed). |
 | `apps/web/app/(app)/report/[id]/page.tsx` | One report in the workspace: file tabs, All files, +, ×, the five dashboard tabs; a "deleted" page once removed. |
 | `apps/web/app/(app)/upload/page.tsx` | New report: the workspace upload view (consent, files, loader; the API and worker read the files). |
+| `apps/web/app/unsubscribe/page.tsx` | "Stop these emails" from the weekly summary: one button (no sign-in); a POST so email link scanners cannot unsubscribe anyone. |
 | `apps/web/components/workspace/CapitalPanel.tsx` | Optional "capital used" for a report (Edge tab): add, change or remove it; shows return, a year at this pace, average and largest loss, worst day, drawdown and the 1% / 2% loss counts as % of that capital. |
-| `apps/web/components/workspace/DataRights.tsx` | "Your data" panel: password (set or change), 30-day plan check-up reminder (cancel), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account. |
+| `apps/web/components/workspace/DataRights.tsx` | "Your data" panel: password (set or change), 30-day plan check-up reminder (cancel), weekly summary email (opt-in), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account. |
 | `apps/web/components/workspace/Edge.tsx` | "Edge" tab: skill or luck (verdict, 90% range, trades needed); the next 100 trades (fan chart, drawdowns, give-back chances); consistency and risk by day; R-multiples; when you trade (weekday × hour heatmap, options by days to expiry). |
 | `apps/web/components/workspace/History.tsx` | Report history (report page sidebar) grouped by month (MON-YY) with Progress score and an always-visible rename (PATCH /api/v1/reports/:id); RenameRow is shared with the dashboard list. |
 | `apps/web/components/workspace/Journal.tsx` | "Journal" tab: write a setup, tags, emotion and a note on each trade (biggest first); see what the journal shows: results by setup, tag and emotion, best and worst. Notes follow the trade into every report. |
@@ -164,6 +167,7 @@ _Generated from file headers by `npm run docs:index` — 296 files._
 | `apps/web/components/workspace/ReportList.tsx` | Dashboard report list: search (name, files, month, market, dates), sort (newest, oldest, name), clear cards with trades and net P&L, always-visible Rename. |
 | `apps/web/components/workspace/Rewind.tsx` | "Rewind" tab: replay this report's own trades with rules the user picks (stop, days, hours, trades a day, stop after losses, no re-entry, skip names, cap size); live new P&L, curve and what each rule did. |
 | `apps/web/components/workspace/ShareCard.tsx` | "Share progress": a 1080×1350 image of the level, score and up to 4 stats the user picks (percentages and verdicts only, no money, no name), drawn in the browser; download it or share it from the phone. |
+| `apps/web/components/workspace/UnsubscribeButton.tsx` | The button on /unsubscribe that stops the weekly summary email (POST with the link's token). |
 | `apps/web/components/workspace/Workspace.tsx` | The report workspace (ported from the offline tool, now on the API): upload with consent, loader, file tabs + All files, "+" and ×, plan card, MON-YY history. |
 | `apps/web/lib/workspace-data.ts` | Server-side loaders for the workspace pages: my plans and my report history from the API, in the shapes the workspace uses. |
 | `packages/db/src/queries/journal.ts` | Trade journal (0027): read the user's notes, save one (an empty note is deleted), delete one. |
@@ -239,7 +243,7 @@ _Generated from file headers by `npm run docs:index` — 296 files._
 | `apps/api/src/lib/queue.ts` | Enqueues analysis jobs on BullMQ (Redis) for apps/worker; job id = analysis id, so a repeat is a no-op. |
 | `apps/api/src/lib/sniff.ts` | Upload type check: the real file type from its bytes (the engine's own detectKind) plus a reject list for non-statements. |
 | `apps/api/src/lib/storage.ts` | Object storage (S3 API on Garage): encrypted statements (api key write-only), export archives (read-only), blog media (read/write, public via the API). |
-| `apps/api/src/main.ts` | API process entry: config, Postgres (lens_app only), Redis, storage, queue, check-up reminder timer; listens on PORT; graceful shutdown. |
+| `apps/api/src/main.ts` | API process entry: config, Postgres (lens_app only), Redis, storage, queue, check-up reminder and weekly summary timers; listens on PORT; graceful shutdown. |
 | `apps/api/src/routes/blog.ts` | REQ-7 blog API: public posts/feed/media (cacheable) and owner/admin-only writing, publishing, live preview and image upload (WebP via sharp). |
 | `apps/api/src/routes/health.ts` | GET /health (liveness) and GET /ready (Postgres as lens_app, Redis, storage). |
 
@@ -323,6 +327,7 @@ _Generated from file headers by `npm run docs:index` — 296 files._
 | `packages/db/migrations/0026_plan_snapshots.sql` | The 30-day plan as it was given to the user (rules, metrics, targets), kept so the next report can score it (check-up: Met / Missed per rule). |
 | `packages/db/migrations/0027_trade_journal.sql` | Trade journal: the user's own setup, tags, emotion and note per trade (keyed by the trade's identity, so a note follows the trade into every report); private (never in research); in "Export my data"; removed with the account. |
 | `packages/db/migrations/0028_report_capital.sql` | Optional "capital used" per report (analysis roadmap B1): the user's own figure, in the report's currency, so results can be shown as % returns and % risk. Never required. |
+| `packages/db/migrations/0029_weekly_digest.sql` | Weekly summary email (analysis roadmap B5): an opt-in flag per user (off by default) and one row per user and week, claimed before sending so the email goes out at most once a week. |
 | `packages/db/optional/pg_cron.sql` | Optional: schedule the purge inside Postgres if pg_cron is available. |
 | `packages/db/scripts/seed-dev.mjs` | Applies seed.sql (dev user with credits) — only when SEED_DEV_DATA=true (set by infra/compose.dev.yml only). |
 | `packages/db/scripts/setup-roles.mjs` | Creates/updates the login roles lens_app and lens_worker with passwords from env (runs after migrations, as superuser). |
@@ -371,6 +376,7 @@ _Generated from file headers by `npm run docs:index` — 296 files._
 |---|---|
 | `apps/api/test/auth.test.ts` | Sign-in (email code), session cookie, /me, /plans, CSRF origin check, consents, export and account deletion, health/ready — on real Postgres. |
 | `apps/api/test/blog.test.ts` | REQ-7 blog API: roles (403 for support/finance/analyst/user), CRUD, publish visibility, Markdown sanitising, slug redirects, image upload checks (WebP + 1200×630), cache headers, sign-up/upload attribution. |
+| `apps/api/test/digest.test.ts` | Weekly summary: prefs on/off, unsubscribe link (good and bad token), sender: only opted-in active users with a report, from Monday 09:00 IST, once a week, with focus rules, report link and a working unsubscribe link. |
 | `apps/api/test/events.test.ts` | POST /events: allow-listed names only; visitors may send only the landing events (REQ-4); journey events from signed-in users (REQ-2). |
 | `apps/api/test/helpers.ts` | API test helpers: app on a fresh migrated database (lens_app connection), session cookies, multipart bodies, captured mail. |
 | `apps/api/test/journal.test.ts` | Journal API: save, list, update, empty removes, delete; validation (emotion, tags, sizes); private to each user; signed-out 401. |
@@ -393,6 +399,7 @@ _Generated from file headers by `npm run docs:index` — 296 files._
 | `packages/db/test/db/blog.test.ts` | REQ-7 blog in the database: app role reads the public view only, owner/admin-only functions, audit rows, visibility rules, slug redirects. |
 | `packages/db/test/db/capital.test.ts` | Report capital (0028): set and clear by the owner only, limits enforced, app may update only that column (and title), included in "Export my data". |
 | `packages/db/test/db/credits.test.ts` | Credits spec (19 Oct 2026) acceptance checks in the database: reports left, "+" free up to the limit, failed files and deletes spend/return nothing, plan window, soonest-expiring first. |
+| `packages/db/test/db/digest.test.ts` | Weekly summary (0029): opt-in off by default, the app may switch it, one send per user and week, closing the account turns it off and clears the sends. |
 | `packages/db/test/db/harness.ts` | DB test harness: fresh database per suite on the throwaway test Postgres, real migrate + setup-roles scripts, role-scoped clients, fixtures. |
 | `packages/db/test/db/journal.test.ts` | Trade journal (0027): save, update, empty = removed, one per trade, app grants (no access for the worker or research), included in "Export my data" with the 30-day plans and reminders, removed when the account is closed. |
 | `packages/db/test/db/migrations.test.ts` | Migrations apply from 0001 on an empty database and on top of a 0007 database with old data; the old web flow keeps working. |
@@ -431,6 +438,7 @@ _Generated from file headers by `npm run docs:index` — 296 files._
 | `packages/shared/test/share.test.ts` | Share card content: level and score from Progress, the chosen stats only (4 at most), return only with capital, and never a money amount, currency sign or symbol on any golden report. |
 | `tests/e2e-web/blog.spec.ts` | REQ-7 blog end to end: owner drafts, previews, publishes, unpublishes, schedules; /blog, article, landing preview, sitemap; raw-HTML SEO; sanitising; support sees no Blog tab; events. |
 | `tests/e2e-web/credits.spec.ts` | Credits spec (19 Oct 2026) in the browser: "N reports left" pill and "Plans" menu, plan card wording, free preview (3 numbers, 2 insights, blurred, from ₹99/$9), plan window end, no "credit" on customer screens. |
+| `tests/e2e-web/digest.spec.ts` | Weekly summary email: off by default, turned on in Your data, the email arrives once with focus rules and the report link, and its "Stop these emails" link turns it off (button, no sign-in). |
 | `tests/e2e-web/edge.spec.ts` | Edge tab: verdict, next-100-trades projection, capital % (add, kept after reload, remove), consistency and risk by day, R-multiples, weekday × hour heatmap; the same numbers on a reload; no sideways scroll on a phone. Drill-down: a cluster row opens Positions filtered to its trades. |
 | `tests/e2e-web/helpers.ts` | E2E helpers: sign in (password, or an emailed code from the API's console mail log then the required password), give a user a plan, run SQL as the admin. |
 | `tests/e2e-web/instagram.spec.ts` | REQ-6 Instagram section: scroll-linked row (card 1 → 4), manual takeover, reduced motion, video play rules, exact copy, no Meta requests, no layout shift. |

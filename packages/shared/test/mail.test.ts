@@ -38,3 +38,25 @@ describe('researchInviteEmail', () => {
     expect(m.html).not.toMatch(/<img|<script|pixel/i);
   });
 });
+
+describe('weekly summary email', () => {
+  it('focus rules, journal line, check-up countdown, report button and unsubscribe link', async () => {
+    const { weeklyDigestEmail } = await import('../src/mail');
+    const m = weeklyDigestEmail({
+      reportUrl: 'https://pnllens.com/report/r1', unsubscribeUrl: 'https://pnllens.com/unsubscribe?u=x&t=y',
+      focus: [{ kind: 'do', title: 'Write your exit before you enter.' }, { kind: 'dont', title: 'Don’t hold a losing option past −30%.' }, { kind: 'dont', title: 'Don’t trade <BANKNIFTY> options this month.' }],
+      journal: { thisWeek: 2, total: 9, best: 'Best so far: setup “Breakout” (+₹4,000 over 3 trades).' },
+      checkup: { daysLeft: 12, date: '26 Nov 2026' },
+    });
+    expect(m.subject).toBe('Your week: 3 rules to keep');
+    expect(m.text).toContain('- Write your exit before you enter.');
+    expect(m.text).toContain('You wrote 2 journal notes this week (9 in all). Best so far');
+    expect(m.text).toContain('Your check-up is in 12 days (26 Nov 2026).');
+    expect(m.text).toContain('https://pnllens.com/unsubscribe?u=x&t=y');
+    expect(m.html).toContain('&lt;BANKNIFTY&gt;');                       // escaped
+    const due = weeklyDigestEmail({ reportUrl: 'r', unsubscribeUrl: 'u', focus: [], journal: { thisWeek: 0, total: 0, best: null }, checkup: { daysLeft: -2, date: '1 Nov 2026' } });
+    expect(due.subject).toBe('Your week on PnL Lens');
+    expect(due.text).toContain('has come: upload this month');
+    expect(due.text).toContain('Your journal is empty');
+  });
+});

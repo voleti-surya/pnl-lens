@@ -140,3 +140,44 @@ export function planReminderEmail(appUrl: string): Omit<Mail, 'to'> {
       <p style="color:#666;font-size:13px;margin-top:20px">You set this reminder from your 30-day plan. We send it once.</p></div>`,
   };
 }
+
+/** Weekly summary (analysis roadmap B5): opt-in, Mondays; built by apps/api/src/lib/digest.ts. No trade symbols beyond the user's own setup names. */
+export interface DigestData {
+  reportUrl: string;
+  focus: { kind: 'do' | 'dont'; title: string }[];
+  journal: { thisWeek: number; total: number; best: string | null };
+  checkup: { daysLeft: number; date: string } | null;
+  unsubscribeUrl: string;
+}
+export function weeklyDigestEmail(d: DigestData): Omit<Mail, 'to'> {
+  const checkupLine = d.checkup
+    ? d.checkup.daysLeft > 0 ? `Your check-up is in ${d.checkup.daysLeft} day${d.checkup.daysLeft === 1 ? '' : 's'} (${d.checkup.date}).` : `Your check-up date (${d.checkup.date}) has come: upload this month's statement to see how your numbers moved.`
+    : 'Download your 30-day plan from your latest report to set a check-up date.';
+  const journalLine = d.journal.thisWeek
+    ? `You wrote ${d.journal.thisWeek} journal note${d.journal.thisWeek === 1 ? '' : 's'} this week (${d.journal.total} in all).`
+    : d.journal.total ? `No journal notes this week (${d.journal.total} in all).` : 'Your journal is empty: tag your three biggest trades in the Journal tab.';
+  const focus = d.focus.slice(0, 3);
+  return {
+    subject: focus.length ? `Your week: ${focus.length} rules to keep` : 'Your week on PnL Lens',
+    text: [
+      'Hi,',
+      '',
+      ...(focus.length ? ['Your focus this week:', ...focus.map((f) => `- ${f.title}`), ''] : []),
+      journalLine + (d.journal.best ? ` ${d.journal.best}` : ''),
+      checkupLine,
+      '',
+      `Open your latest report: ${d.reportUrl}`,
+      '',
+      `You get this because you turned on the weekly summary. Stop it: ${d.unsubscribeUrl}`,
+      'PnL Lens',
+    ].join('\n'),
+    html: `<div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#222;line-height:1.55">
+      <div style="font-weight:800;font-size:18px">PnL Lens</div>
+      <p style="margin:18px 0 10px">Hi,</p>
+      ${focus.length ? `<p style="margin:0 0 6px;font-weight:700">Your focus this week</p><ul style="margin:0 0 16px;padding-left:20px">${focus.map((f) => `<li style="margin:4px 0">${esc(f.title)}</li>`).join('')}</ul>` : ''}
+      <p style="margin:0 0 8px">${esc(journalLine)}${d.journal.best ? ` ${esc(d.journal.best)}` : ''}</p>
+      <p style="margin:0 0 18px">${esc(checkupLine)}</p>
+      <a href="${esc(d.reportUrl)}" style="display:inline-block;background:#FFD60A;color:#000;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:10px">Open my latest report</a>
+      <p style="color:#666;font-size:13px;margin-top:20px">You get this because you turned on the weekly summary. <a href="${esc(d.unsubscribeUrl)}" style="color:#666">Stop these emails</a>.</p></div>`,
+  };
+}

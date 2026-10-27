@@ -1,7 +1,7 @@
 /**
  * @file  apps/web/components/workspace/DataRights.tsx
  * @area  Reports
- * @what  "Your data" panel: password (set or change), 30-day plan check-up reminder (cancel), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account.
+ * @what  "Your data" panel: password (set or change), 30-day plan check-up reminder (cancel), weekly summary email (opt-in), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account.
  */
 'use client';
 import { useEffect, useState } from 'react';
@@ -19,12 +19,14 @@ export default function DataRights() {
   const [typed, setTyped] = useState('');
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
   const [reminder, setReminder] = useState<{ id: string; remindOn: string } | null>(null);
+  const [digest, setDigest] = useState<boolean | null>(null);
 
   const loadExports = () => api<{ exports: ExportRow[] }>('/me/exports').then((r) => setExports(r.exports)).catch(() => {});
   useEffect(() => {
     api<{ research: boolean }>('/me/consents').then((c) => setResearch(c.research)).catch(() => setResearch(false));
     api<{ hasPassword?: boolean }>('/me').then((m) => setHasPassword(!!m.hasPassword)).catch(() => {});
     api<{ reminder: { id: string; remindOn: string } | null }>('/me/reminders').then((r) => setReminder(r.reminder)).catch(() => {});
+    api<{ weeklyDigest: boolean }>('/me/prefs').then((r) => setDigest(r.weeklyDigest)).catch(() => setDigest(false));
     loadExports();
   }, []);
   // refresh while an export is being prepared
@@ -38,6 +40,11 @@ export default function DataRights() {
     setResearch(v);
     try { const r = await api<{ research: boolean }>('/me/consents', { body: { purpose: 'research', granted: v } }); setResearch(r.research); }
     catch (e) { setMsg((e as ApiError).message); setResearch(!v); }
+  }
+  async function toggleDigest(v: boolean) {
+    setDigest(v);
+    try { const r = await api<{ weeklyDigest: boolean }>('/me/prefs', { method: 'PUT', body: { weeklyDigest: v } }); setDigest(r.weeklyDigest); }
+    catch (e) { setMsg((e as ApiError).message); setDigest(!v); }
   }
   async function cancelReminder() {
     if (!reminder) return;
@@ -71,6 +78,9 @@ export default function DataRights() {
           <button className="btn ghost" onClick={cancelReminder}>Cancel</button>
         </div>
       )}
+      <div className="consent dr-consent dr-digest">
+        <label><input type="checkbox" name="weeklyDigest" checked={!!digest} disabled={digest === null} onChange={(e) => toggleDigest(e.target.checked)} /> <span>Weekly summary email on Mondays: your focus rules, journal progress and check-up date.</span></label>
+      </div>
       <div className="consent dr-consent">
         <label><input type="checkbox" name="research" checked={!!research} disabled={research === null} onChange={(e) => toggleResearch(e.target.checked)} /> <span>{CONSENT_RESEARCH}</span></label>
       </div>

@@ -50,6 +50,8 @@ export interface UsersTable {
   restricted_reason: string | null;
   restricted_at: TimestampNull;
   restricted_by: string | null;
+  /** 0029: weekly summary email, opt-in */
+  weekly_digest: Generated<boolean>;
 }
 
 export interface CreditsTable {
@@ -413,7 +415,14 @@ export interface TradeNotesTable {
   updated_at: Generated<Date>;
 }
 
+export interface DigestSendsTable {
+  user_id: string;
+  week_start: string;
+  sent_at: Generated<Date>;
+}
+
 export interface Database {
+  digest_sends: DigestSendsTable;
   trade_notes: TradeNotesTable;
   plan_snapshots: PlanSnapshotsTable;
   research_export_reports: ResearchExportReportsTable;

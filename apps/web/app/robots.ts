@@ -8,7 +8,7 @@ import { SITE_URL } from '@/lib/blog';
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/api/', '/dashboard', '/upload', '/report/', '/reminders/', '/lifetime'] }],
+    rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/api/', '/dashboard', '/upload', '/report/', '/reminders/', '/lifetime', '/unsubscribe'] }],
     sitemap: `${SITE_URL}/sitemap.xml`,
   };
 }
