@@ -30,7 +30,8 @@
     "./site": "./src/site.ts",
     "./plan": "./src/plan/build.ts",
     "./plan/score": "./src/plan/score.ts",
-    "./insights/simulate": "./src/insights/simulate.ts"
+    "./insights/simulate": "./src/insights/simulate.ts",
+    "./insights/edge": "./src/insights/edge.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

@@ -24,6 +24,7 @@ import { PlanCard, PlanStrip } from './PlanCard';
 import History, { RenameRow } from './History';
 import PlanButton from './PlanButton';
 import Rewind from './Rewind';
+import Edge from './Edge';
 import JourneyBar from './JourneyBar';
 import { journey } from '@pnl-lens/shared/journey';
 import type { PlanId } from '@pnl-lens/shared/pricing';
@@ -33,7 +34,7 @@ import {
 } from './model';
 
 const CURRENCIES = Object.keys(engine.CURSYM as Record<string, string>);
-const TABS = [['overview', 'Overview'], ['progress', 'Progress'], ['insights', 'Insights & fixes'], ['rewind', 'Rewind'], ['clusters', 'Clusters'], ['positions', 'Positions']] as const;
+const TABS = [['overview', 'Overview'], ['progress', 'Progress'], ['insights', 'Insights & fixes'], ['edge', 'Edge'], ['rewind', 'Rewind'], ['clusters', 'Clusters'], ['positions', 'Positions']] as const;
 type Lock = { title: string; text: string } | null;
 
 const money = (v: number, cur?: string | null) => { engine.setCurrency(cur || 'INR'); return engine.inr(v) as string; };
@@ -364,7 +365,8 @@ function ReportView({ plan, plans, prices, reports, current, setLock }: { plan: 
             </nav>
             {TABS.map(([id]) => (
               <section key={id} id={id} className={`tab${id === 'overview' ? '' : ' hide'}`}>
-                {/* Rewind is React (interactive); the other tabs are drawn by lib/report-ui/render.js */}
+                {/* Edge and Rewind are React (interactive); the other tabs are drawn by lib/report-ui/render.js */}
+                {id === 'edge' && r && <Edge key={view === 'all' ? 'all' : String(view)} report={r} money={(v) => money(v, r.m?.currency)} active={tab === 'edge'} />}
                 {id === 'rewind' && r && <Rewind key={view === 'all' ? 'all' : String(view)} report={r} money={(v) => money(v, r.m?.currency)} onFirstUse={() => ev('rewind_used', { trades: r.trades?.length ?? 0 })} />}
               </section>
             ))}

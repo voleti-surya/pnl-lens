@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 266 files._
+_Generated from file headers by `npm run docs:index` — 270 files._
 
 ### Pages
 
@@ -149,6 +149,7 @@ _Generated from file headers by `npm run docs:index` — 266 files._
 | `apps/web/app/(app)/report/[id]/page.tsx` | One report in the workspace: file tabs, All files, +, ×, the five dashboard tabs; a "deleted" page once removed. |
 | `apps/web/app/(app)/upload/page.tsx` | New report: the workspace upload view (consent, files, loader; the API and worker read the files). |
 | `apps/web/components/workspace/DataRights.tsx` | "Your data" panel: password (set or change), 30-day plan check-up reminder (cancel), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account. |
+| `apps/web/components/workspace/Edge.tsx` | "Edge" tab: is the average trade really positive or could it be luck (verdict, 90% range, trades needed), and the next 100 trades if the past ones repeat in random order (fan chart, drawdowns, chance of giving profits back). |
 | `apps/web/components/workspace/History.tsx` | Report history (report page sidebar) grouped by month (MON-YY) with Progress score and an always-visible rename (PATCH /api/v1/reports/:id); RenameRow is shared with the dashboard list. |
 | `apps/web/components/workspace/JourneyBar.tsx` | REQ-2 journey bar above the workspace and dashboard: 5 steps (done / locked with the unlocking plan), score line, next action; one line on phones. |
 | `apps/web/components/workspace/model.ts` | Workspace data types (from the API) and the offline tool's wording, labels and plan rules, kept word for word. |
@@ -161,6 +162,7 @@ _Generated from file headers by `npm run docs:index` — 266 files._
 | `apps/web/lib/workspace-data.ts` | Server-side loaders for the workspace pages: my plans and my report history from the API, in the shapes the workspace uses. |
 | `packages/db/src/queries/plan-snapshots.ts` | 30-day plan snapshots (0026): saved when the plan PDF is downloaded; the newest one made before a report is what that report's check-up scores. |
 | `packages/db/src/queries/reminders.ts` | 30-day plan check-up reminders: set (replaces the active one), read, cancel (app); due list and claim-before-send (api sender, via 0024 functions). |
+| `packages/shared/src/insights/edge.ts` | Edge verdict (is the average trade really positive, or could it be luck?) and outcome projection (the next 100 trades if the past ones repeat in random order: range, drawdowns, chance of giving profits back). |
 | `packages/shared/src/insights/simulate.ts` | Rewind: replays a report's own closed trades under rules the user picks (stop at −X%, skip weekdays or hours, max trades a day, stop after N losses, no re-entry after a loss, skip names, cap size) and returns the new P&L, curve and what each rule changed. |
 | `packages/shared/src/journey.ts` | REQ-2 "trading journey": which of the 5 steps are done or locked, the score line and the next action, from real plans and saved reports only. |
 | `packages/shared/src/plan/build.ts` | 30-day plan from a stored report: 5 Do and 5 Don't rules (each with Why and Now → Target), a scorecard, a weekly check-in and the check-up date. Habits only, no buy/sell advice. |
@@ -392,6 +394,7 @@ _Generated from file headers by `npm run docs:index` — 266 files._
 | `packages/engine/test/engine.test.ts` | Engine: formats, accounting, symbols, auto-detection, combining files, progress. |
 | `packages/engine/test/extract.test.ts` | PDF, DOCX and legacy DOC reading matches the CSV originals. |
 | `packages/engine/test/golden.test.ts` | Engine parity: every fixture through the Node runner must equal the stored golden JSON byte for byte. |
+| `packages/shared/test/edge.test.ts` | Edge verdict and projection: deterministic, sensible on clear cases (always winning, coin flip, always losing, too few), finite and ordered on every golden report. |
 | `packages/shared/test/journey.test.ts` | REQ-2 journey rules: steps done only when really met and included in the plan, locks name the unlocking plan, score line, next action. |
 | `packages/shared/test/mail.test.ts` | Email drivers: console writes the log; smtp (Google Workspace) connects with TLS and the App password from env, and sends the code email. |
 | `packages/shared/test/next.test.ts` | safeNext(): same-site paths pass; every off-site trick (//, /\, tabs/newlines, schemes) falls back. |
@@ -405,6 +408,7 @@ _Generated from file headers by `npm run docs:index` — 266 files._
 | `packages/shared/test/rewind.test.ts` | Rewind (what-if replay) on the golden reports: no rules = the real result; each rule does exactly what it says; stops never make a trade worse; date rules need dates; the 30-day plan becomes Rewind settings. |
 | `tests/e2e-web/blog.spec.ts` | REQ-7 blog end to end: owner drafts, previews, publishes, unpublishes, schedules; /blog, article, landing preview, sitemap; raw-HTML SEO; sanitising; support sees no Blog tab; events. |
 | `tests/e2e-web/credits.spec.ts` | Credits spec (19 Oct 2026) in the browser: "N reports left" pill and "Plans" menu, plan card wording, free preview (3 numbers, 2 insights, blurred, from ₹99/$9), plan window end, no "credit" on customer screens. |
+| `tests/e2e-web/edge.spec.ts` | Edge tab: verdict with average trade, 90% range, chance of luck and trades needed; the next-100-trades projection with its chart and figures; the same numbers on a reload; no sideways scroll on a phone. |
 | `tests/e2e-web/helpers.ts` | E2E helpers: sign in (password, or an emailed code from the API's console mail log then the required password), give a user a plan, run SQL as the admin. |
 | `tests/e2e-web/instagram.spec.ts` | REQ-6 Instagram section: scroll-linked row (card 1 → 4), manual takeover, reduced motion, video play rules, exact copy, no Meta requests, no layout shift. |
 | `tests/e2e-web/journey.spec.ts` | REQ-2 journey bar and "What's next" card end to end: Single 2/5 with locks, later month completes step 3, locked step opens pricing, phone view, events in admin. |
@@ -418,7 +422,7 @@ _Generated from file headers by `npm run docs:index` — 266 files._
 | `tests/e2e-web/rewind.spec.ts` | Rewind tab: replay the report's trades with rules (30-day plan preset, stop, chips, reset); the result, curve and per-rule list update; no sideways scroll on a phone. |
 | `tests/e2e-web/score-card.spec.ts` | REQ-1: the Progress score card's level labels never overlap, at every level and width, in Chromium (Chrome/Edge) and WebKit (Safari). |
 | `tests/e2e-web/user-admin.spec.ts` | User management end to end: owner requests reports → email → one-click Yes → Included; restrict signs the user out; delete with typed email; admin and support limits. |
-| `tests/e2e-web/workspace.spec.ts` | Browser end to end on the stack: sign in → upload with consent → loader → report (6 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete. |
+| `tests/e2e-web/workspace.spec.ts` | Browser end to end on the stack: sign in → upload with consent → loader → report (7 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete. |
 | `tests/load/prepare.mjs` | Load test setup: creates N test accounts (load-NN@load.invalid) in the running dev stack and writes a session token for each to .load/tokens.json. |
 | `tests/load/uploads.js` | k6 scenario: N users each upload statements at the same moment and follow their analysis to ready (latency, time to ready, failures). |
 | `tests/stack/stack.test.ts` | Dev stack checks: all services healthy, only Caddy published, internal network isolated, least-privilege DB/Redis/storage. |
