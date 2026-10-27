@@ -498,3 +498,35 @@
 .eg-stats span { color: var(--ink-2); } .eg-stats b { font-variant-numeric: tabular-nums; white-space: nowrap; }
 .eg-stats b.gain { color: var(--gain); } .eg-stats b.loss { color: var(--loss); }
 @media (max-width: 900px) { .eg-verdict, .eg-proj-grid { grid-template-columns: 1fr; } .eg-facts { grid-template-columns: 1fr; } }
+
+/* drill-down (A6): clickable cluster rows and the Positions filter chip */
+.rv-drill { cursor: pointer; border-radius: var(--r-sm); transition: background-color var(--t-fast) var(--ease); }
+.rv-drill:hover { background: var(--s2); }
+.rv-drill:focus-visible { outline: 2px solid var(--y); outline-offset: 2px; }
+.rv-drill-chip { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; padding: 10px 12px; border: 1px solid var(--y-line); border-radius: var(--r-sm); background: var(--y-tint); font-size: 14px; color: var(--ink-2); }
+.rv-drill-chip[hidden] { display: none; }
+.rv-drill-chip b { color: var(--ink); }
+.rv-drill-chip button { margin-left: auto; background: none; border: 1px solid var(--line-strong); color: var(--ink); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+
+/* Edge tab: consistency, R-multiples, days to expiry, heatmap (A7 + A8) */
+.eg-cgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.eg-cgrid > div { padding: 14px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--s1); display: grid; align-content: start; gap: 4px; }
+.eg-cgrid b { font-size: 22px; font-variant-numeric: tabular-nums; } .eg-cgrid b.gain { color: var(--gain); } .eg-cgrid b.loss { color: var(--loss); }
+.eg-cgrid small { color: var(--ink-3); font-size: 12.5px; line-height: 1.4; }
+.eg-buckets { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 8px; }
+.eg-buckets li { display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 2px 12px; align-items: center; }
+.eg-buckets .k { font-size: 13.5px; } .eg-buckets small { grid-column: 2 / -1; color: var(--ink-3); font-size: 12px; }
+.eg-buckets .eg-bt { display: block; height: 10px; border-radius: 999px; background: var(--s3); overflow: hidden; }
+.eg-buckets .eg-bt i { display: block; height: 100%; border-radius: inherit; } .eg-buckets .eg-bt i.up { background: var(--gain); } .eg-buckets .eg-bt i.down { background: var(--loss); }
+.eg-buckets b { font-variant-numeric: tabular-nums; font-size: 14px; } .eg-buckets b.gain { color: var(--gain); } .eg-buckets b.loss { color: var(--loss); }
+.eg-heat-wrap { overflow-x: auto; }
+.eg-heat { border-collapse: separate; border-spacing: 4px; font-size: 12px; min-width: 100%; }
+.eg-heat th { color: var(--ink-3); font-weight: 500; text-align: center; padding: 2px 4px; white-space: nowrap; }
+.eg-heat tbody th { text-align: left; }
+.eg-heat td { height: 34px; min-width: 44px; border-radius: 6px; text-align: center; color: var(--ink); font-variant-numeric: tabular-nums; }
+.eg-heat td.up { background: rgba(61, 214, 140, calc(var(--a) * .85)); }
+.eg-heat td.down { background: rgba(255, 105, 97, calc(var(--a) * .85)); }
+.eg-heat td.none { background: var(--s1); }
+.eg-heat td span { font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
+@media (max-width: 900px) { .eg-cgrid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .eg-cgrid { grid-template-columns: 1fr; } .eg-buckets li { grid-template-columns: 96px minmax(0, 1fr) auto; } }

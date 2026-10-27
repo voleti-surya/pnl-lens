@@ -23,6 +23,25 @@ export function ladderHtml(index) {
     <div class="pg-lad-lab" aria-hidden="true">${LEVEL_RANGES.map(([n], i) => `<span class="${cl(i)}">${n}</span>`).join('')}</div></div>`;
 }
 
+/**
+ * Drill-down (analysis roadmap A6): which trades make up a cluster row. Only the views whose keys are plain trade
+ * fields are drillable, and each rule mirrors the engine's bucketize key exactly (packages/engine/src/engine.js
+ * buildBuckets; parity is tested against every golden report in packages/shared/test/drill.test.ts). Range views
+ * (size, premium, hold, hour, busy day, loss depth) use engine-internal cut-offs and are not drillable.
+ */
+const DOWS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export const DRILL = {
+  group: (t, k) => t.group === k,
+  underlying: (t, k) => t.underlying === k,
+  weekday: (t, k) => !!t.isOpt && t.weekday === k,
+  expiryType: (t, k) => !!t.isOpt && t.expiryType === k,
+  callPut: (t, k) => !!t.isOpt && (t.kind === 'CE' ? 'Calls (CE)' : 'Puts (PE)') === k,
+  style: (t, k) => t.kind === 'EQ' && t.style === k,
+  entryDow: (t, k) => !!t.entryDate && DOWS[new Date(String(t.entryDate).slice(0, 10) + 'T00:00:00Z').getUTCDay()] === k,
+  month: (t, k) => !!t.exitDate && String(t.exitDate).slice(0, 7) === k,
+  direction: (t, k) => t.direction === k,
+};
+
 export function mountReport(root, R, fmt) {
   const inr = fmt.inr, pct = fmt.pct;
   const $ = (s) => root.querySelector(s), $$ = (s) => [...root.querySelectorAll(s)];
@@ -45,7 +64,8 @@ export function mountReport(root, R, fmt) {
     const max = Math.max(1, ...rows.map((r) => Math.abs(r.pnl)));
     return `<div class="rv-bars">${rows.map((r) => {
       const w = (Math.abs(r.pnl) / max) * 50;
-      return `<div class="rv-bar-row"><div class="rv-bl"><b>${esc(r.key)}</b><span>${r.n} trade${r.n === 1 ? '' : 's'}${opts.noWin ? '' : ` · ${Math.round(r.winRate * 100)}% win`}</span></div>
+      const d = opts.drill ? ` data-drill="${opts.drill}" data-key="${esc(r.key)}" role="button" tabindex="0" title="Show these trades"` : '';
+      return `<div class="rv-bar-row${opts.drill ? ' rv-drill' : ''}"${d}><div class="rv-bl"><b>${esc(r.key)}</b><span>${r.n} trade${r.n === 1 ? '' : 's'}${opts.noWin ? '' : ` · ${Math.round(r.winRate * 100)}% win`}</span></div>
         <div class="rv-track"><i class="${r.pnl >= 0 ? 'pos' : 'neg'}" style="${r.pnl >= 0 ? 'left:50%' : `left:${50 - w}%`};width:${w}%"></i><em></em></div>
         <div class="rv-bv ${cls(r.pnl)}">${inr(r.pnl)}</div></div>`;
     }).join('')}</div>`;
@@ -55,7 +75,8 @@ export function mountReport(root, R, fmt) {
     const max = Math.max(1, ...rows.map((r) => Math.abs(r.pnl)));
     return `<div class="rv-tiles ${opts.cls || ''}">${rows.map((r) => {
       const h = Math.max(4, (Math.abs(r.pnl) / max) * 100);
-      return `<div class="rv-tile ${r.pnl >= 0 ? 'up' : 'down'}"><div class="rv-tk">${esc(opts.label ? opts.label(r.key) : r.key)}</div>
+      const d = opts.drill ? ` data-drill="${opts.drill}" data-key="${esc(r.key)}" role="button" tabindex="0" title="Show these trades"` : '';
+      return `<div class="rv-tile ${r.pnl >= 0 ? 'up' : 'down'}${opts.drill ? ' rv-drill' : ''}"${d}><div class="rv-tk">${esc(opts.label ? opts.label(r.key) : r.key)}</div>
         <div class="rv-tv ${cls(r.pnl)}">${inr(r.pnl)}</div>
         <div class="rv-tm">${r.n} trade${r.n === 1 ? '' : 's'} · ${Math.round(r.winRate * 100)}% win</div>
         <div class="rv-tbar"><i style="height:${h}%"></i></div></div>`;
@@ -120,7 +141,7 @@ export function mountReport(root, R, fmt) {
     h += panel('leaks', 'Top leaks', '<a href="#" data-go="insights">All insights &amp; fixes →</a>', `<div class="rv-leaks">${(R.leaks || []).slice(0, 4).map((l) =>
       `<div class="rv-leak"><span class="rv-lv ${l.level}">${l.level}</span><div><b>${esc(l.title)}</b><p>${esc(l.fix)}</p></div><em class="loss">${inr(-l.impact)}</em></div>`).join('') || '<p class="rv-empty">No major leaks found.</p>'}</div>`, 's7');
     if ((R.curve || []).length > 2) h += panel('curve', 'Cumulative P&amp;L', `worst drawdown ${inr(m.maxDD || 0)}`, curve(), 's7');
-    h += panel('instrument', 'By instrument', '', bars(R.b.group), (R.curve || []).length > 2 ? 's5' : 's6');
+    h += panel('instrument', 'By instrument', '', bars(R.b.group, { drill: 'group' }), (R.curve || []).length > 2 ? 's5' : 's6');
     if (R.seq) {
       const a = R.seq.afterWin, l = R.seq.afterLoss;
       h += panel('afterwinloss', 'After a win vs after a loss', 'the next trade you take', `<div class="rv-vs">
@@ -166,32 +187,32 @@ export function mountReport(root, R, fmt) {
   function clusters() {
     const b = R.b;
     const when = [
-      panel('month', 'By month', 'when you closed each trade', tiles(b.month, { label: monthLabel, cls: 'months' }), 's12'),
-      panel('entryDow', 'Entry weekday', 'the day you opened the trade', tiles(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((d) => (b.entryDow || []).find((r) => r.key === d)).filter(Boolean), { cls: 'days' }), 's12'),
+      panel('month', 'By month', 'when you closed each trade', tiles(b.month, { label: monthLabel, cls: 'months', drill: 'month' }), 's12'),
+      panel('entryDow', 'Entry weekday', 'the day you opened the trade', tiles(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((d) => (b.entryDow || []).find((r) => r.key === d)).filter(Boolean), { cls: 'days', drill: 'entryDow' }), 's12'),
       (b.entryHour || []).length > 1 ? panel('entryHour', 'Time of entry', '', tiles(b.entryHour, { cls: 'four' }), 's6') : '',
       (b.busyDay || []).length > 1 ? panel('busyDay', 'Trades per day', 'how results change with activity', tiles(b.busyDay, { cls: 'four' }), 's6') : '',
-      (b.weekday || []).length ? panel('weekday', 'Expiry day', 'when the option contract expired', tiles(b.weekday, { cls: 'days' }), 's12') : '',
+      (b.weekday || []).length ? panel('weekday', 'Expiry day', 'when the option contract expired', tiles(b.weekday, { cls: 'days', drill: 'weekday' }), 's12') : '',
       (b.year || []).length > 1 ? panel('year', 'By year', '', tiles(b.year, { cls: 'four' }), 's12') : '',
     ].join('');
     const how = [
       panel('hold', 'Holding period', '', bars(b.hold, { empty: 'Needs entry and exit dates.' })),
-      b.style && b.style.length ? panel('style', 'Holding style', 'stocks', bars(b.style)) : '',
+      b.style && b.style.length ? panel('style', 'Holding style', 'stocks', bars(b.style, { drill: 'style' })) : '',
       panel('size', 'Position size', 'buy value', bars(b.size)),
       panel('lossDepth', 'How deep losers went', '% of buy value', bars(b.lossDepth, { noWin: true })),
-      panel('worstU', 'Worst underlyings', '', bars((b.underlying || []).filter((u) => u.pnl < 0).slice(0, 8))),
-      panel('bestU', 'Best underlyings', '', bars([...(b.underlying || [])].filter((u) => u.pnl > 0).sort((x, y) => y.pnl - x.pnl).slice(0, 8))),
-      panel('group', 'Instrument', '', bars(b.group)),
+      panel('worstU', 'Worst underlyings', '', bars((b.underlying || []).filter((u) => u.pnl < 0).slice(0, 8), { drill: 'underlying' })),
+      panel('bestU', 'Best underlyings', '', bars([...(b.underlying || [])].filter((u) => u.pnl > 0).sort((x, y) => y.pnl - x.pnl).slice(0, 8), { drill: 'underlying' })),
+      panel('group', 'Instrument', '', bars(b.group, { drill: 'group' })),
       (b.premium || []).length ? panel('premium', 'Entry premium', 'per unit', bars(b.premium)) : '',
-      (b.callPut || []).length ? panel('callPut', 'Calls vs puts', '', bars(b.callPut)) : '',
-      (b.expiryType || []).length ? panel('expiryType', 'Weekly vs monthly', 'options', bars(b.expiryType)) : '',
-      (b.direction || []).length > 1 ? panel('direction', 'Long vs short', '', bars(b.direction)) : '',
+      (b.callPut || []).length ? panel('callPut', 'Calls vs puts', '', bars(b.callPut, { drill: 'callPut' })) : '',
+      (b.expiryType || []).length ? panel('expiryType', 'Weekly vs monthly', 'options', bars(b.expiryType, { drill: 'expiryType' })) : '',
+      (b.direction || []).length > 1 ? panel('direction', 'Long vs short', '', bars(b.direction, { drill: 'direction' })) : '',
     ].join('');
     $('#clusters').innerHTML = `<div class="rv-seg" role="tablist" aria-label="Cluster groups">
         <button role="tab" aria-selected="true" data-seg="when">When you trade</button>
         <button role="tab" aria-selected="false" data-seg="how">How you hold, size &amp; pick</button></div>
       <div class="rv-grid" data-group="when">${when}</div>
       <div class="rv-grid" data-group="how" hidden>${how}</div>
-      <p class="rv-note">Expiry days come from the contract symbol (holidays ignored). Month, weekday and time views need trade dates — a tradebook gives the most detail.</p>`;
+      <p class="rv-note">Expiry days come from the contract symbol (holidays ignored). Month, weekday and time views need trade dates — a tradebook gives the most detail. Click a month, day, instrument or name to see its trades.</p>`;
   }
 
 
@@ -338,6 +359,8 @@ export function mountReport(root, R, fmt) {
   }
   /* ---------- positions ---------- */
   let sortKey = 'pnl', sortDir = 1;
+  /** drill-down filter from a cluster row: { label, test } */
+  let drill = null;
   const COLS = [['symbol', 'Symbol'], ['group', 'Group'], ['expiry', 'Expiry'], ['qty', 'Qty', 1], ['avgBuy', 'Avg buy', 1], ['buy', 'Buy value', 1], ['sell', 'Sell value', 1], ['pct', 'Return', 1], ['pnl', 'Realized', 1], ['netEst', 'After charges', 1]];
   function positions() {
     const groups = [...new Set(R.trades.map((t) => t.group))];
@@ -345,13 +368,28 @@ export function mountReport(root, R, fmt) {
       <div class="rv-filters"><input id="q" type="search" placeholder="Search symbol" aria-label="Search symbol">
         <select id="fg" aria-label="Filter by group"><option value="">All groups</option>${groups.map((g) => `<option>${esc(g)}</option>`).join('')}</select>
         <select id="fo" aria-label="Filter by outcome"><option value="">Winners and losers</option><option value="w">Winners</option><option value="l">Losers</option></select></div>
+      <div class="rv-drill-chip" id="pdrill" hidden></div>
       <div class="rv-tw" id="ptable"></div></div>`;
     ['#q', '#fg', '#fo'].forEach((s) => on($(s), 'input', drawPositions));
     drawPositions();
   }
+  const DRILL_LABEL = {
+    month: (k) => `trades closed in ${monthLabel(k)}`, entryDow: (k) => `trades opened on a ${k}`, weekday: (k) => `contracts expiring on a ${k}`,
+    group: (k) => k, underlying: (k) => k, callPut: (k) => k, expiryType: (k) => `${k} options`, direction: (k) => `${k} trades`, style: (k) => `${k} stock trades`,
+  };
+  /** cluster row → Positions filtered to exactly those trades */
+  function openDrill(dim, key) {
+    const test = DRILL[dim]; if (!test) return;
+    drill = { label: (DRILL_LABEL[dim] || ((k) => k))(key), test: (t) => test(t, key) };
+    show('positions');
+    drawPositions();
+    const el = $('#positions'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
   function drawPositions() {
     const q = $('#q').value.trim().toUpperCase(), g = $('#fg').value, o = $('#fo').value;
-    const rows = R.trades.filter((t) => (!q || t.symbol.toUpperCase().includes(q)) && (!g || t.group === g) && (!o || (o === 'w' ? t.pnl > 0 : t.pnl < 0)));
+    const rows = R.trades.filter((t) => (!drill || drill.test(t)) && (!q || t.symbol.toUpperCase().includes(q)) && (!g || t.group === g) && (!o || (o === 'w' ? t.pnl > 0 : t.pnl < 0)));
+    const chip = $('#pdrill');
+    if (chip) { chip.hidden = !drill; chip.innerHTML = drill ? `Showing <b>${esc(drill.label)}</b><button type="button" data-drill-clear>Show all positions ×</button>` : ''; }
     rows.sort((a, b) => { const x = a[sortKey], y = b[sortKey]; return (typeof x === 'number' ? x - y : String(x || '').localeCompare(String(y || ''))) * sortDir; });
     const max = Math.max(1, ...R.trades.map((t) => Math.abs(t.pnl)));
     const tot = rows.reduce((s, t) => s + t.pnl, 0);
@@ -407,6 +445,10 @@ export function mountReport(root, R, fmt) {
   }, { passive: true });
   on(window, 'resize', () => { if (tipFor) place(tipFor); });
   on(document, 'keydown', (e) => { if (e.key === 'Escape') hideTip(); });
+  on(root, 'keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const dr = e.target.closest && e.target.closest('[data-drill]'); if (dr) { e.preventDefault(); openDrill(dr.dataset.drill, dr.dataset.key); }
+  });
 
   /* ---------- navigation ---------- */
   function swap(id, enter) {
@@ -431,6 +473,8 @@ export function mountReport(root, R, fmt) {
   on(root, 'click', (e) => {
     const tb = e.target.closest('[data-tip]');
     if (tb) { e.preventDefault(); e.stopPropagation(); const el = tb.closest('[data-behav]'); if (tipFor === el && pinned) hideTip(); else { showTip(el, tb.dataset.tip); pinned = true; } return; }
+    const dr = e.target.closest('[data-drill]'); if (dr) { openDrill(dr.dataset.drill, dr.dataset.key); return; }
+    if (e.target.closest('[data-drill-clear]')) { drill = null; drawPositions(); return; }
     const b = e.target.closest('[data-tab]'); if (b) { show(b.dataset.tab); return; }
     const g = e.target.closest('[data-go]'); if (g) { e.preventDefault(); show(g.dataset.go); return; }
     const sg = e.target.closest('[data-seg]');

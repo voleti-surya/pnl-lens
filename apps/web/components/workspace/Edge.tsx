@@ -1,11 +1,12 @@
 /**
  * @file  apps/web/components/workspace/Edge.tsx
  * @area  Reports
- * @what  "Edge" tab: is the average trade really positive or could it be luck (verdict, 90% range, trades needed), and the next 100 trades if the past ones repeat in random order (fan chart, drawdowns, chance of giving profits back).
+ * @what  "Edge" tab: skill or luck (verdict, 90% range, trades needed); the next 100 trades (fan chart, drawdowns, give-back chances); consistency and risk by day; R-multiples; when you trade (weekday × hour heatmap, options by days to expiry).
  */
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { edgeVerdict, project, MIN_TRADES, type Verdict } from '@pnl-lens/shared/insights/edge';
+import { consistency, rMultiples, heatmap, daysToExpiry, type Heatmap, type Bucket } from '@pnl-lens/shared/insights/deep';
 
 const VERDICT: Record<Verdict, { title: string; tone: string; text: string }> = {
   real: { title: 'Your edge looks real', tone: 'gain', text: 'Even in unlucky reshuffles of these trades, the average trade stays above zero.' },
@@ -49,6 +50,40 @@ function Fan({ p, money }: { p: NonNullable<ReturnType<typeof project>>; money: 
   );
 }
 
+const HOUR = (h: number) => `${String(h).padStart(2, '0')}:00`;
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const dm = (iso: string) => { const [y, m, d] = iso.split('-'); return `${Number(d)} ${MON[Number(m) - 1]} ${y.slice(2)}`; };
+const ratio = (v: number | null) => (v === null ? '—' : (Math.round(v * 100) / 100).toFixed(2));
+
+function HeatGrid({ h, money }: { h: Heatmap; money: (v: number) => string }) {
+  const max = Math.max(1, ...Object.values(h.cells).map((c) => Math.abs(c.pnl)));
+  return (
+    <div className="eg-heat-wrap">
+      <table className="eg-heat">
+        <thead><tr><th />{h.hours.map((x) => <th key={x}>{HOUR(x)}</th>)}</tr></thead>
+        <tbody>{h.days.map((d) => (
+          <tr key={d}><th>{d.slice(0, 3)}</th>{h.hours.map((x) => {
+            const c = h.cells[`${d}|${x}`];
+            if (!c) return <td key={x} className="none" />;
+            const a = Math.max(0.12, Math.abs(c.pnl) / max);
+            return <td key={x} className={c.pnl >= 0 ? 'up' : 'down'} style={{ ['--a' as any]: a }} title={`${d} ${HOUR(x)}: ${c.n} trade${c.n === 1 ? '' : 's'}, ${money(c.pnl)}`}><span>{c.n}</span></td>;
+          })}</tr>
+        ))}</tbody>
+      </table>
+    </div>
+  );
+}
+
+function BucketBars({ rows, money }: { rows: Bucket[]; money: (v: number) => string }) {
+  const max = Math.max(1, ...rows.map((r) => Math.abs(r.pnl)));
+  return (
+    <ul className="eg-buckets">{rows.map((r) => (
+      <li key={r.key}><span className="k">{r.key}</span><span className="eg-bt"><i className={r.pnl >= 0 ? 'up' : 'down'} style={{ width: `${(Math.abs(r.pnl) / max) * 100}%` }} /></span>
+        <b className={r.pnl >= 0 ? 'gain' : 'loss'}>{money(r.pnl)}</b><small>{r.n} trade{r.n === 1 ? '' : 's'} · {Math.round(r.winRate * 100)}% won</small></li>
+    ))}</ul>
+  );
+}
+
 export default function Edge({ report, money, active }: { report: any; money: (v: number) => string; active: boolean }) {
   const trades: any[] = report?.trades || [];
   // the simulations run only once the tab is first opened, then stay for this report
@@ -56,6 +91,7 @@ export default function Edge({ report, money, active }: { report: any; money: (v
   useEffect(() => { if (active) setOpened(true); }, [active]);
   const e = useMemo(() => (opened ? edgeVerdict(trades) : null), [trades, opened]);
   const p = useMemo(() => (opened ? project(trades) : null), [trades, opened]);
+  const deep = useMemo(() => (opened ? { c: consistency(trades), r: rMultiples(trades), h: heatmap(trades), dte: daysToExpiry(trades) } : null), [trades, opened]);
   if (!e) return null;
   const v = VERDICT[e.verdict];
   const more = e.needed && e.needed > e.n ? e.needed - e.n : 0;
@@ -95,6 +131,44 @@ export default function Edge({ report, money, active }: { report: any; money: (v
             </ul>
           </div>
           <p className="rv-note">Built only from the trades in this report: each simulated path draws your own past trades at random, again and again. Markets change and your trading will too, so treat this as a picture of your past results, not a forecast. Not investment advice.</p>
+        </div>
+      )}
+
+      {deep?.c && (
+        <div className="rv-panel s12" data-consistency>
+          <div className="rv-ph"><h3>Consistency and risk</h3><small>by trading day · {deep.c.days} days</small></div>
+          <div className="eg-cgrid">
+            <div><span className="eg-k">Green days</span><b>{pct(deep.c.greenDays)}</b><small>average day {money(deep.c.avgDay)}</small></div>
+            <div><span className="eg-k">Best day</span><b className="gain">{money(deep.c.bestDay.pnl)}</b><small>{dm(deep.c.bestDay.date)}</small></div>
+            <div><span className="eg-k">Worst day</span><b className="loss">{money(deep.c.worstDay.pnl)}</b><small>{dm(deep.c.worstDay.date)}{deep.c.worstVsTypicalLoss ? ` · ${ratio(deep.c.worstVsTypicalLoss)}× a normal losing day` : ''}</small></div>
+            <div><span className="eg-k">Worst drawdown</span><b className="loss">{money(deep.c.maxDD)}</b><small>{deep.c.maxDD < 0 ? `${deep.c.ddDays} trading day${deep.c.ddDays === 1 ? '' : 's'} down · ${deep.c.recoveryDays === null ? 'not made back yet' : `made back in ${deep.c.recoveryDays}`}` : 'no drawdown'}</small></div>
+            <div><span className="eg-k">Return per unit of risk</span><b>{ratio(deep.c.sharpe)}</b><small>Sharpe-style, daily; above 1 is steady{deep.c.sortino !== null ? ` · downside only ${ratio(deep.c.sortino)}` : ''}</small></div>
+            <div><span className="eg-k">Profit from your 3 best days</span><b>{deep.c.top3Share === null ? '—' : pct(deep.c.top3Share)}</b><small>{deep.c.top3Share !== null && deep.c.top3Share > 0.6 ? 'a few days carry the result' : 'profit is spread out'}{deep.c.greenMonths !== null ? ` · ${pct(deep.c.greenMonths)} of months green` : ''}</small></div>
+          </div>
+          {deep.c.underwaterNow > 0 && <p className="rv-note">You are {deep.c.underwaterNow} trading day{deep.c.underwaterNow === 1 ? '' : 's'} past your last high in this report.</p>}
+        </div>
+      )}
+
+      {deep?.r && (
+        <div className="rv-panel s6" data-r-multiples>
+          <div className="rv-ph"><h3>Wins and losses in R</h3><small>1R = your average loss, {money(deep.r.r)}</small></div>
+          <BucketBars rows={deep.r.buckets.filter((b) => b.n > 0)} money={money} />
+          <p className="rv-note">Average trade {ratio(deep.r.avgR)}R · {deep.r.bigWins} win{deep.r.bigWins === 1 ? '' : 's'} of 2R or more · {deep.r.bigLosses} loss{deep.r.bigLosses === 1 ? '' : 'es'} of 2R or worse.</p>
+        </div>
+      )}
+
+      {deep?.dte && (
+        <div className="rv-panel s6" data-dte>
+          <div className="rv-ph"><h3>Options by days to expiry</h3><small>days from entry to expiry</small></div>
+          <BucketBars rows={deep.dte} money={money} />
+        </div>
+      )}
+
+      {deep?.h && (
+        <div className="rv-panel s12" data-heatmap>
+          <div className="rv-ph"><h3>When you trade</h3><small>entry day × entry hour · number = trades, colour = P&amp;L</small></div>
+          <HeatGrid h={deep.h} money={money} />
+          {(deep.h.best || deep.h.worst) && <p className="rv-note">{deep.h.best ? `Best slot: ${deep.h.best.day} ${HOUR(deep.h.best.hour)} (${money(deep.h.best.pnl)}). ` : ''}{deep.h.worst ? `Worst slot: ${deep.h.worst.day} ${HOUR(deep.h.worst.hour)} (${money(deep.h.worst.pnl)}).` : ''}</p>}
         </div>
       )}
     </div>

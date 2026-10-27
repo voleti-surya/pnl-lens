@@ -2,6 +2,8 @@ import type { ReportV1 } from '@pnl-lens/engine/types';
 /** [name, lowest score, highest score] per level, mirroring the engine's thresholds. */
 export const LEVEL_RANGES: [string, number, number][];
 export function ladderHtml(index: number): string;
+/** drill-down rules: does trade t belong to the cluster row with this key (mirrors the engine buckets) */
+export const DRILL: Record<'group' | 'underlying' | 'weekday' | 'expiryType' | 'callPut' | 'style' | 'entryDow' | 'month' | 'direction', (t: any, key: string) => boolean>;
 export function mountReport(
   root: HTMLElement,
   report: ReportV1,
