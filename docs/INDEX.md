@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 287 files._
+_Generated from file headers by `npm run docs:index` — 292 files._
 
 ### Pages
 
@@ -150,6 +150,7 @@ _Generated from file headers by `npm run docs:index` — 287 files._
 | `apps/web/app/(app)/reminders/new/page.tsx` | "Remind me on <date>" from the 30-day plan PDF: confirms and turns on one check-up email (signs in first if needed). |
 | `apps/web/app/(app)/report/[id]/page.tsx` | One report in the workspace: file tabs, All files, +, ×, the five dashboard tabs; a "deleted" page once removed. |
 | `apps/web/app/(app)/upload/page.tsx` | New report: the workspace upload view (consent, files, loader; the API and worker read the files). |
+| `apps/web/components/workspace/CapitalPanel.tsx` | Optional "capital used" for a report (Edge tab): add, change or remove it; shows return, a year at this pace, average and largest loss, worst day, drawdown and the 1% / 2% loss counts as % of that capital. |
 | `apps/web/components/workspace/DataRights.tsx` | "Your data" panel: password (set or change), 30-day plan check-up reminder (cancel), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account. |
 | `apps/web/components/workspace/Edge.tsx` | "Edge" tab: skill or luck (verdict, 90% range, trades needed); the next 100 trades (fan chart, drawdowns, give-back chances); consistency and risk by day; R-multiples; when you trade (weekday × hour heatmap, options by days to expiry). |
 | `apps/web/components/workspace/History.tsx` | Report history (report page sidebar) grouped by month (MON-YY) with Progress score and an always-visible rename (PATCH /api/v1/reports/:id); RenameRow is shared with the dashboard list. |
@@ -167,6 +168,7 @@ _Generated from file headers by `npm run docs:index` — 287 files._
 | `packages/db/src/queries/journal.ts` | Trade journal (0027): read the user's notes, save one (an empty note is deleted), delete one. |
 | `packages/db/src/queries/plan-snapshots.ts` | 30-day plan snapshots (0026): saved when the plan PDF is downloaded; the newest one made before a report is what that report's check-up scores. |
 | `packages/db/src/queries/reminders.ts` | 30-day plan check-up reminders: set (replaces the active one), read, cancel (app); due list and claim-before-send (api sender, via 0024 functions). |
+| `packages/shared/src/insights/capital.ts` | Results as % of the capital the user says they used (analysis roadmap B1): return, a year at this pace, average trade, average loss and largest loss, worst day and worst drawdown, and how often a single trade lost more than 1% or 2% of capital. |
 | `packages/shared/src/insights/deep.ts` | Deep dive on a report's own trades: consistency and risk by day (green days, Sharpe/Sortino-style ratios, drawdown length and recovery, R-multiples, how concentrated the profit is) and timing (weekday × hour heatmap, options by days to expiry). |
 | `packages/shared/src/insights/edge.ts` | Edge verdict (is the average trade really positive, or could it be luck?) and outcome projection (the next 100 trades if the past ones repeat in random order: range, drawdowns, chance of giving profits back). |
 | `packages/shared/src/insights/journal.ts` | What the trade journal shows: results by setup, tag and emotion on the trades the user has journaled, how many are journaled, and plain-words highlights. |
@@ -318,6 +320,7 @@ _Generated from file headers by `npm run docs:index` — 287 files._
 | `packages/db/migrations/0025_research_links.sql` | Research datasets stay pseudonymised for download, but PnL Lens keeps the link: research_export_reports (report pseudonym → report) and an owner-only, audited research_lookup(). |
 | `packages/db/migrations/0026_plan_snapshots.sql` | The 30-day plan as it was given to the user (rules, metrics, targets), kept so the next report can score it (check-up: Met / Missed per rule). |
 | `packages/db/migrations/0027_trade_journal.sql` | Trade journal: the user's own setup, tags, emotion and note per trade (keyed by the trade's identity, so a note follows the trade into every report); private (never in research); in "Export my data"; removed with the account. |
+| `packages/db/migrations/0028_report_capital.sql` | Optional "capital used" per report (analysis roadmap B1): the user's own figure, in the report's currency, so results can be shown as % returns and % risk. Never required. |
 | `packages/db/optional/pg_cron.sql` | Optional: schedule the purge inside Postgres if pg_cron is available. |
 | `packages/db/scripts/seed-dev.mjs` | Applies seed.sql (dev user with credits) — only when SEED_DEV_DATA=true (set by infra/compose.dev.yml only). |
 | `packages/db/scripts/setup-roles.mjs` | Creates/updates the login roles lens_app and lens_worker with passwords from env (runs after migrations, as superuser). |
@@ -376,7 +379,7 @@ _Generated from file headers by `npm run docs:index` — 287 files._
 | `apps/api/test/plan.test.ts` | 30-day plan: owner-only PDF (2 pages, links, audited, no-store), plan snapshot + check-up on the next report, public .ics, reminders (set/replace/cancel/validate), sender claims before sending and sends once. |
 | `apps/api/test/research.test.ts` | Research dataset routes: owner only (403 for admin, support, finance, analyst, user), Build now (one at a time), download decrypts and is audited, expired → 404. |
 | `apps/api/test/sniff.test.ts` | Upload type check: every engine fixture is accepted with the engine's kind; executables, images, wrong ZIPs and binaries posing as CSV are refused. |
-| `apps/api/test/uploads.test.ts` | Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete, lifetime trades. |
+| `apps/api/test/uploads.test.ts` | Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete, lifetime trades, capital. |
 | `apps/api/test/users-admin.test.ts` | User management API: permissions, list + research statuses, "Request reports" rules and email, one-click consent link (single use, expiry), restrict ends sessions and sign-in, delete with typed email. |
 | `apps/worker/test/export.test.ts` | "Export my data" on a real database: complete archive (JSON + original statements), encrypted at rest, access logged, expires after 7 days. |
 | `apps/worker/test/global-setup.ts` | Builds the worker bundles once before the tests (the engine child process runs from dist/, as in the image). |
@@ -386,6 +389,7 @@ _Generated from file headers by `npm run docs:index` — 287 files._
 | `apps/worker/test/queue.test.ts` | Real sample files through the real queue (API producer → Redis → worker consumer); retries then dead letter; nightly purge and storage sweep. |
 | `apps/worker/test/research.test.ts` | Research dataset: only opted-in users, encrypted at rest, 4 CSVs + README, no emails/names/file names/internal ids, per-export report pseudonyms, links kept for the owner's audited lookup, consent withdrawal, expiry sweep, worker role limits. |
 | `packages/db/test/db/blog.test.ts` | REQ-7 blog in the database: app role reads the public view only, owner/admin-only functions, audit rows, visibility rules, slug redirects. |
+| `packages/db/test/db/capital.test.ts` | Report capital (0028): set and clear by the owner only, limits enforced, app may update only that column (and title), included in "Export my data". |
 | `packages/db/test/db/credits.test.ts` | Credits spec (19 Oct 2026) acceptance checks in the database: reports left, "+" free up to the limit, failed files and deletes spend/return nothing, plan window, soonest-expiring first. |
 | `packages/db/test/db/harness.ts` | DB test harness: fresh database per suite on the throwaway test Postgres, real migrate + setup-roles scripts, role-scoped clients, fixtures. |
 | `packages/db/test/db/journal.test.ts` | Trade journal (0027): save, update, empty = removed, one per trade, app grants (no access for the worker or research), included in "Export my data" with the 30-day plans and reminders, removed when the account is closed. |
@@ -405,6 +409,7 @@ _Generated from file headers by `npm run docs:index` — 287 files._
 | `packages/engine/test/engine.test.ts` | Engine: formats, accounting, symbols, auto-detection, combining files, progress. |
 | `packages/engine/test/extract.test.ts` | PDF, DOCX and legacy DOC reading matches the CSV originals. |
 | `packages/engine/test/golden.test.ts` | Engine parity: every fixture through the Node runner must equal the stored golden JSON byte for byte. |
+| `packages/shared/test/capital.test.ts` | Capital %: return, a year at this pace (only for 30+ days), average/largest loss, worst day, drawdown and the 1% / 2% loss counts on a hand-made case; null without capital; finite on every golden report. |
 | `packages/shared/test/deep.test.ts` | Deep dive statistics: consistency/risk by day, R-multiples, weekday × hour heatmap and days to expiry: correct on small hand-made cases, finite and complete on every golden report, null when the statement cannot show them. |
 | `packages/shared/test/drill.test.ts` | Drill-down parity: for every golden report and every drillable cluster view, the trades the renderer's DRILL rules pick are exactly the engine's bucket (same count, same P&L). |
 | `packages/shared/test/edge.test.ts` | Edge verdict and projection: deterministic, sensible on clear cases (always winning, coin flip, always losing, too few), finite and ordered on every golden report. |
@@ -423,7 +428,7 @@ _Generated from file headers by `npm run docs:index` — 287 files._
 | `packages/shared/test/rewind.test.ts` | Rewind (what-if replay) on the golden reports: no rules = the real result; each rule does exactly what it says; stops never make a trade worse; date rules need dates; the 30-day plan becomes Rewind settings. |
 | `tests/e2e-web/blog.spec.ts` | REQ-7 blog end to end: owner drafts, previews, publishes, unpublishes, schedules; /blog, article, landing preview, sitemap; raw-HTML SEO; sanitising; support sees no Blog tab; events. |
 | `tests/e2e-web/credits.spec.ts` | Credits spec (19 Oct 2026) in the browser: "N reports left" pill and "Plans" menu, plan card wording, free preview (3 numbers, 2 insights, blurred, from ₹99/$9), plan window end, no "credit" on customer screens. |
-| `tests/e2e-web/edge.spec.ts` | Edge tab: verdict, next-100-trades projection, consistency and risk by day, R-multiples, weekday × hour heatmap; the same numbers on a reload; no sideways scroll on a phone. Drill-down: a cluster row opens Positions filtered to its trades. |
+| `tests/e2e-web/edge.spec.ts` | Edge tab: verdict, next-100-trades projection, capital % (add, kept after reload, remove), consistency and risk by day, R-multiples, weekday × hour heatmap; the same numbers on a reload; no sideways scroll on a phone. Drill-down: a cluster row opens Positions filtered to its trades. |
 | `tests/e2e-web/helpers.ts` | E2E helpers: sign in (password, or an emailed code from the API's console mail log then the required password), give a user a plan, run SQL as the admin. |
 | `tests/e2e-web/instagram.spec.ts` | REQ-6 Instagram section: scroll-linked row (card 1 → 4), manual takeover, reduced motion, video play rules, exact copy, no Meta requests, no layout shift. |
 | `tests/e2e-web/journal.spec.ts` | Trade journal: add a setup, tags, emotion and note to trades, see "what your journal shows" by setup/tag/emotion, the note follows the trade into another report of the same statement, remove a note. |

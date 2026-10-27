@@ -1,7 +1,7 @@
 /**
  * @file  tests/e2e-web/edge.spec.ts
  * @area  Tests
- * @what  Edge tab: verdict, next-100-trades projection, consistency and risk by day, R-multiples, weekday × hour heatmap; the same numbers on a reload; no sideways scroll on a phone. Drill-down: a cluster row opens Positions filtered to its trades.
+ * @what  Edge tab: verdict, next-100-trades projection, capital % (add, kept after reload, remove), consistency and risk by day, R-multiples, weekday × hour heatmap; the same numbers on a reload; no sideways scroll on a phone. Drill-down: a cluster row opens Positions filtered to its trades.
  */
 import { test, expect } from '@playwright/test';
 import path from 'node:path';
@@ -9,7 +9,7 @@ import { signIn, givePlan, FIX } from './helpers';
 
 test.skip(({ browserName }) => browserName === 'webkit', 'Secure cookie over plain http');
 
-test('Edge: skill-or-luck verdict and the next 100 trades, stable across reloads', async ({ page }) => {
+test('Edge: skill-or-luck verdict, the next 100 trades and capital %, stable across reloads', async ({ page }) => {
   const email = `edge-${Date.now()}@e2e.local`;
   await signIn(page, email, '/upload');
   givePlan(email);
@@ -31,6 +31,16 @@ test('Edge: skill-or-luck verdict and the next 100 trades, stable across reloads
   await expect(eg.locator('[data-consistency]')).toContainText('Green days');
   await expect(eg.locator('[data-r-multiples]')).toContainText('1R = your average loss');
   await expect(eg.locator('[data-heatmap] .eg-heat td:not(.none)')).not.toHaveCount(0);
+  // capital %: optional; add it, it is kept, then remove it
+  const cp = eg.locator('[data-capital]');
+  await expect(cp).toContainText('Add the capital you traded with');
+  await cp.getByRole('textbox', { name: 'Capital used' }).fill('5,00,000');
+  await cp.getByRole('button', { name: 'Save' }).click();
+  await expect(cp.locator('[data-capital-value]')).toHaveText('₹5.00L');
+  await expect(cp.locator('[data-return]')).toHaveText(/^\+\d+\.\d%$/);
+  await page.reload();
+  await open();
+  await expect(page.locator('[data-capital] [data-capital-value]')).toHaveText('₹5.00L');
   const before = await eg.innerText();
   await page.reload();
   await open();
@@ -38,6 +48,8 @@ test('Edge: skill-or-luck verdict and the next 100 trades, stable across reloads
 
   await page.setViewportSize({ width: 390, height: 860 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  await page.locator('[data-capital]').getByRole('button', { name: 'Remove' }).click();
+  await expect(page.locator('[data-capital]')).toContainText('Add the capital you traded with');
 });
 
 test('drill-down: a cluster row opens Positions filtered to exactly its trades, and the chip clears it', async ({ page }) => {

@@ -19,7 +19,7 @@ export interface PlanCheckView {
   fromReportId: string | null; fromReportName: string | null;
   items: { id: string; kind: 'do' | 'dont'; title: string; habit: string; before: string; target: string; now: string | null; met: boolean | null }[];
 }
-export interface CurrentReport { id: string; createdAt: string; title: string | null; report: any; files: FileTab[]; places: { total: number; used: number }; planCheck?: PlanCheckView | null }
+export interface CurrentReport { id: string; createdAt: string; title: string | null; report: any; files: FileTab[]; places: { total: number; used: number }; planCheck?: PlanCheckView | null; capital?: number | null }
 
 const MON = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
 export const monthTag = (d: string) => { const x = new Date(d); return MON[x.getMonth()] + '-' + String(x.getFullYear()).slice(2); };

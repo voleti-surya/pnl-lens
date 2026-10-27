@@ -1,7 +1,7 @@
 /**
  * @file  apps/api/test/uploads.test.ts
  * @area  Tests
- * @what  Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete, lifetime trades.
+ * @what  Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete, lifetime trades, capital.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'node:fs';
@@ -178,6 +178,24 @@ describe.skipIf(!ok)('uploads and reports', () => {
     l = (await x.app.inject({ method: 'GET', url: '/api/v1/me/lifetime', headers: h })).json();
     expect(l.reports.map((r: any) => r.id)).toEqual([one]);
     expect((await x.app.inject({ method: 'GET', url: '/api/v1/me/lifetime' })).statusCode).toBe(401);
+  });
+
+  it('capital: owner sets, reads and clears it; validation; others get 404', async () => {
+    const u = await makeUser(x.t), other = await makeUser(x.t);
+    await givePlan(x.t, u, { reports: 1 });
+    const m = multipart([consent, fixture('zerodha_tradebook.csv')]);
+    const a = (await x.app.inject({ method: 'POST', url: '/api/v1/analyses', payload: m.payload, headers: { ...m.headers, ...(await as(u)) } })).json().analysisId;
+    await finish(a);
+    const id = (await x.app.inject({ method: 'POST', url: '/api/v1/reports', headers: await as(u), payload: { analysisId: a } })).json().id;
+    const put = async (by: string, capital: unknown) => x.app.inject({ method: 'PUT', url: `/api/v1/reports/${id}/capital`, headers: await as(by), payload: { capital } });
+    const get = async () => (await x.app.inject({ method: 'GET', url: `/api/v1/reports/${id}`, headers: await as(u) })).json().capital;
+    expect(await get()).toBeNull();
+    expect((await put(u, 500000)).json()).toEqual({ capital: 500000 });
+    expect(await get()).toBe(500000);
+    for (const bad of [0, -1, 'lots', 1e12]) expect((await put(u, bad)).statusCode).toBe(400);
+    expect((await put(other, 1000)).statusCode).toBe(404);
+    expect((await put(u, null)).json()).toEqual({ capital: null });
+    expect(await get()).toBeNull();
   });
 
   it('credits spec: reports left follows grant, create, delete and the plan window; "+" refused after the window, before storing', async () => {

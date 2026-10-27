@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { edgeVerdict, project, MIN_TRADES, type Verdict } from '@pnl-lens/shared/insights/edge';
 import { consistency, rMultiples, heatmap, daysToExpiry, type Heatmap, type Bucket } from '@pnl-lens/shared/insights/deep';
+import CapitalPanel from './CapitalPanel';
 
 const VERDICT: Record<Verdict, { title: string; tone: string; text: string }> = {
   real: { title: 'Your edge looks real', tone: 'gain', text: 'Even in unlucky reshuffles of these trades, the average trade stays above zero.' },
@@ -84,7 +85,7 @@ function BucketBars({ rows, money }: { rows: Bucket[]; money: (v: number) => str
   );
 }
 
-export default function Edge({ report, money, active }: { report: any; money: (v: number) => string; active: boolean }) {
+export default function Edge({ report, money, active, capital }: { report: any; money: (v: number) => string; active: boolean; capital?: { reportId: string; value: number | null } | null }) {
   const trades: any[] = report?.trades || [];
   // the simulations run only once the tab is first opened, then stay for this report
   const [opened, setOpened] = useState(active);
@@ -133,6 +134,8 @@ export default function Edge({ report, money, active }: { report: any; money: (v
           <p className="rv-note">Built only from the trades in this report: each simulated path draws your own past trades at random, again and again. Markets change and your trading will too, so treat this as a picture of your past results, not a forecast. Not investment advice.</p>
         </div>
       )}
+
+      {capital && <CapitalPanel reportId={capital.reportId} initial={capital.value} trades={trades} money={money} />}
 
       {deep?.c && (
         <div className="rv-panel s12" data-consistency>

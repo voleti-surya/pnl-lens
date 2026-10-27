@@ -94,6 +94,8 @@ export interface ReportsTable {
   month_label: string | null;
   used_fingerprints: Generated<string[]>;
   fingerprint: string | null;
+  /** 0028: optional capital used, in the report's currency */
+  capital: string | null;
 }
 
 export interface AnalysesTable {

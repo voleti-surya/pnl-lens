@@ -367,7 +367,7 @@ function ReportView({ plan, plans, prices, reports, current, setLock }: { plan: 
             {TABS.map(([id]) => (
               <section key={id} id={id} className={`tab${id === 'overview' ? '' : ' hide'}`}>
                 {/* Edge, Rewind and Journal are React (interactive); the other tabs are drawn by lib/report-ui/render.js */}
-                {id === 'edge' && r && <Edge key={view === 'all' ? 'all' : String(view)} report={r} money={(v) => money(v, r.m?.currency)} active={tab === 'edge'} />}
+                {id === 'edge' && r && <Edge key={view === 'all' ? 'all' : String(view)} report={r} money={(v) => money(v, r.m?.currency)} active={tab === 'edge'} capital={view === 'all' || files.length < 2 ? { reportId: current.id, value: current.capital ?? null } : null} />}
                 {id === 'journal' && r && <Journal key={view === 'all' ? 'all' : String(view)} report={r} money={(v) => money(v, r.m?.currency)} active={tab === 'journal'} />}
                 {id === 'rewind' && r && <Rewind key={view === 'all' ? 'all' : String(view)} report={r} money={(v) => money(v, r.m?.currency)} onFirstUse={() => ev('rewind_used', { trades: r.trades?.length ?? 0 })} />}
               </section>

@@ -24,6 +24,14 @@ export async function addAnalysisToReport(db: Db, userId: string, reportId: stri
 }
 
 /** Rename (history only). Empty title clears it. False if not the user's live report. */
+/** Optional capital used (0028); null clears it. */
+export async function setReportCapital(db: Db, userId: string, reportId: string, capital: number | null): Promise<boolean> {
+  const r = await db.updateTable('reports').set({ capital: capital === null ? null : String(Math.round(capital * 100) / 100) })
+    .where('id', '=', reportId).where('user_id', '=', userId).where('purged_at', 'is', null)
+    .executeTakeFirst();
+  return Number(r.numUpdatedRows) === 1;
+}
+
 export async function renameReport(db: Db, userId: string, reportId: string, title: string | null): Promise<boolean> {
   const t = title?.trim() || null;
   const r = await db.updateTable('reports').set({ title: t })
@@ -53,7 +61,7 @@ export async function listReports(db: Db, userId: string, limit = 200) {
 export async function getReport(db: Db, userId: string, reportId: string) {
   return db.selectFrom('reports')
     .select(['id', 'title', 'month_label', 'created_at', 'expires_at', 'purged_at', 'file_names', 'market', 'currency', 'trade_count',
-      'net_pnl_minor', 'report', 'subscription_id', 'used_fingerprints', 'analysis_id'])
+      'net_pnl_minor', 'report', 'subscription_id', 'used_fingerprints', 'analysis_id', 'capital'])
     .where('id', '=', reportId).where('user_id', '=', userId)
     .executeTakeFirst();
 }

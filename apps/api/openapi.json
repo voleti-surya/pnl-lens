@@ -923,6 +923,56 @@
         }
       }
     },
+    "/api/v1/reports/{id}/capital": {
+      "put": {
+        "summary": "Set the capital used for a report (or clear it)",
+        "tags": [
+          "reports"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "capital": {
+                    "nullable": true,
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 100000000000
+                  }
+                },
+                "required": [
+                  "capital"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/v1/payments/webhook": {
       "post": {
         "summary": "Razorpay webhook (signature-checked)",

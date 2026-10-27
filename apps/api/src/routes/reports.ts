@@ -10,7 +10,7 @@
  */
 import { z } from 'zod';
 import { trackWith } from '@pnl-lens/shared/admin/telemetry';
-import { createReportFromAnalysis, addAnalysisToReport, listReports, getReport, renameReport, deleteReport, progressHistory, reportFiles, planToCheck, isDbError, type DbErrorCode } from '@pnl-lens/db';
+import { createReportFromAnalysis, addAnalysisToReport, listReports, getReport, renameReport, deleteReport, progressHistory, reportFiles, planToCheck, setReportCapital, isDbError, type DbErrorCode } from '@pnl-lens/db';
 import { scorePlan } from '@pnl-lens/shared/plan/score';
 import type { App, Deps } from '../app.js';
 import { fail, ok, requireUser, UUID } from '../lib/http.js';
@@ -106,7 +106,7 @@ export async function reportRoutes(app: App, deps: Deps) {
     // 30-day plan check-up: the newest plan downloaded before this report, scored on it (Met / Missed per rule)
     const prev = await planToCheck(deps.db, user.id, r.id, new Date(r.created_at));
     const planCheck = prev ? { ...scorePlan(prev.plan, r.report), fromReportId: prev.reportId, fromReportName: prev.reportName } : null;
-    return ok(reply, { summary: sm, report: r.report, history, files, places, planCheck });
+    return ok(reply, { summary: sm, report: r.report, history, files, places, planCheck, capital: r.capital === null || r.capital === undefined ? null : Number(r.capital) });
   });
 
   /**
@@ -123,6 +123,18 @@ export async function reportRoutes(app: App, deps: Deps) {
       id: r.id, title: r.title || null, files: r.file_names || [],
       createdAt: new Date(r.created_at).toISOString(), currency: String(r.currency).toUpperCase(), trades: r.trades,
     })) });
+  });
+
+  /** Optional capital used (0028), in the report's currency: unlocks % returns and % risk. null clears it. */
+  app.put('/reports/:id/capital', {
+    schema: { ...s, summary: 'Set the capital used for a report (or clear it)', params: z.object({ id: z.string() }), body: z.object({ capital: z.number().positive().max(100_000_000_000).nullable() }) },
+  }, async (req, reply) => {
+    const user = await requireUser(req, reply); if (!user) return;
+    if (!UUID.test(req.params.id)) return fail(reply, 404, 'not_found');
+    const done = await setReportCapital(deps.db, user.id, req.params.id, req.body.capital);
+    if (!done) return fail(reply, 404, 'not_found');
+    await trackWith(deps.pool, user.id, 'capital_set', { cleared: req.body.capital === null });
+    return ok(reply, { capital: req.body.capital });
   });
 
   /** Rename (history only). An empty title clears it. */

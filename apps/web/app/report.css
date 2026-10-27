@@ -571,3 +571,10 @@
 .jr-ed-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .jr-more { margin-top: 10px; }
 @media (max-width: 900px) { .jr-gcols { grid-template-columns: 1fr; } .jr-row { grid-template-columns: minmax(0, 1fr) auto; } .jr-meta { grid-column: 1 / -1; order: 3; } .jr-edit { grid-column: 2; } }
+
+/* capital % (components/workspace/CapitalPanel.tsx) */
+.cp-intro { margin: 0 0 12px; font-size: 14px; max-width: 70ch; }
+.cp-form { display: flex; flex-wrap: wrap; gap: 8px; }
+.cp-form input { flex: 0 1 240px; min-height: 40px; background: var(--s2); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 0 12px; font: inherit; font-size: 15px; }
+.cp-cap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; color: var(--ink-2); font-size: 14px; }
+.cp-cap b { color: var(--ink); font-size: 16px; } .cp-cap .btn { min-height: 30px; padding: 4px 12px; font-size: 13px; }
