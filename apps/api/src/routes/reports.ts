@@ -109,6 +109,22 @@ export async function reportRoutes(app: App, deps: Deps) {
     return ok(reply, { summary: sm, report: r.report, history, files, places, planCheck });
   });
 
+  /**
+   * Lifetime view: the closed trades of every live report (only the trades, currency and names; the browser merges
+   * them per currency, packages/shared/src/insights/lifetime.ts). Owner only by construction (user_id filter).
+   */
+  app.get('/me/lifetime', { schema: { ...s, tags: ['reports'], summary: 'All my live reports\' trades for the lifetime view' } }, async (req, reply) => {
+    const user = await requireUser(req, reply); if (!user) return;
+    const { rows } = await deps.pool.query(
+      `select id, title, month_label, created_at, file_names, coalesce(report->'m'->>'currency', currency, 'INR') as currency, coalesce(report->'trades', '[]'::jsonb) as trades
+         from public.reports where user_id = $1 and purged_at is null and report is not null order by created_at`, [user.id]);
+    reply.header('Cache-Control', 'no-store');
+    return ok(reply, { reports: rows.map((r) => ({
+      id: r.id, title: r.title || null, files: r.file_names || [],
+      createdAt: new Date(r.created_at).toISOString(), currency: String(r.currency).toUpperCase(), trades: r.trades,
+    })) });
+  });
+
   /** Rename (history only). An empty title clears it. */
   app.patch('/reports/:id', {
     schema: { ...s, summary: 'Rename a report', params: z.object({ id: z.string() }), body: z.object({ title: z.string().max(120).nullable() }) },

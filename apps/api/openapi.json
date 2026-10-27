@@ -905,6 +905,24 @@
         }
       }
     },
+    "/api/v1/me/lifetime": {
+      "get": {
+        "summary": "All my live reports' trades for the lifetime view",
+        "tags": [
+          "reports"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/v1/payments/webhook": {
       "post": {
         "summary": "Razorpay webhook (signature-checked)",

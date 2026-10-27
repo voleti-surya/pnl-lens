@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 273 files._
+_Generated from file headers by `npm run docs:index` — 278 files._
 
 ### Pages
 
@@ -144,7 +144,8 @@ _Generated from file headers by `npm run docs:index` — 273 files._
 | `apps/api/src/routes/analyses.ts` | POST /analyses (alias /uploads): consent, type sniffing, size/plan/D11 limits, encrypt, store, queue. GET /analyses/:id and /reports/:id/status. |
 | `apps/api/src/routes/plan.ts` | 30-day plan: the report owner's PDF download (the one download a report has), the check-up calendar file, and check-up email reminders. |
 | `apps/api/src/routes/reports.ts` | Reports: list (MON-YY history), save an analysis (spends one report from a valid plan), "+" add files (file-set lock), get, rename, delete. |
-| `apps/web/app/(app)/dashboard/page.tsx` | Signed-in dashboard: plan card, reports (search, sort, rename); your data (research opt-in, export, delete account). |
+| `apps/web/app/(app)/dashboard/page.tsx` | Signed-in dashboard: plan card, reports (search, sort, rename), link to the lifetime view (2+ reports); your data (research opt-in, export, delete account). |
+| `apps/web/app/(app)/lifetime/page.tsx` | "All my trading": the lifetime view across every live report (merged per currency, duplicates counted once), with the Edge and Rewind analysis on all trades. |
 | `apps/web/app/(app)/reminders/new/page.tsx` | "Remind me on <date>" from the 30-day plan PDF: confirms and turns on one check-up email (signs in first if needed). |
 | `apps/web/app/(app)/report/[id]/page.tsx` | One report in the workspace: file tabs, All files, +, ×, the five dashboard tabs; a "deleted" page once removed. |
 | `apps/web/app/(app)/upload/page.tsx` | New report: the workspace upload view (consent, files, loader; the API and worker read the files). |
@@ -152,6 +153,7 @@ _Generated from file headers by `npm run docs:index` — 273 files._
 | `apps/web/components/workspace/Edge.tsx` | "Edge" tab: skill or luck (verdict, 90% range, trades needed); the next 100 trades (fan chart, drawdowns, give-back chances); consistency and risk by day; R-multiples; when you trade (weekday × hour heatmap, options by days to expiry). |
 | `apps/web/components/workspace/History.tsx` | Report history (report page sidebar) grouped by month (MON-YY) with Progress score and an always-visible rename (PATCH /api/v1/reports/:id); RenameRow is shared with the dashboard list. |
 | `apps/web/components/workspace/JourneyBar.tsx` | REQ-2 journey bar above the workspace and dashboard: 5 steps (done / locked with the unlocking plan), score line, next action; one line on phones. |
+| `apps/web/components/workspace/Lifetime.tsx` | Lifetime view UI: all reports merged (per currency, duplicates once): totals, P&L curve, months, what each report added; then Edge and Rewind on every trade. |
 | `apps/web/components/workspace/model.ts` | Workspace data types (from the API) and the offline tool's wording, labels and plan rules, kept word for word. |
 | `apps/web/components/workspace/PlanButton.tsx` | "30-day plan" button at the top right of a report: downloads the server-built PDF of 5 Do and 5 Don't rules (the one download a report has). |
 | `apps/web/components/workspace/PlanCard.tsx` | Plan card (sidebar) and plan strip (upload view): "Snapshot · 2 of 5 reports used · use by 19-Jan-27", statements per report (credits spec wording). |
@@ -164,6 +166,7 @@ _Generated from file headers by `npm run docs:index` — 273 files._
 | `packages/db/src/queries/reminders.ts` | 30-day plan check-up reminders: set (replaces the active one), read, cancel (app); due list and claim-before-send (api sender, via 0024 functions). |
 | `packages/shared/src/insights/deep.ts` | Deep dive on a report's own trades: consistency and risk by day (green days, Sharpe/Sortino-style ratios, drawdown length and recovery, R-multiples, how concentrated the profit is) and timing (weekday × hour heatmap, options by days to expiry). |
 | `packages/shared/src/insights/edge.ts` | Edge verdict (is the average trade really positive, or could it be luck?) and outcome projection (the next 100 trades if the past ones repeat in random order: range, drawdowns, chance of giving profits back). |
+| `packages/shared/src/insights/lifetime.ts` | Lifetime view: merges the closed trades of all a user's live reports (per currency), counting a trade that appears in several reports (the same statement uploaded twice, overlapping periods) once; summary, months and each report's share. |
 | `packages/shared/src/insights/simulate.ts` | Rewind: replays a report's own closed trades under rules the user picks (stop at −X%, skip weekdays or hours, max trades a day, stop after N losses, no re-entry after a loss, skip names, cap size) and returns the new P&L, curve and what each rule changed. |
 | `packages/shared/src/journey.ts` | REQ-2 "trading journey": which of the 5 steps are done or locked, the score line and the next action, from real plans and saved reports only. |
 | `packages/shared/src/plan/build.ts` | 30-day plan from a stored report: 5 Do and 5 Don't rules (each with Why and Now → Target), a scorecard, a weekly check-in and the check-up date. Habits only, no buy/sell advice. |
@@ -367,7 +370,7 @@ _Generated from file headers by `npm run docs:index` — 273 files._
 | `apps/api/test/plan.test.ts` | 30-day plan: owner-only PDF (2 pages, links, audited, no-store), plan snapshot + check-up on the next report, public .ics, reminders (set/replace/cancel/validate), sender claims before sending and sends once. |
 | `apps/api/test/research.test.ts` | Research dataset routes: owner only (403 for admin, support, finance, analyst, user), Build now (one at a time), download decrypts and is audited, expired → 404. |
 | `apps/api/test/sniff.test.ts` | Upload type check: every engine fixture is accepted with the engine's kind; executables, images, wrong ZIPs and binaries posing as CSV are refused. |
-| `apps/api/test/uploads.test.ts` | Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete. |
+| `apps/api/test/uploads.test.ts` | Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete, lifetime trades. |
 | `apps/api/test/users-admin.test.ts` | User management API: permissions, list + research statuses, "Request reports" rules and email, one-click consent link (single use, expiry), restrict ends sessions and sign-in, delete with typed email. |
 | `apps/worker/test/export.test.ts` | "Export my data" on a real database: complete archive (JSON + original statements), encrypted at rest, access logged, expires after 7 days. |
 | `apps/worker/test/global-setup.ts` | Builds the worker bundles once before the tests (the engine child process runs from dist/, as in the image). |
@@ -399,6 +402,7 @@ _Generated from file headers by `npm run docs:index` — 273 files._
 | `packages/shared/test/drill.test.ts` | Drill-down parity: for every golden report and every drillable cluster view, the trades the renderer's DRILL rules pick are exactly the engine's bucket (same count, same P&L). |
 | `packages/shared/test/edge.test.ts` | Edge verdict and projection: deterministic, sensible on clear cases (always winning, coin flip, always losing, too few), finite and ordered on every golden report. |
 | `packages/shared/test/journey.test.ts` | REQ-2 journey rules: steps done only when really met and included in the plan, locks name the unlocking plan, score line, next action. |
+| `packages/shared/test/lifetime.test.ts` | Lifetime merge: a re-uploaded statement adds nothing, overlapping statements count shared trades once, identical trades within one file stay separate, currencies never mix, months and report shares add up. |
 | `packages/shared/test/mail.test.ts` | Email drivers: console writes the log; smtp (Google Workspace) connects with TLS and the App password from env, and sends the code email. |
 | `packages/shared/test/next.test.ts` | safeNext(): same-site paths pass; every off-site trick (//, /\, tabs/newlines, schemes) falls back. |
 | `packages/shared/test/otp.test.ts` | Email one-time code helpers. |
@@ -416,6 +420,7 @@ _Generated from file headers by `npm run docs:index` — 273 files._
 | `tests/e2e-web/instagram.spec.ts` | REQ-6 Instagram section: scroll-linked row (card 1 → 4), manual takeover, reduced motion, video play rules, exact copy, no Meta requests, no layout shift. |
 | `tests/e2e-web/journey.spec.ts` | REQ-2 journey bar and "What's next" card end to end: Single 2/5 with locks, later month completes step 3, locked step opens pricing, phone view, events in admin. |
 | `tests/e2e-web/landing.spec.ts` | REQ-4: on a 390x844 phone pricing starts within 4 screen-heights; See plans / nav / pill reach it; mobile card order; no section lost; landing events stored. |
+| `tests/e2e-web/lifetime.spec.ts` | Lifetime view: the dashboard link appears with 2+ reports; the same statement uploaded twice counts once; Summary, Edge and Rewind work on all trades; one report shows the "needs two" message. |
 | `tests/e2e-web/login.spec.ts` | Sign-in card: new email → code → required password → dashboard; password sign-in sends no code; wrong password; forgot → code → new password; the set step can't be skipped; layout at 320/390/1440. |
 | `tests/e2e-web/motion.spec.ts` | Motion system (19 Oct 2026): reduced motion = no animation and everything visible; reveal-on-scroll ends visible; sliding tab ink follows the selected tab; sign-in steps work with View Transitions. |
 | `tests/e2e-web/plan.spec.ts` | 30-day plan: "30-day plan" button at the top right of a report downloads the PDF; "Remind me" turns on a check-up email, shown in Your data, sent once when due; the next report's Progress tab scores the plan. |

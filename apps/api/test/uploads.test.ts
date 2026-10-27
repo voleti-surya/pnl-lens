@@ -1,7 +1,7 @@
 /**
  * @file  apps/api/test/uploads.test.ts
  * @area  Tests
- * @what  Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete.
+ * @what  Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete, lifetime trades.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'node:fs';
@@ -156,6 +156,28 @@ describe.skipIf(!ok)('uploads and reports', () => {
     expect(gone.statusCode).toBe(410);
     expect(gone.json().error).toBe('expired');
     expect((await x.app.inject({ method: 'DELETE', url: `/api/v1/reports/${id}`, headers: h })).statusCode).toBe(404);
+  });
+
+  it('lifetime: every live report\'s trades and currency, own reports only, deleted ones left out', async () => {
+    const u = await makeUser(x.t), other = await makeUser(x.t);
+    await givePlan(x.t, u, { reports: 3 }); await givePlan(x.t, other, { reports: 1 });
+    const h = await as(u);
+    const save = async (who: string) => {
+      const m = multipart([consent, fixture('zerodha_tradebook.csv')]);
+      const a = (await x.app.inject({ method: 'POST', url: '/api/v1/analyses', payload: m.payload, headers: { ...m.headers, ...(await as(who)) } })).json().analysisId;
+      await finish(a);
+      return (await x.app.inject({ method: 'POST', url: '/api/v1/reports', headers: await as(who), payload: { analysisId: a } })).json().id as string;
+    };
+    const one = await save(u), two = await save(u); await save(other);
+    await x.app.inject({ method: 'PATCH', url: `/api/v1/reports/${one}`, headers: h, payload: { title: 'Q1' } });
+    let l = (await x.app.inject({ method: 'GET', url: '/api/v1/me/lifetime', headers: h })).json();
+    expect(l.reports.map((r: any) => r.id)).toEqual([one, two]);
+    expect(l.reports[0]).toMatchObject({ title: 'Q1', currency: 'INR' });
+    expect(l.reports[0].trades.length).toBe(golden('zerodha_tradebook_csv').trades.length);
+    await x.app.inject({ method: 'DELETE', url: `/api/v1/reports/${two}`, headers: h });
+    l = (await x.app.inject({ method: 'GET', url: '/api/v1/me/lifetime', headers: h })).json();
+    expect(l.reports.map((r: any) => r.id)).toEqual([one]);
+    expect((await x.app.inject({ method: 'GET', url: '/api/v1/me/lifetime' })).statusCode).toBe(401);
   });
 
   it('credits spec: reports left follows grant, create, delete and the plan window; "+" refused after the window, before storing', async () => {

@@ -32,7 +32,8 @@
     "./plan/score": "./src/plan/score.ts",
     "./insights/simulate": "./src/insights/simulate.ts",
     "./insights/edge": "./src/insights/edge.ts",
-    "./insights/deep": "./src/insights/deep.ts"
+    "./insights/deep": "./src/insights/deep.ts",
+    "./insights/lifetime": "./src/insights/lifetime.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

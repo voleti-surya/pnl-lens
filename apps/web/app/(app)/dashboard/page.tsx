@@ -1,7 +1,7 @@
 /**
  * @file  apps/web/app/(app)/dashboard/page.tsx
  * @area  Reports
- * @what  Signed-in dashboard: plan card, reports (search, sort, rename); your data (research opt-in, export, delete account).
+ * @what  Signed-in dashboard: plan card, reports (search, sort, rename), link to the lifetime view (2+ reports); your data (research opt-in, export, delete account).
  */
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -28,6 +28,7 @@ export default async function Dashboard() {
           <p className="page-sub">Your reports stay here until you delete them.</p>
         </div>
         <div className="actions">
+          {reports.length >= 2 && <Link className="btn ghost" href="/lifetime" data-lifetime-link>All my trading</Link>}
           {(me.reportsLeft ?? 0) > 0 ? <Link className="btn" href="/upload">New report</Link> : <Link className="btn" href="/pricing">See plans</Link>}
         </div>
       </div>
