@@ -1,7 +1,7 @@
 /**
  * @file  apps/api/src/main.ts
  * @area  API
- * @what  API process entry: config, Postgres (lens_app only), Redis, storage, queue, check-up reminder and weekly summary timers; listens on PORT; graceful shutdown.
+ * @what  API process entry: config, Postgres (lens_app only), Redis, storage, queue, check-up reminder, weekly summary and market data timers; listens on PORT; graceful shutdown.
  */
 import { Redis } from 'ioredis';
 import { createDb, assertRole } from '@pnl-lens/db';
@@ -11,6 +11,7 @@ import { s3Storage, memoryStorage } from './lib/storage.js';
 import { bullQueue, memoryQueue } from './lib/queue.js';
 import { startReminderLoop } from './lib/reminders.js';
 import { startDigestLoop } from './lib/digest.js';
+import { startMarketSync } from './lib/market-sync.js';
 import { sendMail } from '@pnl-lens/shared/mail';
 
 const config = loadConfig();
@@ -34,9 +35,15 @@ const stopDigest = process.env.WEEKLY_DIGEST === 'off' ? () => {} : startDigestL
   db, mail: sendMail, appUrl: (process.env.APP_URL || 'https://pnllens.com').replace(/\/$/, ''), secret: config.ipHashSecret,
   log: (event, extra = {}) => console.log(JSON.stringify({ time: new Date().toISOString(), service: 'api', event, ...extra })),
 });
+// India market data (NIFTY 50, NIFTY BANK, India VIX daily closes): fetched hourly, gaps filled automatically
+const stopMarket = process.env.MARKET_SYNC === 'off' ? () => {} : startMarketSync({
+  db, pool,
+  log: (event, extra = {}) => console.log(JSON.stringify({ time: new Date().toISOString(), service: 'api', event, ...extra })),
+});
 const shutdown = async () => {
   stopReminders();
   stopDigest();
+  stopMarket();
   await app.close().catch(() => {});
   await queue.close().catch(() => {});
   await db.destroy().catch(() => {});

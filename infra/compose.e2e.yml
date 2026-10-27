@@ -17,6 +17,7 @@ services:
       PLAN_REMINDER_FROM_HOUR: "0"
       DIGEST_INTERVAL_MS: "2000"              # weekly summary: checked every 2 s, any hour on Monday (production: 15 min, from 09:00 IST)
       DIGEST_FROM_HOUR: "0"
+      MARKET_SYNC: "off"                      # tests never call Upstox/NSE; they insert market_daily rows themselves
   web:
     environment:
       AUTH_MODE: jwt

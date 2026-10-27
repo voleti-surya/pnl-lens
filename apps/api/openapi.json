@@ -2634,6 +2634,34 @@
           }
         }
       }
+    },
+    "/api/v1/reports/{id}/market": {
+      "get": {
+        "summary": "Market context for a report (India only)",
+        "tags": [
+          "reports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
     }
   },
   "servers": [

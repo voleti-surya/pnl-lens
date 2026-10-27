@@ -35,6 +35,7 @@ import { planRoutes } from './routes/plan.js';
 import { journalRoutes } from './routes/journal.js';
 import { digestRoutes } from './routes/digest.js';
 import { benchmarkRoutes } from './routes/benchmarks.js';
+import { marketRoutes } from './routes/market.js';
 
 export interface Deps {
   config: Config;
@@ -142,6 +143,7 @@ export async function buildApp(deps: Deps): Promise<App> {
     await journalRoutes(v1 as App, deps);
     await digestRoutes(v1 as App, deps);
     await benchmarkRoutes(v1 as App, deps);
+    await marketRoutes(v1 as App, deps);
     if (deps.config.exposeOpenApi) v1.get('/openapi.json', { schema: { hide: true } }, async () => app.swagger());
   }, { prefix: '/api/v1' });
 

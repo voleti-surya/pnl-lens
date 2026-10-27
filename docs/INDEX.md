@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 312 files._
+_Generated from file headers by `npm run docs:index` — 320 files._
 
 ### Pages
 
@@ -140,12 +140,14 @@ _Generated from file headers by `npm run docs:index` — 312 files._
 | File | What it does |
 |---|---|
 | `apps/api/src/lib/digest.ts` | Weekly summary email (opt-in): from Monday 09:00 IST, once a week per user with a live report: focus rules from the latest 30-day plan, journal progress, check-up countdown. Claim first, then send. Unsubscribe tokens. |
+| `apps/api/src/lib/market-sync.ts` | Automatic market data (India): daily closes of NIFTY 50, NIFTY BANK and India VIX from Upstox's public history API, NSE as fallback; retries, gap filling from the last stored day, a status row per symbol and a stale-data alarm in the admin Errors tab. |
 | `apps/api/src/lib/plan-pdf.ts` | Renders a 30-day plan (packages/shared/src/plan) as the 2-page A4 PDF of the owner's sample: Do/Don't cards, scorecard, weekly check-in, check-up box with links. |
 | `apps/api/src/lib/reminders.ts` | Sends due 30-day plan check-up reminders (from 09:00 IST, once each): claim first, then email. Runs on a timer in the api process. |
 | `apps/api/src/routes/analyses.ts` | POST /analyses (alias /uploads): consent, type sniffing, size/plan/D11 limits, encrypt, store, queue. GET /analyses/:id and /reports/:id/status. |
 | `apps/api/src/routes/benchmarks.ts` | How a report compares with traders like the user: its segment and, per metric, the share of that group (or of all traders) it does better than; only groups of 50+ consenting traders are used. |
 | `apps/api/src/routes/digest.ts` | Weekly summary email settings: read and switch my opt-in; stop it from the link in an email (no sign-in, HMAC token). |
 | `apps/api/src/routes/journal.ts` | Trade journal API: list my notes, save a note on a trade (setup, tags, emotion, note; empty = removed), delete one. Private to the user. |
+| `apps/api/src/routes/market.ts` | Market context for one of my reports (India only): the index over the period, results by India VIX level and by the index's move that day; not available for other markets. |
 | `apps/api/src/routes/plan.ts` | 30-day plan: the report owner's PDF download (the one download a report has), the check-up calendar file, and check-up email reminders. |
 | `apps/api/src/routes/reports.ts` | Reports: list (MON-YY history), save an analysis (spends one report from a valid plan), "+" add files (file-set lock), get, rename, delete. |
 | `apps/web/app/(app)/dashboard/page.tsx` | Signed-in dashboard: plan card, reports (search, sort, rename), link to the lifetime view (2+ reports); your data (research opt-in, export, delete account). |
@@ -162,6 +164,7 @@ _Generated from file headers by `npm run docs:index` — 312 files._
 | `apps/web/components/workspace/Journal.tsx` | "Journal" tab: write a setup, tags, emotion and a note on each trade (biggest first); see what the journal shows: results by setup, tag and emotion, best and worst. Notes follow the trade into every report. |
 | `apps/web/components/workspace/JourneyBar.tsx` | REQ-2 journey bar above the workspace and dashboard: 5 steps (done / locked with the unlocking plan), score line, next action; one line on phones. |
 | `apps/web/components/workspace/Lifetime.tsx` | Lifetime view UI: all reports merged (per currency, duplicates once): totals, P&L curve, months, what each report added; then Edge, Rewind and the Journal on every trade. |
+| `apps/web/components/workspace/MarketPanel.tsx` | "Market context" (Edge tab, India reports only): NIFTY over the report's period vs your return, and your results by India VIX level and by the index's move on the day you entered. Hidden when not available. |
 | `apps/web/components/workspace/model.ts` | Workspace data types (from the API) and the offline tool's wording, labels and plan rules, kept word for word. |
 | `apps/web/components/workspace/PlanButton.tsx` | "30-day plan" button at the top right of a report: downloads the server-built PDF of 5 Do and 5 Don't rules (the one download a report has). |
 | `apps/web/components/workspace/PlanCard.tsx` | Plan card (sidebar) and plan strip (upload view): "Snapshot · 2 of 5 reports used · use by 19-Jan-27", statements per report (credits spec wording). |
@@ -181,6 +184,7 @@ _Generated from file headers by `npm run docs:index` — 312 files._
 | `packages/shared/src/insights/edge.ts` | Edge verdict (is the average trade really positive, or could it be luck?) and outcome projection (the next 100 trades if the past ones repeat in random order: range, drawdowns, chance of giving profits back). |
 | `packages/shared/src/insights/journal.ts` | What the trade journal shows: results by setup, tag and emotion on the trades the user has journaled, how many are journaled, and plain-words highlights. |
 | `packages/shared/src/insights/lifetime.ts` | Lifetime view: merges the closed trades of all a user's live reports (per currency), counting a trade that appears in several reports (the same statement uploaded twice, overlapping periods) once; summary, months and each report's share. |
+| `packages/shared/src/insights/market.ts` | Market context (India only): the index over the report's period, results by India VIX level on the entry day, and results on days the index fell, held or rose; from the report's own trades and daily closes. |
 | `packages/shared/src/insights/share.ts` | The shareable progress card's content (analysis roadmap B4): level and score, and the stats the user picks (win rate, edge verdict, plan rules met, green days, % return), never a money amount, a name or a symbol. |
 | `packages/shared/src/insights/simulate.ts` | Rewind: replays a report's own closed trades under rules the user picks (stop at −X%, skip weekdays or hours, max trades a day, stop after N losses, no re-entry after a loss, skip names, cap size) and returns the new P&L, curve and what each rule changed. |
 | `packages/shared/src/journey.ts` | REQ-2 "trading journey": which of the 5 steps are done or locked, the score line and the next action, from real plans and saved reports only. |
@@ -246,7 +250,7 @@ _Generated from file headers by `npm run docs:index` — 312 files._
 | `apps/api/src/lib/queue.ts` | Enqueues analysis jobs on BullMQ (Redis) for apps/worker; job id = analysis id, so a repeat is a no-op. |
 | `apps/api/src/lib/sniff.ts` | Upload type check: the real file type from its bytes (the engine's own detectKind) plus a reject list for non-statements. |
 | `apps/api/src/lib/storage.ts` | Object storage (S3 API on Garage): encrypted statements (api key write-only), export archives (read-only), blog media (read/write, public via the API). |
-| `apps/api/src/main.ts` | API process entry: config, Postgres (lens_app only), Redis, storage, queue, check-up reminder and weekly summary timers; listens on PORT; graceful shutdown. |
+| `apps/api/src/main.ts` | API process entry: config, Postgres (lens_app only), Redis, storage, queue, check-up reminder, weekly summary and market data timers; listens on PORT; graceful shutdown. |
 | `apps/api/src/routes/blog.ts` | REQ-7 blog API: public posts/feed/media (cacheable) and owner/admin-only writing, publishing, live preview and image upload (WebP via sharp). |
 | `apps/api/src/routes/health.ts` | GET /health (liveness) and GET /ready (Postgres as lens_app, Redis, storage). |
 
@@ -333,6 +337,7 @@ _Generated from file headers by `npm run docs:index` — 312 files._
 | `packages/db/migrations/0028_report_capital.sql` | Optional "capital used" per report (analysis roadmap B1): the user's own figure, in the report's currency, so results can be shown as % returns and % risk. Never required. |
 | `packages/db/migrations/0029_weekly_digest.sql` | Weekly summary email (analysis roadmap B5): an opt-in flag per user (off by default) and one row per user and week, claimed before sending so the email goes out at most once a week. |
 | `packages/db/migrations/0030_benchmarks.sql` | Peer benchmarks (Release C): per segment ("India · Index options", "All traders") and metric, the number of traders and the quantiles (p5…p95) of consenting traders' values; built nightly by the worker from the research views. |
+| `packages/db/migrations/0031_market_daily.sql` | Market context (India only): daily closes of NIFTY 50, NIFTY BANK and India VIX, fetched automatically by the api (Upstox public history, NSE as fallback), and a sync status row per symbol for monitoring. |
 | `packages/db/optional/pg_cron.sql` | Optional: schedule the purge inside Postgres if pg_cron is available. |
 | `packages/db/scripts/seed-dev.mjs` | Applies seed.sql (dev user with credits) — only when SEED_DEV_DATA=true (set by infra/compose.dev.yml only). |
 | `packages/db/scripts/setup-roles.mjs` | Creates/updates the login roles lens_app and lens_worker with passwords from env (runs after migrations, as superuser). |
@@ -386,6 +391,7 @@ _Generated from file headers by `npm run docs:index` — 312 files._
 | `apps/api/test/events.test.ts` | POST /events: allow-listed names only; visitors may send only the landing events (REQ-4); journey events from signed-in users (REQ-2). |
 | `apps/api/test/helpers.ts` | API test helpers: app on a fresh migrated database (lens_app connection), session cookies, multipart bodies, captured mail. |
 | `apps/api/test/journal.test.ts` | Journal API: save, list, update, empty removes, delete; validation (emotion, tags, sizes); private to each user; signed-out 401. |
+| `apps/api/test/market.test.ts` | Market data: automatic sync (Upstox, only the missing days, retries, NSE fallback, status and stale flag when both fail) with a fake network; the report route (India only, masked for other markets, owner only). |
 | `apps/api/test/openapi-doc.ts` | Builds the app with placeholder dependencies (no database connection is opened) to read its OpenAPI document. |
 | `apps/api/test/openapi.test.ts` | apps/api/openapi.json matches the routes (regenerate: npm run openapi -w @pnl-lens/api); global and sign-in rate limits. |
 | `apps/api/test/password.test.ts` | Email + password sign-in: start → code for new emails, required password after the first code, password login, lockout, forgot, change needs a fresh sign-in, other devices signed out, no hash leaks. |
@@ -434,6 +440,7 @@ _Generated from file headers by `npm run docs:index` — 312 files._
 | `packages/shared/test/journey.test.ts` | REQ-2 journey rules: steps done only when really met and included in the plan, locks name the unlocking plan, score line, next action. |
 | `packages/shared/test/lifetime.test.ts` | Lifetime merge: a re-uploaded statement adds nothing, overlapping statements count shared trades once, identical trades within one file stay separate, currencies never mix, months and report shares add up. |
 | `packages/shared/test/mail.test.ts` | Email drivers: console writes the log; smtp (Google Workspace) connects with TLS and the App password from env, and sends the code email. |
+| `packages/shared/test/market.test.ts` | Market context: index change over the period, VIX bands and index-move bands on the entry day (BANKNIFTY trades use NIFTY BANK), coverage and nulls, your return with capital. |
 | `packages/shared/test/next.test.ts` | safeNext(): same-site paths pass; every off-site trick (//, /\, tabs/newlines, schemes) falls back. |
 | `packages/shared/test/otp.test.ts` | Email one-time code helpers. |
 | `packages/shared/test/password.test.ts` | scrypt password hashing: round trip, wrong password, unique salts, the dummy hash never matches, and the password rules. |
@@ -455,6 +462,7 @@ _Generated from file headers by `npm run docs:index` — 312 files._
 | `tests/e2e-web/landing.spec.ts` | REQ-4: on a 390x844 phone pricing starts within 4 screen-heights; See plans / nav / pill reach it; mobile card order; no section lost; landing events stored. |
 | `tests/e2e-web/lifetime.spec.ts` | Lifetime view: the dashboard link appears with 2+ reports; the same statement uploaded twice counts once; Summary, Edge and Rewind work on all trades; one report shows the "needs two" message. |
 | `tests/e2e-web/login.spec.ts` | Sign-in card: new email → code → required password → dashboard; password sign-in sends no code; wrong password; forgot → code → new password; the set step can't be skipped; layout at 320/390/1440. |
+| `tests/e2e-web/market.spec.ts` | Market context (India only): an Indian report shows NIFTY over the period and results by VIX level and index move; a non-Indian (crypto) report shows no market section at all. |
 | `tests/e2e-web/motion.spec.ts` | Motion system (19 Oct 2026): reduced motion = no animation and everything visible; reveal-on-scroll ends visible; sliding tab ink follows the selected tab; sign-in steps work with View Transitions. |
 | `tests/e2e-web/plan.spec.ts` | 30-day plan: "30-day plan" button at the top right of a report downloads the PDF; "Remind me" turns on a check-up email, shown in Your data, sent once when due; the next report's Progress tab scores the plan. |
 | `tests/e2e-web/privacy.spec.ts` | Data rights in the browser: research opt-in toggle, export my data (worker builds the ZIP, download works), delete my account. |

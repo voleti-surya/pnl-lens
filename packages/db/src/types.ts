@@ -429,7 +429,28 @@ export interface BenchmarksTable {
   computed_at: Generated<Date>;
 }
 
+export interface MarketDailyTable {
+  symbol: string;
+  day: string;
+  open: string | null;
+  high: string | null;
+  low: string | null;
+  close: string;
+  source: string;
+  fetched_at: Generated<Date>;
+}
+export interface MarketSyncTable {
+  symbol: string;
+  last_day: string | null;
+  last_ok_at: Date | null;
+  last_attempt_at: Date | null;
+  last_source: string | null;
+  last_error: string | null;
+}
+
 export interface Database {
+  market_daily: MarketDailyTable;
+  market_sync: MarketSyncTable;
   benchmarks: BenchmarksTable;
   digest_sends: DigestSendsTable;
   trade_notes: TradeNotesTable;

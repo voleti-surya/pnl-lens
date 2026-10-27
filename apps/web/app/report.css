@@ -597,3 +597,10 @@
 .cmp-bar { position: relative; height: 8px; border-radius: 999px; background: linear-gradient(90deg, var(--loss-dim), var(--s3) 50%, var(--gain-dim)); }
 .cmp-bar i { position: absolute; top: -4px; width: 4px; height: 16px; margin-left: -2px; border-radius: 2px; background: var(--y); }
 .cmp-list small { font-size: 12.5px; color: var(--ink-3); } .cmp-list small b.gain { color: var(--gain); } .cmp-list small b.loss { color: var(--loss); }
+
+/* market context (components/workspace/MarketPanel.tsx) */
+.mk-top { margin-bottom: 16px; }
+.mk-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.mk-cols h4 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
+.mk .eg-buckets li { grid-template-columns: 170px minmax(0, 1fr) auto; }
+@media (max-width: 900px) { .mk-cols { grid-template-columns: 1fr; } .mk .eg-buckets li { grid-template-columns: 130px minmax(0, 1fr) auto; } }
