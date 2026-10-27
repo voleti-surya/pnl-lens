@@ -15,3 +15,4 @@ export * from './queries/blog.js';
 export * from './queries/users-admin.js';
 export * from './queries/reminders.js';
 export * from './queries/plan-snapshots.js';
+export * from './queries/journal.js';

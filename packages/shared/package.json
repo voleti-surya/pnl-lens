@@ -33,7 +33,8 @@
     "./insights/simulate": "./src/insights/simulate.ts",
     "./insights/edge": "./src/insights/edge.ts",
     "./insights/deep": "./src/insights/deep.ts",
-    "./insights/lifetime": "./src/insights/lifetime.ts"
+    "./insights/lifetime": "./src/insights/lifetime.ts",
+    "./insights/journal": "./src/insights/journal.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

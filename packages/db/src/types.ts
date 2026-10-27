@@ -399,7 +399,20 @@ export interface PlanSnapshotsTable {
   created_at: Generated<Date>;
 }
 
+export interface TradeNotesTable {
+  id: Generated<string>;
+  user_id: string;
+  trade_key: string;
+  setup: string | null;
+  tags: Generated<string[]>;
+  emotion: string | null;
+  note: string | null;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+}
+
 export interface Database {
+  trade_notes: TradeNotesTable;
   plan_snapshots: PlanSnapshotsTable;
   research_export_reports: ResearchExportReportsTable;
   plan_reminders: PlanRemindersTable;

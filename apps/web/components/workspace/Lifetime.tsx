@@ -1,7 +1,7 @@
 /**
  * @file  apps/web/components/workspace/Lifetime.tsx
  * @area  Reports
- * @what  Lifetime view UI: all reports merged (per currency, duplicates once): totals, P&L curve, months, what each report added; then Edge and Rewind on every trade.
+ * @what  Lifetime view UI: all reports merged (per currency, duplicates once): totals, P&L curve, months, what each report added; then Edge, Rewind and the Journal on every trade.
  */
 'use client';
 import { useMemo, useState } from 'react';
@@ -10,6 +10,7 @@ import { engine } from '@pnl-lens/engine';
 import { mergeReports, lifetimeCurrencies, type LifetimeReport } from '@pnl-lens/shared/insights/lifetime';
 import Edge from './Edge';
 import Rewind from './Rewind';
+import Journal from './Journal';
 import { reportName } from './model';
 
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -35,7 +36,7 @@ export default function LifetimeView({ reports }: { reports: RawReport[] }) {
   const all: LifetimeReport[] = useMemo(() => reports.map((r) => ({ id: r.id, name: reportName(r), createdAt: r.createdAt, currency: r.currency, trades: r.trades || [] })), [reports]);
   const currencies = useMemo(() => lifetimeCurrencies(all), [all]);
   const [cur, setCur] = useState(currencies[0]?.currency || 'INR');
-  const [tab, setTab] = useState<'summary' | 'edge' | 'rewind'>('summary');
+  const [tab, setTab] = useState<'summary' | 'edge' | 'rewind' | 'journal'>('summary');
   const l = useMemo(() => mergeReports(all, cur), [all, cur]);
   const report = useMemo(() => ({ trades: l.trades, m: { currency: l.currency } }), [l]);
   const money = (v: number) => { engine.setCurrency(l.currency); return engine.inr(v) as string; };
@@ -61,7 +62,7 @@ export default function LifetimeView({ reports }: { reports: RawReport[] }) {
       </div>
 
       <nav className="tabs lt-tabs" role="tablist">
-        {([['summary', 'Summary'], ['edge', 'Edge'], ['rewind', 'Rewind']] as const).map(([id, label]) => (
+        {([['summary', 'Summary'], ['edge', 'Edge'], ['rewind', 'Rewind'], ['journal', 'Journal']] as const).map(([id, label]) => (
           <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>
         ))}
       </nav>
@@ -99,6 +100,7 @@ export default function LifetimeView({ reports }: { reports: RawReport[] }) {
       )}
       {tab === 'edge' && <Edge report={report} money={money} active />}
       {tab === 'rewind' && <Rewind key={l.currency} report={report} money={money} />}
+      {tab === 'journal' && <Journal key={l.currency} report={report} money={money} active />}
     </section>
   );
 }
