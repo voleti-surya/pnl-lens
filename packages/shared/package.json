@@ -29,7 +29,8 @@
     "./journey": "./src/journey.ts",
     "./site": "./src/site.ts",
     "./plan": "./src/plan/build.ts",
-    "./plan/score": "./src/plan/score.ts"
+    "./plan/score": "./src/plan/score.ts",
+    "./insights/simulate": "./src/insights/simulate.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

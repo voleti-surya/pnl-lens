@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 262 files._
+_Generated from file headers by `npm run docs:index` — 266 files._
 
 ### Pages
 
@@ -156,10 +156,12 @@ _Generated from file headers by `npm run docs:index` — 262 files._
 | `apps/web/components/workspace/PlanCard.tsx` | Plan card (sidebar) and plan strip (upload view): "Snapshot · 2 of 5 reports used · use by 19-Jan-27", statements per report (credits spec wording). |
 | `apps/web/components/workspace/ReminderConfirm.tsx` | Confirms a check-up reminder: "Remind me on 20 Nov 2026?" → Turn on reminder → "Done. We'll email you on 20 Nov." |
 | `apps/web/components/workspace/ReportList.tsx` | Dashboard report list: search (name, files, month, market, dates), sort (newest, oldest, name), clear cards with trades and net P&L, always-visible Rename. |
+| `apps/web/components/workspace/Rewind.tsx` | "Rewind" tab: replay this report's own trades with rules the user picks (stop, days, hours, trades a day, stop after losses, no re-entry, skip names, cap size); live new P&L, curve and what each rule did. |
 | `apps/web/components/workspace/Workspace.tsx` | The report workspace (ported from the offline tool, now on the API): upload with consent, loader, file tabs + All files, "+" and ×, plan card, MON-YY history. |
 | `apps/web/lib/workspace-data.ts` | Server-side loaders for the workspace pages: my plans and my report history from the API, in the shapes the workspace uses. |
 | `packages/db/src/queries/plan-snapshots.ts` | 30-day plan snapshots (0026): saved when the plan PDF is downloaded; the newest one made before a report is what that report's check-up scores. |
 | `packages/db/src/queries/reminders.ts` | 30-day plan check-up reminders: set (replaces the active one), read, cancel (app); due list and claim-before-send (api sender, via 0024 functions). |
+| `packages/shared/src/insights/simulate.ts` | Rewind: replays a report's own closed trades under rules the user picks (stop at −X%, skip weekdays or hours, max trades a day, stop after N losses, no re-entry after a loss, skip names, cap size) and returns the new P&L, curve and what each rule changed. |
 | `packages/shared/src/journey.ts` | REQ-2 "trading journey": which of the 5 steps are done or locked, the score line and the next action, from real plans and saved reports only. |
 | `packages/shared/src/plan/build.ts` | 30-day plan from a stored report: 5 Do and 5 Don't rules (each with Why and Now → Target), a scorecard, a weekly check-in and the check-up date. Habits only, no buy/sell advice. |
 | `packages/shared/src/plan/score.ts` | 30-day plan check-up: scores each measurable rule of an earlier plan against a newer report (Met / Missed / not measurable), on the trades since the plan when there are enough. |
@@ -400,6 +402,7 @@ _Generated from file headers by `npm run docs:index` — 262 files._
 | `packages/shared/test/plan.test.ts` | 30-day plan generator on every golden report: always 5 Do + 5 Don't, real numbers, deterministic, habits only. |
 | `packages/shared/test/pricing.test.ts` | REQ-3: plan durations and prices from the single source of truth, the wording built from them, and no stale copy left in the repo. |
 | `packages/shared/test/rbac.test.ts` | Role permissions and error fingerprinting. |
+| `packages/shared/test/rewind.test.ts` | Rewind (what-if replay) on the golden reports: no rules = the real result; each rule does exactly what it says; stops never make a trade worse; date rules need dates; the 30-day plan becomes Rewind settings. |
 | `tests/e2e-web/blog.spec.ts` | REQ-7 blog end to end: owner drafts, previews, publishes, unpublishes, schedules; /blog, article, landing preview, sitemap; raw-HTML SEO; sanitising; support sees no Blog tab; events. |
 | `tests/e2e-web/credits.spec.ts` | Credits spec (19 Oct 2026) in the browser: "N reports left" pill and "Plans" menu, plan card wording, free preview (3 numbers, 2 insights, blurred, from ₹99/$9), plan window end, no "credit" on customer screens. |
 | `tests/e2e-web/helpers.ts` | E2E helpers: sign in (password, or an emailed code from the API's console mail log then the required password), give a user a plan, run SQL as the admin. |
@@ -412,9 +415,10 @@ _Generated from file headers by `npm run docs:index` — 262 files._
 | `tests/e2e-web/privacy.spec.ts` | Data rights in the browser: research opt-in toggle, export my data (worker builds the ZIP, download works), delete my account. |
 | `tests/e2e-web/reports.spec.ts` | Consent boxes (Terms/Privacy links, research unticked) and finding/renaming reports: dashboard search, sort, rename; rename on the report page; the dashboard is one centred column. |
 | `tests/e2e-web/research.spec.ts` | Research datasets end to end: the owner builds one now (the real worker, storage and encryption), downloads the ZIP; finds who a subject or report code belongs to (audited); an admin has no Research tab. |
+| `tests/e2e-web/rewind.spec.ts` | Rewind tab: replay the report's trades with rules (30-day plan preset, stop, chips, reset); the result, curve and per-rule list update; no sideways scroll on a phone. |
 | `tests/e2e-web/score-card.spec.ts` | REQ-1: the Progress score card's level labels never overlap, at every level and width, in Chromium (Chrome/Edge) and WebKit (Safari). |
 | `tests/e2e-web/user-admin.spec.ts` | User management end to end: owner requests reports → email → one-click Yes → Included; restrict signs the user out; delete with typed email; admin and support limits. |
-| `tests/e2e-web/workspace.spec.ts` | Browser end to end on the stack: sign in → upload with consent → loader → report (5 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete. |
+| `tests/e2e-web/workspace.spec.ts` | Browser end to end on the stack: sign in → upload with consent → loader → report (6 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete. |
 | `tests/load/prepare.mjs` | Load test setup: creates N test accounts (load-NN@load.invalid) in the running dev stack and writes a session token for each to .load/tokens.json. |
 | `tests/load/uploads.js` | k6 scenario: N users each upload statements at the same moment and follow their analysis to ready (latency, time to ready, failures). |
 | `tests/stack/stack.test.ts` | Dev stack checks: all services healthy, only Caddy published, internal network isolated, least-privilege DB/Redis/storage. |

@@ -1,7 +1,7 @@
 /**
  * @file  tests/e2e-web/workspace.spec.ts
  * @area  Tests
- * @what  Browser end to end on the stack: sign in → upload with consent → loader → report (5 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete.
+ * @what  Browser end to end on the stack: sign in → upload with consent → loader → report (6 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete.
  */
 import { test, expect } from '@playwright/test';
 import path from 'node:path';
@@ -34,7 +34,7 @@ test('the full workspace flow, and a second device sees the same report', async 
   const reportUrl = page.url();
   await expect(page.locator('.ws-main .page-title')).toHaveText('zerodha_tradebook.csv');
   await expect(page.locator('#overview')).toContainText('₹2.12L');
-  for (const t of ['Progress', 'Insights & fixes', 'Clusters', 'Positions', 'Overview']) {
+  for (const t of ['Progress', 'Insights & fixes', 'Rewind', 'Clusters', 'Positions', 'Overview']) {
     await page.locator('#reportRoot .tabs').getByRole('tab', { name: t }).click();
     await expect(page.locator('#reportRoot .tabs').getByRole('tab', { name: t })).toHaveAttribute('aria-selected', 'true');
   }
