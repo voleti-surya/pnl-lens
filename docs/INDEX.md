@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 292 files._
+_Generated from file headers by `npm run docs:index` — 296 files._
 
 ### Pages
 
@@ -163,6 +163,7 @@ _Generated from file headers by `npm run docs:index` — 292 files._
 | `apps/web/components/workspace/ReminderConfirm.tsx` | Confirms a check-up reminder: "Remind me on 20 Nov 2026?" → Turn on reminder → "Done. We'll email you on 20 Nov." |
 | `apps/web/components/workspace/ReportList.tsx` | Dashboard report list: search (name, files, month, market, dates), sort (newest, oldest, name), clear cards with trades and net P&L, always-visible Rename. |
 | `apps/web/components/workspace/Rewind.tsx` | "Rewind" tab: replay this report's own trades with rules the user picks (stop, days, hours, trades a day, stop after losses, no re-entry, skip names, cap size); live new P&L, curve and what each rule did. |
+| `apps/web/components/workspace/ShareCard.tsx` | "Share progress": a 1080×1350 image of the level, score and up to 4 stats the user picks (percentages and verdicts only, no money, no name), drawn in the browser; download it or share it from the phone. |
 | `apps/web/components/workspace/Workspace.tsx` | The report workspace (ported from the offline tool, now on the API): upload with consent, loader, file tabs + All files, "+" and ×, plan card, MON-YY history. |
 | `apps/web/lib/workspace-data.ts` | Server-side loaders for the workspace pages: my plans and my report history from the API, in the shapes the workspace uses. |
 | `packages/db/src/queries/journal.ts` | Trade journal (0027): read the user's notes, save one (an empty note is deleted), delete one. |
@@ -173,6 +174,7 @@ _Generated from file headers by `npm run docs:index` — 292 files._
 | `packages/shared/src/insights/edge.ts` | Edge verdict (is the average trade really positive, or could it be luck?) and outcome projection (the next 100 trades if the past ones repeat in random order: range, drawdowns, chance of giving profits back). |
 | `packages/shared/src/insights/journal.ts` | What the trade journal shows: results by setup, tag and emotion on the trades the user has journaled, how many are journaled, and plain-words highlights. |
 | `packages/shared/src/insights/lifetime.ts` | Lifetime view: merges the closed trades of all a user's live reports (per currency), counting a trade that appears in several reports (the same statement uploaded twice, overlapping periods) once; summary, months and each report's share. |
+| `packages/shared/src/insights/share.ts` | The shareable progress card's content (analysis roadmap B4): level and score, and the stats the user picks (win rate, edge verdict, plan rules met, green days, % return), never a money amount, a name or a symbol. |
 | `packages/shared/src/insights/simulate.ts` | Rewind: replays a report's own closed trades under rules the user picks (stop at −X%, skip weekdays or hours, max trades a day, stop after N losses, no re-entry after a loss, skip names, cap size) and returns the new P&L, curve and what each rule changed. |
 | `packages/shared/src/journey.ts` | REQ-2 "trading journey": which of the 5 steps are done or locked, the score line and the next action, from real plans and saved reports only. |
 | `packages/shared/src/plan/build.ts` | 30-day plan from a stored report: 5 Do and 5 Don't rules (each with Why and Now → Target), a scorecard, a weekly check-in and the check-up date. Habits only, no buy/sell advice. |
@@ -426,6 +428,7 @@ _Generated from file headers by `npm run docs:index` — 292 files._
 | `packages/shared/test/pricing.test.ts` | REQ-3: plan durations and prices from the single source of truth, the wording built from them, and no stale copy left in the repo. |
 | `packages/shared/test/rbac.test.ts` | Role permissions and error fingerprinting. |
 | `packages/shared/test/rewind.test.ts` | Rewind (what-if replay) on the golden reports: no rules = the real result; each rule does exactly what it says; stops never make a trade worse; date rules need dates; the 30-day plan becomes Rewind settings. |
+| `packages/shared/test/share.test.ts` | Share card content: level and score from Progress, the chosen stats only (4 at most), return only with capital, and never a money amount, currency sign or symbol on any golden report. |
 | `tests/e2e-web/blog.spec.ts` | REQ-7 blog end to end: owner drafts, previews, publishes, unpublishes, schedules; /blog, article, landing preview, sitemap; raw-HTML SEO; sanitising; support sees no Blog tab; events. |
 | `tests/e2e-web/credits.spec.ts` | Credits spec (19 Oct 2026) in the browser: "N reports left" pill and "Plans" menu, plan card wording, free preview (3 numbers, 2 insights, blurred, from ₹99/$9), plan window end, no "credit" on customer screens. |
 | `tests/e2e-web/edge.spec.ts` | Edge tab: verdict, next-100-trades projection, capital % (add, kept after reload, remove), consistency and risk by day, R-multiples, weekday × hour heatmap; the same numbers on a reload; no sideways scroll on a phone. Drill-down: a cluster row opens Positions filtered to its trades. |
@@ -443,6 +446,7 @@ _Generated from file headers by `npm run docs:index` — 292 files._
 | `tests/e2e-web/research.spec.ts` | Research datasets end to end: the owner builds one now (the real worker, storage and encryption), downloads the ZIP; finds who a subject or report code belongs to (audited); an admin has no Research tab. |
 | `tests/e2e-web/rewind.spec.ts` | Rewind tab: replay the report's trades with rules (30-day plan preset, stop, chips, reset); the result, curve and per-rule list update; no sideways scroll on a phone. |
 | `tests/e2e-web/score-card.spec.ts` | REQ-1: the Progress score card's level labels never overlap, at every level and width, in Chromium (Chrome/Edge) and WebKit (Safari). |
+| `tests/e2e-web/share.spec.ts` | Share progress: the dialog shows up to 4 chosen stats (no money), the card is a 1080×1350 PNG download, the choice changes the card, and the use is recorded. |
 | `tests/e2e-web/user-admin.spec.ts` | User management end to end: owner requests reports → email → one-click Yes → Included; restrict signs the user out; delete with typed email; admin and support limits. |
 | `tests/e2e-web/workspace.spec.ts` | Browser end to end on the stack: sign in → upload with consent → loader → report (8 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete. |
 | `tests/load/prepare.mjs` | Load test setup: creates N test accounts (load-NN@load.invalid) in the running dev stack and writes a session token for each to .load/tokens.json. |

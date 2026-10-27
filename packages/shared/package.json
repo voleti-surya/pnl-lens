@@ -35,7 +35,8 @@
     "./insights/deep": "./src/insights/deep.ts",
     "./insights/lifetime": "./src/insights/lifetime.ts",
     "./insights/journal": "./src/insights/journal.ts",
-    "./insights/capital": "./src/insights/capital.ts"
+    "./insights/capital": "./src/insights/capital.ts",
+    "./insights/share": "./src/insights/share.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",

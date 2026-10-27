@@ -578,3 +578,13 @@
 .cp-form input { flex: 0 1 240px; min-height: 40px; background: var(--s2); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--r-sm); padding: 0 12px; font: inherit; font-size: 15px; }
 .cp-cap { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; color: var(--ink-2); font-size: 14px; }
 .cp-cap b { color: var(--ink); font-size: 16px; } .cp-cap .btn { min-height: 30px; padding: 4px 12px; font-size: 13px; }
+
+/* share card dialog (components/workspace/ShareCard.tsx) */
+.sc-backdrop { position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, .72); display: grid; place-items: center; padding: 16px; }
+.sc-dialog { width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; background: var(--s1); border: 1px solid var(--line-strong); border-radius: 20px; padding: 18px 20px 20px; }
+.sc-head { display: flex; justify-content: space-between; align-items: center; } .sc-head h3 { margin: 0; } .sc-head .btn { min-height: 32px; padding: 0 12px; font-size: 18px; }
+.sc-note { font-size: 13.5px; margin: 6px 0 12px; }
+.sc-pick { margin-bottom: 12px; }
+.sc-canvas { width: 100%; height: auto; aspect-ratio: 1080 / 1350; display: block; border-radius: 14px; border: 1px solid var(--line); background: #000; }
+.sc-items { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.sc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
