@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 304 files._
+_Generated from file headers by `npm run docs:index` — 312 files._
 
 ### Pages
 
@@ -143,6 +143,7 @@ _Generated from file headers by `npm run docs:index` — 304 files._
 | `apps/api/src/lib/plan-pdf.ts` | Renders a 30-day plan (packages/shared/src/plan) as the 2-page A4 PDF of the owner's sample: Do/Don't cards, scorecard, weekly check-in, check-up box with links. |
 | `apps/api/src/lib/reminders.ts` | Sends due 30-day plan check-up reminders (from 09:00 IST, once each): claim first, then email. Runs on a timer in the api process. |
 | `apps/api/src/routes/analyses.ts` | POST /analyses (alias /uploads): consent, type sniffing, size/plan/D11 limits, encrypt, store, queue. GET /analyses/:id and /reports/:id/status. |
+| `apps/api/src/routes/benchmarks.ts` | How a report compares with traders like the user: its segment and, per metric, the share of that group (or of all traders) it does better than; only groups of 50+ consenting traders are used. |
 | `apps/api/src/routes/digest.ts` | Weekly summary email settings: read and switch my opt-in; stop it from the link in an email (no sign-in, HMAC token). |
 | `apps/api/src/routes/journal.ts` | Trade journal API: list my notes, save a note on a trade (setup, tags, emotion, note; empty = removed), delete one. Private to the user. |
 | `apps/api/src/routes/plan.ts` | 30-day plan: the report owner's PDF download (the one download a report has), the check-up calendar file, and check-up email reminders. |
@@ -154,6 +155,7 @@ _Generated from file headers by `npm run docs:index` — 304 files._
 | `apps/web/app/(app)/upload/page.tsx` | New report: the workspace upload view (consent, files, loader; the API and worker read the files). |
 | `apps/web/app/unsubscribe/page.tsx` | "Stop these emails" from the weekly summary: one button (no sign-in); a POST so email link scanners cannot unsubscribe anyone. |
 | `apps/web/components/workspace/CapitalPanel.tsx` | Optional "capital used" for a report (Edge tab): add, change or remove it; shows return, a year at this pace, average and largest loss, worst day, drawdown and the 1% / 2% loss counts as % of that capital. |
+| `apps/web/components/workspace/ComparePanel.tsx` | "How you compare" (Edge tab): where this report sits among traders like the user (same market and main instrument), per metric; shown only from groups of 50+ consenting traders, otherwise how many there are so far. |
 | `apps/web/components/workspace/DataRights.tsx` | "Your data" panel: password (set or change), 30-day plan check-up reminder (cancel), weekly summary email (opt-in), research opt-in (off by default, change anytime), export my data (ZIP, kept 7 days), delete my account. |
 | `apps/web/components/workspace/Edge.tsx` | "Edge" tab: skill or luck (verdict, 90% range, trades needed); the next 100 trades (fan chart, drawdowns, give-back chances); consistency and risk by day; R-multiples; when you trade (weekday × hour heatmap, options by days to expiry). |
 | `apps/web/components/workspace/History.tsx` | Report history (report page sidebar) grouped by month (MON-YY) with Progress score and an always-visible rename (PATCH /api/v1/reports/:id); RenameRow is shared with the dashboard list. |
@@ -173,6 +175,7 @@ _Generated from file headers by `npm run docs:index` — 304 files._
 | `packages/db/src/queries/journal.ts` | Trade journal (0027): read the user's notes, save one (an empty note is deleted), delete one. |
 | `packages/db/src/queries/plan-snapshots.ts` | 30-day plan snapshots (0026): saved when the plan PDF is downloaded; the newest one made before a report is what that report's check-up scores. |
 | `packages/db/src/queries/reminders.ts` | 30-day plan check-up reminders: set (replaces the active one), read, cancel (app); due list and claim-before-send (api sender, via 0024 functions). |
+| `packages/shared/src/insights/benchmarks.ts` | Peer benchmarks (Release C): a report's segment ("India · Index options"), its comparable metrics from its trades, the quantiles of a group of traders, and where one value sits among them ("better than 72%"). |
 | `packages/shared/src/insights/capital.ts` | Results as % of the capital the user says they used (analysis roadmap B1): return, a year at this pace, average trade, average loss and largest loss, worst day and worst drawdown, and how often a single trade lost more than 1% or 2% of capital. |
 | `packages/shared/src/insights/deep.ts` | Deep dive on a report's own trades: consistency and risk by day (green days, Sharpe/Sortino-style ratios, drawdown length and recovery, R-multiples, how concentrated the profit is) and timing (weekday × hour heatmap, options by days to expiry). |
 | `packages/shared/src/insights/edge.ts` | Edge verdict (is the average trade really positive, or could it be luck?) and outcome projection (the next 100 trades if the past ones repeat in random order: range, drawdowns, chance of giving profits back). |
@@ -251,12 +254,13 @@ _Generated from file headers by `npm run docs:index` — 304 files._
 
 | File | What it does |
 |---|---|
+| `apps/worker/src/benchmarks.ts` | Peer benchmarks, built nightly (02:45 IST) from the research views (consenting traders only): each trader's latest report per segment, the metrics from packages/shared/src/insights/benchmarks.ts, and only quantiles of groups with 50+ traders. |
 | `apps/worker/src/config.ts` | Worker configuration from env: lens_worker DB URL, Redis, storage (read + delete), file keys, engine limits. |
 | `apps/worker/src/engine-child.ts` | Child process that runs the engine on one job's decrypted files (memory-capped, killed on timeout); returns the report, per-file fingerprints, fills and parse info. |
 | `apps/worker/src/engine-runner.ts` | Starts engine-child.js per job with a memory cap and a timeout; a hung or crashing parse fails that file, not the worker (plan D10). |
 | `apps/worker/src/engine-version.ts` | engine_version written on every derived row: a hash of the engine's source files and package.json (fixed at build time in the image). |
 | `apps/worker/src/export.ts` | "Export my data": builds the user's archive (all data as JSON + original statements still stored), encrypts it, stores it for 7 days; expiry sweep. |
-| `apps/worker/src/main.ts` | Worker process: BullMQ consumer for analysis jobs (retries, dead-letter on final failure), data exports and research datasets, schedules (nightly purge, storage sweep, research dataset on the 1st and 16th), local health endpoint. |
+| `apps/worker/src/main.ts` | Worker process: BullMQ consumer for analysis jobs (retries, dead-letter on final failure), data exports and research datasets, schedules (nightly purge, storage sweep, research dataset on the 1st and 16th, peer benchmarks nightly), local health endpoint. |
 | `apps/worker/src/maintenance.ts` | Scheduled jobs: nightly purge (raw files after 30 days, unsaved drafts after 24 h, old sign-in codes) and the storage sweep that deletes shredded objects. |
 | `apps/worker/src/pipeline.ts` | One analysis job: fetch + decrypt files (logged) → engine in a child process → store payload, trades, fills, metrics, traits, parse runs in one transaction. |
 | `apps/worker/src/queue-worker.ts` | BullMQ consumer for analysis jobs: runs the pipeline, retries infrastructure errors, and on the final failure marks the analysis failed (dead letter). |
@@ -328,6 +332,7 @@ _Generated from file headers by `npm run docs:index` — 304 files._
 | `packages/db/migrations/0027_trade_journal.sql` | Trade journal: the user's own setup, tags, emotion and note per trade (keyed by the trade's identity, so a note follows the trade into every report); private (never in research); in "Export my data"; removed with the account. |
 | `packages/db/migrations/0028_report_capital.sql` | Optional "capital used" per report (analysis roadmap B1): the user's own figure, in the report's currency, so results can be shown as % returns and % risk. Never required. |
 | `packages/db/migrations/0029_weekly_digest.sql` | Weekly summary email (analysis roadmap B5): an opt-in flag per user (off by default) and one row per user and week, claimed before sending so the email goes out at most once a week. |
+| `packages/db/migrations/0030_benchmarks.sql` | Peer benchmarks (Release C): per segment ("India · Index options", "All traders") and metric, the number of traders and the quantiles (p5…p95) of consenting traders' values; built nightly by the worker from the research views. |
 | `packages/db/optional/pg_cron.sql` | Optional: schedule the purge inside Postgres if pg_cron is available. |
 | `packages/db/scripts/seed-dev.mjs` | Applies seed.sql (dev user with credits) — only when SEED_DEV_DATA=true (set by infra/compose.dev.yml only). |
 | `packages/db/scripts/setup-roles.mjs` | Creates/updates the login roles lens_app and lens_worker with passwords from env (runs after migrations, as superuser). |
@@ -375,6 +380,7 @@ _Generated from file headers by `npm run docs:index` — 304 files._
 | File | What it does |
 |---|---|
 | `apps/api/test/auth.test.ts` | Sign-in (email code), session cookie, /me, /plans, CSRF origin check, consents, export and account deletion, health/ready — on real Postgres. |
+| `apps/api/test/benchmarks.test.ts` | How you compare: the report's segment, "not enough traders yet" without quantiles, the share it beats from stored quantiles (own segment first, else all traders, lower-is-better flipped), owner only. |
 | `apps/api/test/blog.test.ts` | REQ-7 blog API: roles (403 for support/finance/analyst/user), CRUD, publish visibility, Markdown sanitising, slug redirects, image upload checks (WebP + 1200×630), cache headers, sign-up/upload attribution. |
 | `apps/api/test/digest.test.ts` | Weekly summary: prefs on/off, unsubscribe link (good and bad token), sender: only opted-in active users with a report, from Monday 09:00 IST, once a week, with focus rules, report link and a working unsubscribe link. |
 | `apps/api/test/events.test.ts` | POST /events: allow-listed names only; visitors may send only the landing events (REQ-4); journey events from signed-in users (REQ-2). |
@@ -389,6 +395,7 @@ _Generated from file headers by `npm run docs:index` — 304 files._
 | `apps/api/test/sniff.test.ts` | Upload type check: every engine fixture is accepted with the engine's kind; executables, images, wrong ZIPs and binaries posing as CSV are refused. |
 | `apps/api/test/uploads.test.ts` | Uploads and reports on real Postgres: consent, type/size/plan/D11 limits, encryption at rest, queueing, status, save (credits), "+" lock, rename, delete, lifetime trades, capital. |
 | `apps/api/test/users-admin.test.ts` | User management API: permissions, list + research statuses, "Request reports" rules and email, one-click consent link (single use, expiry), restrict ends sessions and sign-in, delete with typed email. |
+| `apps/worker/test/benchmarks.test.ts` | Peer benchmarks build: only consenting traders, each once per segment (latest report), quantiles only for groups of 50+, the table replaced atomically, no ids stored; grants. |
 | `apps/worker/test/export.test.ts` | "Export my data" on a real database: complete archive (JSON + original statements), encrypted at rest, access logged, expires after 7 days. |
 | `apps/worker/test/global-setup.ts` | Builds the worker bundles once before the tests (the engine child process runs from dist/, as in the image). |
 | `apps/worker/test/helpers.ts` | Worker test helpers: encrypted uploads of real fixtures (as the API stores them), pipeline deps with the real engine child, golden cases. |
@@ -418,6 +425,7 @@ _Generated from file headers by `npm run docs:index` — 304 files._
 | `packages/engine/test/engine.test.ts` | Engine: formats, accounting, symbols, auto-detection, combining files, progress. |
 | `packages/engine/test/extract.test.ts` | PDF, DOCX and legacy DOC reading matches the CSV originals. |
 | `packages/engine/test/golden.test.ts` | Engine parity: every fixture through the Node runner must equal the stored golden JSON byte for byte. |
+| `packages/shared/test/benchmarks.test.ts` | Peer benchmarks: segment from the main instrument group, metrics from trades (same with research-view field names), quantiles, and percentiles (direction, clamping, interpolation). |
 | `packages/shared/test/capital.test.ts` | Capital %: return, a year at this pace (only for 30+ days), average/largest loss, worst day, drawdown and the 1% / 2% loss counts on a hand-made case; null without capital; finite on every golden report. |
 | `packages/shared/test/deep.test.ts` | Deep dive statistics: consistency/risk by day, R-multiples, weekday × hour heatmap and days to expiry: correct on small hand-made cases, finite and complete on every golden report, null when the statement cannot show them. |
 | `packages/shared/test/drill.test.ts` | Drill-down parity: for every golden report and every drillable cluster view, the trades the renderer's DRILL rules pick are exactly the engine's bucket (same count, same P&L). |
@@ -439,7 +447,7 @@ _Generated from file headers by `npm run docs:index` — 304 files._
 | `tests/e2e-web/blog.spec.ts` | REQ-7 blog end to end: owner drafts, previews, publishes, unpublishes, schedules; /blog, article, landing preview, sitemap; raw-HTML SEO; sanitising; support sees no Blog tab; events. |
 | `tests/e2e-web/credits.spec.ts` | Credits spec (19 Oct 2026) in the browser: "N reports left" pill and "Plans" menu, plan card wording, free preview (3 numbers, 2 insights, blurred, from ₹99/$9), plan window end, no "credit" on customer screens. |
 | `tests/e2e-web/digest.spec.ts` | Weekly summary email: off by default, turned on in Your data, the email arrives once with focus rules and the report link, and its "Stop these emails" link turns it off (button, no sign-in). |
-| `tests/e2e-web/edge.spec.ts` | Edge tab: verdict, next-100-trades projection, capital % (add, kept after reload, remove), consistency and risk by day, R-multiples, weekday × hour heatmap; the same numbers on a reload; no sideways scroll on a phone. Drill-down: a cluster row opens Positions filtered to its trades. |
+| `tests/e2e-web/edge.spec.ts` | Edge tab: verdict, next-100-trades projection, how you compare (waiting, then from stored benchmarks), capital % (add, kept after reload, remove), consistency and risk by day, R-multiples, weekday × hour heatmap; the same numbers on a reload; no sideways scroll on a phone. Drill-down: a cluster row opens Positions filtered to its trades. |
 | `tests/e2e-web/helpers.ts` | E2E helpers: sign in (password, or an emailed code from the API's console mail log then the required password), give a user a plan, run SQL as the admin. |
 | `tests/e2e-web/instagram.spec.ts` | REQ-6 Instagram section: scroll-linked row (card 1 → 4), manual takeover, reduced motion, video play rules, exact copy, no Meta requests, no layout shift. |
 | `tests/e2e-web/journal.spec.ts` | Trade journal: add a setup, tags, emotion and note to trades, see "what your journal shows" by setup/tag/emotion, the note follows the trade into another report of the same statement, remove a note. |

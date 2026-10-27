@@ -421,7 +421,16 @@ export interface DigestSendsTable {
   sent_at: Generated<Date>;
 }
 
+export interface BenchmarksTable {
+  segment: string;
+  metric: string;
+  traders: number;
+  quantiles: string[] | null;
+  computed_at: Generated<Date>;
+}
+
 export interface Database {
+  benchmarks: BenchmarksTable;
   digest_sends: DigestSendsTable;
   trade_notes: TradeNotesTable;
   plan_snapshots: PlanSnapshotsTable;

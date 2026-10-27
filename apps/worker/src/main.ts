@@ -1,7 +1,7 @@
 /**
  * @file  apps/worker/src/main.ts
  * @area  Worker
- * @what  Worker process: BullMQ consumer for analysis jobs (retries, dead-letter on final failure), data exports and research datasets, schedules (nightly purge, storage sweep, research dataset on the 1st and 16th), local health endpoint.
+ * @what  Worker process: BullMQ consumer for analysis jobs (retries, dead-letter on final failure), data exports and research datasets, schedules (nightly purge, storage sweep, research dataset on the 1st and 16th, peer benchmarks nightly), local health endpoint.
  */
 /**
  * Runs on the internal network only (no internet) as lens_worker. Health is served on 127.0.0.1 inside the container
@@ -20,6 +20,7 @@ import { DATA_QUEUE, RESEARCH_JOB, type ExportJobData, type ResearchJobData } fr
 import { buildResearchExport, sweepResearch } from './research.js';
 import { processExport, failExport, sweepExports } from './export.js';
 import { nightly, sweepStorage } from './maintenance.js';
+import { buildBenchmarks } from './benchmarks.js';
 
 const MAINTENANCE_QUEUE = 'maintenance';
 const log = (event: string, extra: object = {}) => console.log(JSON.stringify({ time: new Date().toISOString(), service: 'worker', event, ...extra }));
@@ -60,9 +61,13 @@ await maintenanceQueue.upsertJobScheduler('nightly-purge', { pattern: '0 2 * * *
 await maintenanceQueue.upsertJobScheduler('storage-sweep', { every: 15 * 60_000 }, { name: 'sweep' });
 // research dataset for future model training (opted-in users only): 03:00 IST on the 1st and 16th, about every 15 days
 await maintenanceQueue.upsertJobScheduler('research-export', { pattern: '0 3 1,16 * *', tz: 'Asia/Kolkata' }, { name: 'research' });
+// peer benchmarks from the consenting traders' data: nightly at 02:45 IST, and once at start-up
+await maintenanceQueue.upsertJobScheduler('benchmarks', { pattern: '45 2 * * *', tz: 'Asia/Kolkata' }, { name: 'benchmarks' });
+await maintenanceQueue.add('benchmarks', {}, { jobId: `benchmarks-start-${new Date().toISOString().slice(0, 13)}`, removeOnComplete: true, removeOnFail: true });
 const maintenance = new Worker(MAINTENANCE_QUEUE, async (job) => {
   const result = job.name === 'nightly' ? await nightly(db, storage)
     : job.name === 'research' ? await buildResearchExport({ db, storage, currentKek: cfg.currentKek })
+    : job.name === 'benchmarks' ? await buildBenchmarks(db)
     : { files: await sweepStorage(db, storage), exports: await sweepExports(db, storage), research: await sweepResearch(db, storage) };
   log(`maintenance_${job.name}`, { result });
   return result;

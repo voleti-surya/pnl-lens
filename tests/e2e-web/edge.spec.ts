@@ -1,11 +1,11 @@
 /**
  * @file  tests/e2e-web/edge.spec.ts
  * @area  Tests
- * @what  Edge tab: verdict, next-100-trades projection, capital % (add, kept after reload, remove), consistency and risk by day, R-multiples, weekday × hour heatmap; the same numbers on a reload; no sideways scroll on a phone. Drill-down: a cluster row opens Positions filtered to its trades.
+ * @what  Edge tab: verdict, next-100-trades projection, how you compare (waiting, then from stored benchmarks), capital % (add, kept after reload, remove), consistency and risk by day, R-multiples, weekday × hour heatmap; the same numbers on a reload; no sideways scroll on a phone. Drill-down: a cluster row opens Positions filtered to its trades.
  */
 import { test, expect } from '@playwright/test';
 import path from 'node:path';
-import { signIn, givePlan, FIX } from './helpers';
+import { signIn, givePlan, sql, FIX } from './helpers';
 
 test.skip(({ browserName }) => browserName === 'webkit', 'Secure cookie over plain http');
 
@@ -41,9 +41,11 @@ test('Edge: skill-or-luck verdict, the next 100 trades and capital %, stable acr
   await page.reload();
   await open();
   await expect(page.locator('[data-capital] [data-capital-value]')).toHaveText('₹5.00L');
+  await expect(eg.locator('[data-compare]')).toBeVisible();          // loads its own data
   const before = await eg.innerText();
   await page.reload();
   await open();
+  await expect(page.locator('[data-edge] [data-compare]')).toBeVisible();
   expect(await page.locator('[data-edge]').innerText()).toBe(before);           // seeded: the same report, the same numbers
 
   await page.setViewportSize({ width: 390, height: 860 });
@@ -73,4 +75,29 @@ test('drill-down: a cluster row opens Positions filtered to exactly its trades, 
   await page.locator('#pdrill').getByRole('button', { name: /Show all positions/ }).click();
   await expect(page.locator('#pdrill')).toBeHidden();
   await expect(page.locator('#ptable tr.tot')).not.toContainText(`${n} positions`);
+});
+
+test('how you compare: waits for 50 traders, then shows where the report sits', async ({ page }) => {
+  const email = `compare-${Date.now()}@e2e.local`;
+  await signIn(page, email, '/upload');
+  givePlan(email);
+  await page.goto('/upload');
+  await page.setInputFiles('#file', path.join(FIX, 'zerodha_tradebook.csv'));
+  await page.check('input[name=consent]');
+  await page.getByRole('button', { name: 'Analyse' }).click();
+  await page.waitForURL(/\/report\//, { timeout: 90_000 });
+  const seg = 'India · Equity / cash';                  // this statement's market and main instrument group
+  sql(`delete from benchmarks`);
+  await page.locator('#reportRoot .tabs').getByRole('tab', { name: 'Edge' }).click();
+  await expect(page.locator('[data-compare-wait]')).toContainText(`traders in ${seg} have chosen to share their data`);
+
+  // a nightly build with enough traders (the worker writes this; set directly here)
+  const qs = Array.from({ length: 19 }, (_, i) => ((i + 1) * 0.05).toFixed(2)).join(',');
+  sql(`insert into benchmarks (segment, metric, traders, quantiles) values ('${seg}', 'win_rate', 120, '{${qs}}')`);
+  await page.reload();
+  await page.locator('#reportRoot .tabs').getByRole('tab', { name: 'Edge' }).click();
+  const win = page.locator('[data-compare] [data-metric="win_rate"]');
+  await expect(win).toContainText(/Better than \d+%/);
+  await expect(win).toContainText('of 120 traders');
+  sql(`delete from benchmarks where traders = 120`);
 });

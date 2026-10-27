@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { edgeVerdict, project, MIN_TRADES, type Verdict } from '@pnl-lens/shared/insights/edge';
 import { consistency, rMultiples, heatmap, daysToExpiry, type Heatmap, type Bucket } from '@pnl-lens/shared/insights/deep';
 import CapitalPanel from './CapitalPanel';
+import ComparePanel from './ComparePanel';
 
 const VERDICT: Record<Verdict, { title: string; tone: string; text: string }> = {
   real: { title: 'Your edge looks real', tone: 'gain', text: 'Even in unlucky reshuffles of these trades, the average trade stays above zero.' },
@@ -135,6 +136,7 @@ export default function Edge({ report, money, active, capital }: { report: any; 
         </div>
       )}
 
+      {capital && <ComparePanel reportId={capital.reportId} />}
       {capital && <CapitalPanel reportId={capital.reportId} initial={capital.value} trades={trades} money={money} />}
 
       {deep?.c && (

@@ -2606,6 +2606,34 @@
           }
         }
       }
+    },
+    "/api/v1/reports/{id}/benchmarks": {
+      "get": {
+        "summary": "How this report compares with traders like you",
+        "tags": [
+          "reports"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
     }
   },
   "servers": [
