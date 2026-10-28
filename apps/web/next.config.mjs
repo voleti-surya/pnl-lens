@@ -10,7 +10,8 @@ const nextConfig = {
   // Self-contained server bundle for the Docker image (no Vercel runtime).
   output: 'standalone',
   poweredByHeader: false,
-  // No next/image anywhere: the image optimizer (/_next/image) stays off. Caddy also answers it with 404.
+  // No next/image anywhere: the image optimizer (/_next/image) stays off (defence in depth; the SVG RCE in next <= 15.5.27
+  // is fixed in 15.5.28). Caddy also answers it with 404.
   images: { unoptimized: true },
   // Workspace packages ship TypeScript/ESM source; Next compiles them like app code.
   transpilePackages: ['@pnl-lens/engine', '@pnl-lens/shared'],

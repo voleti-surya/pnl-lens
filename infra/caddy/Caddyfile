@@ -30,8 +30,8 @@
 	handle /api/* {
 		reverse_proxy api:4000
 	}
-	# Next's image optimizer is not used (no next/image; images.unoptimized in next.config). It is closed here too:
-	# next <= 15.5.27 has a critical RCE through it with SVG files (allow-list entry, until 15.5.28).
+	# Next's image optimizer is not used (no next/image; images.unoptimized in next.config). It is closed here too,
+	# as defence in depth (next <= 15.5.27 had a critical RCE through it with SVG files; fixed in 15.5.28).
 	handle /_next/image* {
 		respond 404
 	}

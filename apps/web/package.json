@@ -12,8 +12,8 @@
     "@pnl-lens/engine": "0.1.0",
     "@pnl-lens/shared": "0.1.0",
     "@types/markdown-it": "14.2.0",
-    "markdown-it": "15.0.2",
-    "next": "15.5.27",
+    "markdown-it": "15.0.3",
+    "next": "15.5.28",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
