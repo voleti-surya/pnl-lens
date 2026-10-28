@@ -112,9 +112,9 @@ const LEGAL: { name: string; address: string; policies: [string, string][] } = {
 // Plan-specific copy only; durations, report counts and statements come from PLANS (packages/shared/src/pricing.ts).
 const PLAN_COPY: Record<string, { tag: string; feat: string[]; cta: string }> = {
   single: { tag: 'A first look', feat: ['Full dashboard and insights'], cta: 'Choose Single' },
-  snapshot: { tag: 'A thorough review', feat: ['Combined view and PDF/CSV export'], cta: 'Choose Snapshot' },
+  snapshot: { tag: 'A thorough review', feat: ['30-day plan with a check-up on your next report'], cta: 'Choose Snapshot' },
   progress: { tag: 'Build better habits', feat: ['Progress tab and habit tracking', 'Monthly check-up reminders'], cta: 'Choose Progress' },
-  discipline: { tag: 'For dedicated traders', feat: ['Full-year progress and trends', 'Share reports with your coach', 'Early access to new features'], cta: 'Choose Discipline' },
+  discipline: { tag: 'For dedicated traders', feat: ['Full-year progress and trends', 'Lifetime view of all your trading', 'Early access to new features'], cta: 'Choose Discipline' },
 };
 /** Card bullets: reports (with "over N months" for progress plans), statements per report for one-off plans, the plan's own copy, validity, reports kept. */
 const planBullets = (p: Plan) => [reportsBullet(p), ...(p.progress ? [] : [`${p.filesPerReport} broker statements per report`]), ...PLAN_COPY[p.id].feat, validityBullet(p), REPORTS_KEPT].filter((x): x is string => !!x);
@@ -150,6 +150,7 @@ export default function Landing({ signedIn, plans, region = 'IN', posts = [] }: 
           <a href="#brokers">Brokers</a>
           <a href="#pricing">Pricing</a>
           <a href="/blog">Blog</a>
+          <a href="/manual">User manual</a>
           <a href="#faq">FAQ</a>
           <div className="lp-menu-cta">
             {signedIn ? <a className="lp-btn ghost" href="/dashboard">Dashboard</a> : <a className="lp-btn ghost" href="/login">Sign in</a>}
@@ -300,7 +301,7 @@ export default function Landing({ signedIn, plans, region = 'IN', posts = [] }: 
         <div className="lp-brand"><LogoMark size={26} /><span>PnL Lens</span></div>
         <p>PnL Lens is a trade-analysis tool, not investment advice, and is not registered as an investment adviser or research analyst. Trading involves risk of loss. Figures on this page are illustrative. Reports cannot be refunded once generated; for genuine issues write to support@pnllens.com.</p>
         <p className="lp-legal">{LEGAL.name} · {LEGAL.address}</p>
-        <nav aria-label="Footer"><a href={other.href}>{other.label}</a>{LEGAL.policies.map(([href, label]) => <a key={href} href={href}>{label}</a>)}<a href="mailto:support@pnllens.com">support@pnllens.com</a><a href="#pricing">Pricing</a><a href="/blog">Blog</a><a href="#faq">FAQ</a></nav>
+        <nav aria-label="Footer"><a href={other.href}>{other.label}</a>{LEGAL.policies.map(([href, label]) => <a key={href} href={href}>{label}</a>)}<a href="mailto:support@pnllens.com">support@pnllens.com</a><a href="#pricing">Pricing</a><a href="/blog">Blog</a><a href="/manual">User manual</a><a href="#faq">FAQ</a></nav>
         <Social site={site} placement="footer" className="lp-foot-social" />
       </footer>
     </div>

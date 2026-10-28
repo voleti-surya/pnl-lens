@@ -19,7 +19,7 @@ const nextConfig = {
   experimental: {
     outputFileTracingRoot: repoRoot,
     // the Terms and Privacy pages read the legal texts from docs/legal at runtime: bundle them into the image
-    outputFileTracingIncludes: { '/terms': ['../../docs/legal/TERMS_OF_SERVICE.md'], '/privacy': ['../../docs/legal/PRIVACY_POLICY.md'] },
+    outputFileTracingIncludes: { '/terms': ['../../docs/legal/TERMS_OF_SERVICE.md'], '/privacy': ['../../docs/legal/PRIVACY_POLICY.md'], '/manual': ['../../docs/manual/manual-india.html', '../../docs/manual/manual-global.html'] },
   },
 };
 

@@ -215,3 +215,4 @@ a.credits-pill:hover{border-color:var(--y);background:var(--y-tint)}a.credits-pi
 .rc-quote{margin:0 0 14px;padding:12px 14px;border-left:3px solid var(--y);background:var(--s2);border-radius:0 var(--r-sm) var(--r-sm) 0;color:var(--ink);font-size:14px;line-height:1.5}
 .rc-list{margin:0 0 18px;padding-left:18px;color:var(--ink-2);font-size:14px;line-height:1.6}
 
+.app-nav.guest{justify-content:flex-end}

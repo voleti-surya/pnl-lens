@@ -63,8 +63,8 @@ A **file** is one P&L statement or tradebook downloaded from your broker (Excel,
   - **LAWYER CHECK:** state whether prices include GST, and how GST and foreign taxes are handled for overseas buyers (export of services / OIDAR).
   - **LAWYER CHECK:** confirm we may charge by detected location.
 - Payments are processed by **Razorpay**. Your plan is activated only after Razorpay confirms the payment to us. This normally takes seconds, but can take longer.
-- Plan features shown on the pricing page ("Progress tab", "Share reports with your coach", "Early access") describe the plan as of the purchase date.
-  - **LAWYER CHECK:** confirm the "monthly check-up reminders" and "share with coach" features exist at launch, or remove them from plan descriptions. **BUILD CHECK**
+- Plan features shown on the pricing page ("Progress tab", "Monthly check-up reminders", "Lifetime view", "Early access") describe the plan as of the purchase date.
+  - **LAWYER CHECK:** "Early access to new features" has no defined process yet; keep or remove it. (BUILD CHECK, 28 Oct 2026: "monthly check-up reminders" exist as the 30-day plan reminder emails; "share with coach" was removed from the plans; "PDF/CSV export" was removed when reports became view-only.)
 
 ## 6. No refunds
 
