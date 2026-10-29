@@ -52,6 +52,9 @@ export interface UsersTable {
   restricted_by: string | null;
   /** 0029: weekly summary email, opt-in */
   weekly_digest: Generated<boolean>;
+  /** 0032: founding trader number 1–1000, given once on the first paid plan; never to staff or test accounts */
+  founding_no: number | null;
+  is_test: Generated<boolean>;
 }
 
 export interface CreditsTable {

@@ -585,8 +585,9 @@
 .sc-head { display: flex; justify-content: space-between; align-items: center; } .sc-head h3 { margin: 0; } .sc-head .btn { min-height: 32px; padding: 0 12px; font-size: 18px; }
 .sc-note { font-size: 13.5px; margin: 6px 0 12px; }
 .sc-pick { margin-bottom: 12px; }
-.sc-canvas { width: 100%; height: auto; aspect-ratio: 1080 / 1350; display: block; border-radius: 14px; border: 1px solid var(--line); background: #000; }
-.sc-items { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.sc-lbl { margin: 0 0 6px; font-size: 12.5px; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: .04em; }
+.sc-canvas { width: min(100%, 360px); height: auto; margin: 0 auto; display: block; border-radius: 14px; border: 1px solid var(--line); background: #000; }
+.sc-items { margin: 10px 0 0; padding-left: 18px; font-size: 13px; color: var(--ink-2); display: grid; gap: 2px; }
 .sc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 
 /* peer benchmarks (components/workspace/ComparePanel.tsx) */

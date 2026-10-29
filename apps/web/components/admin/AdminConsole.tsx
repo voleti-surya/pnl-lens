@@ -162,18 +162,28 @@ function ProductTab({ d }: { d: any }) {
     {d.blog && <Panel title="Blog" sub={`last 30 days · ${d.blog.uploads} uploads and ${d.blog.signups} sign-ups came from the blog`} span="s12">
       <Table cols={[['Article', (r) => r.slug], ['Views', (r) => r.views, 'n'], ['“Analyse my trades” clicks', (r) => r.cta, 'n'], ['Landing preview clicks', (r) => r.preview, 'n']]} rows={d.blog.posts} /></Panel>}
     {d.landing && <Panel title="Landing page" sub="visitors, last 30 days: pricing seen and how far they scrolled" span="s12">
-      <Table cols={[['Measure', (r) => r.m], ['Count', (r) => r.n, 'n']]} rows={[{ m: 'Pricing section seen', n: d.landing.pricing_views }, { m: 'Scrolled 25% of the page', n: d.landing.d25 }, { m: 'Scrolled 50%', n: d.landing.d50 }, { m: 'Scrolled 75%', n: d.landing.d75 }, { m: 'Reached the end', n: d.landing.d100 }]} /></Panel>}
+      <Table cols={[['Measure', (r) => r.m], ['Count', (r) => r.n, 'n']]} rows={[{ m: 'Pricing section seen', n: d.landing.pricing_views }, { m: 'Scrolled 25% of the page', n: d.landing.d25 }, { m: 'Scrolled 50%', n: d.landing.d50 }, { m: 'Scrolled 75%', n: d.landing.d75 }, { m: 'Reached the end', n: d.landing.d100 }, { m: 'Share cards made', n: d.landing.shares ?? 0 }, { m: 'Visits from share card QR codes', n: d.landing.from_share ?? 0 }]} /></Panel>}
   </>;
 }
 
-/** Owner-only manual plan grant (plan D5, W11): plan, reason (required), confirm. The API and the database re-check the owner role and write the audit log. */
+/**
+ * Owner-only manual plan grant (plan D5, W11): plan, reason (required), confirm. The API and the database re-check the owner role and write the audit log.
+ * "Founding trader" also gives a founding number (0032, off by default); "Test account" marks the user so they never get one.
+ */
 function GrantPlan({ email }: { email: string }) {
   const [planId, setPlanId] = useState('snapshot'), [reason, setReason] = useState(''), [msg, setMsg] = useState(''), [busy, setBusy] = useState(false);
+  const [founding, setFounding] = useState(false);
+  const markTest = async (isTest: boolean) => {
+    setBusy(true); setMsg('');
+    const r = await fetch('/api/v1/admin/test-account', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, isTest }) });
+    const j = await r.json().catch(() => ({}));
+    setBusy(false); setMsg(r.ok ? (isTest ? `${email} is now a test account.` : `${email} is no longer a test account.`) : j.message || j.error || 'Not allowed');
+  };
   const grant = async () => {
     if (reason.trim().length < 3) { setMsg('Write the reason for this grant.'); return; }
     if (!confirm(`Grant the ${planId} plan to ${email}? This is recorded in the audit log.`)) return;
     setBusy(true); setMsg('');
-    const r = await fetch('/api/v1/admin/grants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, planId, reason }) });
+    const r = await fetch('/api/v1/admin/grants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, planId, reason, founding }) });
     const j = await r.json().catch(() => ({}));
     setBusy(false); setMsg(r.ok ? `Plan granted to ${email}.` : j.message || j.error || 'Not allowed');
     if (r.ok) setReason('');
@@ -183,7 +193,12 @@ function GrantPlan({ email }: { email: string }) {
     <div className="filters">
       <select value={planId} onChange={(e) => setPlanId(e.target.value)} aria-label="Plan">{['single', 'snapshot', 'progress', 'discipline'].map((p) => <option key={p} value={p}>{p}</option>)}</select>
       <input placeholder="Reason (required)" value={reason} onChange={(e) => setReason(e.target.value)} aria-label="Reason" maxLength={500} />
+      <label className="mut" style={{ fontSize: 13 }}><input type="checkbox" checked={founding} onChange={(e) => setFounding(e.target.checked)} /> Founding trader</label>
       <button className="btn" onClick={grant} disabled={busy}>Grant plan</button>
+    </div>
+    <div className="filters" style={{ marginTop: 8 }}>
+      <button className="btn ghost" onClick={() => markTest(true)} disabled={busy}>Mark as test account</button>
+      <button className="btn ghost" onClick={() => markTest(false)} disabled={busy}>Not a test account</button>
     </div>
     {msg && <p className="mut" style={{ fontSize: 13 }}>{msg}</p>}
   </div>;

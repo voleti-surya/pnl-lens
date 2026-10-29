@@ -124,7 +124,9 @@ async function productTab() {
       (select count(*) from events where name='landing_scroll_depth' and props->>'depth'='25' and created_at > now() - interval '30 days')::int as d25,
       (select count(*) from events where name='landing_scroll_depth' and props->>'depth'='50' and created_at > now() - interval '30 days')::int as d50,
       (select count(*) from events where name='landing_scroll_depth' and props->>'depth'='75' and created_at > now() - interval '30 days')::int as d75,
-      (select count(*) from events where name='landing_scroll_depth' and props->>'depth'='100' and created_at > now() - interval '30 days')::int as d100`);
+      (select count(*) from events where name='landing_scroll_depth' and props->>'depth'='100' and created_at > now() - interval '30 days')::int as d100,
+      (select count(*) from events where name='landing_visit' and props->>'source'='share_card' and created_at > now() - interval '30 days')::int as from_share,
+      (select count(*) from events where name='share_card_used' and created_at > now() - interval '30 days')::int as shares`);
   // REQ-2: journey bar — events, Single → higher plan, and users who came back within 45 days
   const journey = await one(`select
       (select count(*) from events where name='journey_bar_view' and created_at > now() - interval '30 days')::int as views,

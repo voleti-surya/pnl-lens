@@ -20,6 +20,8 @@ export async function userPlans(db: Db, userId: string) {
 
 export interface ManualGrant {
   actorId: string; userId: string; plan: PlanId; reports: number; filesPerReport: number; days: number; reason: string;
+  /** 0032: also give a founding trader number (owner's choice; staff and test accounts never get one) */
+  founding?: boolean;
 }
 
 /**
@@ -30,7 +32,12 @@ export interface ManualGrant {
 export async function adminGrantPlan(db: Db, g: ManualGrant): Promise<string> {
   try {
     const { rows } = await sql<{ id: string }>`select public.admin_grant_plan(${g.actorId}::uuid, ${g.userId}::uuid, ${g.plan}::text,
-      ${g.reports}::int, ${g.filesPerReport}::int, ${g.days}::int, ${g.reason}::text) as id`.execute(db);
+      ${g.reports}::int, ${g.filesPerReport}::int, ${g.days}::int, ${g.reason}::text, ${g.founding === true}::boolean) as id`.execute(db);
     return rows[0].id;
   } catch (e) { rethrow(e); }
+}
+
+/** Owner marks or unmarks a test account (0032): a test account never gets a founding number. Throws DbError: forbidden | unknown_user. */
+export async function adminSetTestAccount(db: Db, actorId: string, userId: string, isTest: boolean): Promise<void> {
+  try { await sql`select public.admin_set_test_account(${actorId}::uuid, ${userId}::uuid, ${isTest}::boolean)`.execute(db); } catch (e) { rethrow(e); }
 }

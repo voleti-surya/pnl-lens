@@ -346,7 +346,7 @@ function ReportView({ plan, plans, prices, reports, current, setLock }: { plan: 
             </div>
             <div className="actions">
               <PlanButton reportId={current.id} onError={(text) => setLock({ title: 'Could not prepare your plan', text })} />
-              {r && <ShareCard report={r} planCheck={view === 'all' || files.length < 2 ? current.planCheck ?? null : null} capital={view === 'all' || files.length < 2 ? current.capital ?? null : null} onUsed={(how) => ev('share_card_used', { how })} />}
+              {r && <ShareCard report={r} planCheck={view === 'all' || files.length < 2 ? current.planCheck ?? null : null} onUsed={(u) => ev('share_card_used', u)} />}
               <button className="btn ghost" onClick={remove}>Delete</button>
             </div>
           </div>

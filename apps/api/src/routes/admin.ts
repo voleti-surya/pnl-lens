@@ -9,7 +9,7 @@ import { can, assignable, type Perm, type Role } from '@pnl-lens/shared/admin/rb
 import { adminQueries } from '@pnl-lens/shared/admin/queries';
 import { normaliseEmail } from '@pnl-lens/shared/auth/otp';
 import { PLANS, planDays } from '@pnl-lens/shared/pricing';
-import { adminGrantPlan, isDbError } from '@pnl-lens/db';
+import { adminGrantPlan, adminSetTestAccount, isDbError } from '@pnl-lens/db';
 import type { App, Deps } from '../app.js';
 import { fail, ok, sessionUser } from '../lib/http.js';
 
@@ -80,12 +80,13 @@ export async function adminRoutes(app: App, deps: Deps) {
   });
 
   /**
-   * POST { email, planId, reason } — owner-only manual plan grant (approved exception to rule 6, plan D5). Plan values
-   * come from PLANS; the DB re-checks the owner role, requires the reason and writes audit_log.
+   * POST { email, planId, reason, founding? } — owner-only manual plan grant (approved exception to rule 6, plan D5). Plan
+   * values come from PLANS; the DB re-checks the owner role, requires the reason and writes audit_log. `founding` also
+   * gives a founding trader number (0032; never to staff or test accounts).
    */
   app.post('/admin/grants', {
     attachValidation: true,
-    schema: { ...s, summary: 'Owner only: grant a plan by hand (reason required, audited)', body: z.object({ email: z.string(), planId: z.enum(['single', 'snapshot', 'progress', 'discipline']), reason: z.string().max(500) }) },
+    schema: { ...s, summary: 'Owner only: grant a plan by hand (reason required, audited)', body: z.object({ email: z.string(), planId: z.enum(['single', 'snapshot', 'progress', 'discipline']), reason: z.string().max(500), founding: z.boolean().optional() }) },
   }, async (req, reply) => {
     const who = await requirePerm(req, reply, 'plans:grant'); if (!who) return;
     const b = req.body as any;
@@ -96,11 +97,31 @@ export async function adminRoutes(app: App, deps: Deps) {
     const { rows } = await deps.pool.query('select id from public.users where email = $1', [email]);
     if (!rows[0]) return fail(reply, 404, 'not_found', 'No user with that email.');
     try {
-      const id = await adminGrantPlan(deps.db, { actorId: who.id, userId: rows[0].id, plan: plan.id, reports: plan.reports, filesPerReport: plan.filesPerReport, days: planDays(plan), reason: b.reason });
+      const id = await adminGrantPlan(deps.db, { actorId: who.id, userId: rows[0].id, plan: plan.id, reports: plan.reports, filesPerReport: plan.filesPerReport, days: planDays(plan), reason: b.reason, founding: b.founding === true });
       return ok(reply, { ok: true, subscriptionId: id }, 201);
     } catch (e) {
       if (isDbError(e, 'forbidden')) return reply.code(403).send({ error: 'forbidden' });
       if (isDbError(e, 'reason_required')) return fail(reply, 400, 'reason_required', 'Write the reason for this grant.');
+      throw e;
+    }
+  });
+
+  /** POST { email, isTest } — owner only: mark a test account (0032: it never gets a founding trader number). Audited in the DB. */
+  app.post('/admin/test-account', {
+    attachValidation: true,
+    schema: { ...s, summary: 'Owner only: mark or unmark a test account', body: z.object({ email: z.string(), isTest: z.boolean() }) },
+  }, async (req, reply) => {
+    const who = await requirePerm(req, reply, 'plans:grant'); if (!who) return;
+    const b = req.body as any;
+    const email = normaliseEmail(b?.email);
+    if (!email || typeof b?.isTest !== 'boolean') return fail(reply, 400, 'invalid', 'Enter a valid email.');
+    const { rows } = await deps.pool.query('select id from public.users where email = $1', [email]);
+    if (!rows[0]) return fail(reply, 404, 'not_found', 'No user with that email.');
+    try {
+      await adminSetTestAccount(deps.db, who.id, rows[0].id, b.isTest);
+      return ok(reply, { ok: true });
+    } catch (e) {
+      if (isDbError(e, 'forbidden')) return reply.code(403).send({ error: 'forbidden' });
       throw e;
     }
   });

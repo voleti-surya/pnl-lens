@@ -161,6 +161,24 @@ describe.skipIf(!ok)('admin (RBAC)', () => {
     }
   });
 
+  it('founding trader (0032): only a grant ticked founding gives a number, never to a test account; /me shows it', async () => {
+    const owner = await makeUser(x.t, { role: 'owner' }), admin = await makeUser(x.t, { role: 'admin' });
+    const post = async (by: string, url: string, body: object) => x.app.inject({ method: 'POST', url, headers: await as(by), payload: body });
+    const a = `fa${Date.now()}@t.local`, b = `fb${Date.now()}@t.local`;
+    const ua = await makeUser(x.t, { email: a }), ub = await makeUser(x.t, { email: b });
+    expect((await post(owner, '/api/v1/admin/grants', { email: a, planId: 'single', reason: 'Tester' })).statusCode).toBe(201);
+    let me = (await x.app.inject({ method: 'GET', url: '/api/v1/me', headers: await as(ua) })).json();
+    expect(me.foundingNo).toBeNull();
+    expect((await post(owner, '/api/v1/admin/grants', { email: a, planId: 'single', reason: 'Early customer', founding: true })).statusCode).toBe(201);
+    me = (await x.app.inject({ method: 'GET', url: '/api/v1/me', headers: await as(ua) })).json();
+    expect(me.foundingNo).toBeGreaterThanOrEqual(1);
+    expect((await post(admin, '/api/v1/admin/test-account', { email: b, isTest: true })).statusCode).toBe(403);
+    expect((await post(owner, '/api/v1/admin/test-account', { email: 'nobody@t.local', isTest: true })).statusCode).toBe(404);
+    expect((await post(owner, '/api/v1/admin/test-account', { email: b, isTest: true })).json()).toEqual({ ok: true });
+    expect((await post(owner, '/api/v1/admin/grants', { email: b, planId: 'single', reason: 'Tester', founding: true })).statusCode).toBe(201);
+    expect((await x.app.inject({ method: 'GET', url: '/api/v1/me', headers: await as(ub) })).json().foundingNo).toBeNull();
+  });
+
   it('tickets: support updates status; unknown ticket 404', async () => {
     const support = await makeUser(x.t, { role: 'support' });
     const { rows } = await x.t.admin.query(`insert into support_tickets (email, subject) values ('a@t.local', 'Help') returning id`);

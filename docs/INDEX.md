@@ -86,7 +86,7 @@ npm workspaces monorepo (backend-v2). Run every command from the repo root.
 ## 5. Every file
 
 <!-- FILES:START -->
-_Generated from file headers by `npm run docs:index` — 324 files._
+_Generated from file headers by `npm run docs:index` — 330 files._
 
 ### Pages
 
@@ -171,7 +171,8 @@ _Generated from file headers by `npm run docs:index` — 324 files._
 | `apps/web/components/workspace/ReminderConfirm.tsx` | Confirms a check-up reminder: "Remind me on 20 Nov 2026?" → Turn on reminder → "Done. We'll email you on 20 Nov." |
 | `apps/web/components/workspace/ReportList.tsx` | Dashboard report list: search (name, files, month, market, dates), sort (newest, oldest, name), clear cards with trades and net P&L, always-visible Rename. |
 | `apps/web/components/workspace/Rewind.tsx` | "Rewind" tab: replay this report's own trades with rules the user picks (stop, days, hours, trades a day, stop after losses, no re-entry, skip names, cap size); live new P&L, curve and what each rule did. |
-| `apps/web/components/workspace/ShareCard.tsx` | "Share progress": a 1080×1350 image of the level, score and up to 4 stats the user picks (percentages and verdicts only, no money, no name), drawn in the browser; download it or share it from the phone. |
+| `apps/web/components/workspace/share-draw.ts` | Draws the "My Trading Edge" share card on a canvas (card 1080×1728 or story 1080×1920) from shareCard()'s data; all text, colours and geometry come from packages/shared/src/insights/share.ts. No React, so tests can draw it on a plain page. |
+| `apps/web/components/workspace/ShareCard.tsx` | "Share progress": the "My Trading Edge" card (strengths only, no money, no names, no contract codes) drawn on a canvas in the browser, as a 1080×1728 card or a 1080×1920 story; pick the hero and tiles, show or hide the founding badge, download or share. |
 | `apps/web/components/workspace/UnsubscribeButton.tsx` | The button on /unsubscribe that stops the weekly summary email (POST with the link's token). |
 | `apps/web/components/workspace/Workspace.tsx` | The report workspace (ported from the offline tool, now on the API): upload with consent, loader, file tabs + All files, "+" and ×, plan card, MON-YY history. |
 | `apps/web/lib/workspace-data.ts` | Server-side loaders for the workspace pages: my plans and my report history from the API, in the shapes the workspace uses. |
@@ -185,7 +186,8 @@ _Generated from file headers by `npm run docs:index` — 324 files._
 | `packages/shared/src/insights/journal.ts` | What the trade journal shows: results by setup, tag and emotion on the trades the user has journaled, how many are journaled, and plain-words highlights. |
 | `packages/shared/src/insights/lifetime.ts` | Lifetime view: merges the closed trades of all a user's live reports (per currency), counting a trade that appears in several reports (the same statement uploaded twice, overlapping periods) once; summary, months and each report's share. |
 | `packages/shared/src/insights/market.ts` | Market context (India only): the index over the report's period, results by India VIX level on the entry day, and results on days the index fell, held or rose; from the report's own trades and daily closes. |
-| `packages/shared/src/insights/share.ts` | The shareable progress card's content (analysis roadmap B4): level and score, and the stats the user picks (win rate, edge verdict, plan rules met, green days, % return), never a money amount, a name or a symbol. |
+| `packages/shared/src/insights/share-qr.ts` | The share card's QR code, made once: the modules (1 = dark) for SHARE_URL, error correction M, version 4 (33 × 33). No user data in the URL, so no QR library ships to the browser. |
+| `packages/shared/src/insights/share.ts` | The "My Trading Edge" share card (v2, docs/SHARE_CARD.md): the tile catalogue (positives only), the deterministic slot filling, the founding badge text and every layout, colour and text style the browser draws with. |
 | `packages/shared/src/insights/simulate.ts` | Rewind: replays a report's own closed trades under rules the user picks (stop at −X%, skip weekdays or hours, max trades a day, stop after N losses, no re-entry after a loss, skip names, cap size) and returns the new P&L, curve and what each rule changed. |
 | `packages/shared/src/journey.ts` | REQ-2 "trading journey": which of the 5 steps are done or locked, the score line and the next action, from real plans and saved reports only. |
 | `packages/shared/src/plan/build.ts` | 30-day plan from a stored report: 5 Do and 5 Don't rules (each with Why and Now → Target), a scorecard, a weekly check-in and the check-up date. Habits only, no buy/sell advice. |
@@ -338,6 +340,7 @@ _Generated from file headers by `npm run docs:index` — 324 files._
 | `packages/db/migrations/0029_weekly_digest.sql` | Weekly summary email (analysis roadmap B5): an opt-in flag per user (off by default) and one row per user and week, claimed before sending so the email goes out at most once a week. |
 | `packages/db/migrations/0030_benchmarks.sql` | Peer benchmarks (Release C): per segment ("India · Index options", "All traders") and metric, the number of traders and the quantiles (p5…p95) of consenting traders' values; built nightly by the worker from the research views. |
 | `packages/db/migrations/0031_market_daily.sql` | Market context (India only): daily closes of NIFTY 50, NIFTY BANK and India VIX, fetched automatically by the api (Upstox public history, NSE as fallback), and a sync status row per symbol for monitoring. |
+| `packages/db/migrations/0032_founding_traders.sql` | Founding traders (share card v2): users.founding_no 1–1000, given once on a user's first paid plan (or a manual grant the owner marks as founding), never to staff or test accounts; users.is_test; a gap-free counter. |
 | `packages/db/optional/pg_cron.sql` | Optional: schedule the purge inside Postgres if pg_cron is available. |
 | `packages/db/scripts/seed-dev.mjs` | Applies seed.sql (dev user with credits) — only when SEED_DEV_DATA=true (set by infra/compose.dev.yml only). |
 | `packages/db/scripts/setup-roles.mjs` | Creates/updates the login roles lens_app and lens_worker with passwords from env (runs after migrations, as superuser). |
@@ -366,6 +369,7 @@ _Generated from file headers by `npm run docs:index` — 324 files._
 | `infra/scripts/storage-init.mjs` | One-off, idempotent Garage setup via its admin API: node layout, private bucket, and least-privilege S3 keys. |
 | `packages/db/scripts/migrate.mjs` | Applies packages/db/migrations in order (runs as the pre-deploy job). |
 | `packages/db/scripts/purge.mjs` | Nightly purge of expired reports (DigitalOcean scheduled job). |
+| `packages/db/scripts/reset-founding.mjs` | Before launch only: clears all founding trader numbers and restarts the counter at 1 (testers got numbers during testing). Refused once any order is paid. |
 | `packages/db/scripts/rewrap-keys.mjs` | Key rotation: re-wraps every file and export key from older FILE_KEK_<ID>s to the current FILE_KEK_ID. Objects in storage are not touched. |
 | `packages/db/scripts/seed-admin-demo.mjs` | Fills a local database with demo admin data (refuses production). |
 | `scripts/gen-index.mjs` | Regenerates the file table in docs/INDEX.md from the @file/@area/@what headers. Run: npm run docs:index |
@@ -413,6 +417,7 @@ _Generated from file headers by `npm run docs:index` — 324 files._
 | `packages/db/test/db/capital.test.ts` | Report capital (0028): set and clear by the owner only, limits enforced, app may update only that column (and title), included in "Export my data". |
 | `packages/db/test/db/credits.test.ts` | Credits spec (19 Oct 2026) acceptance checks in the database: reports left, "+" free up to the limit, failed files and deletes spend/return nothing, plan window, soonest-expiring first. |
 | `packages/db/test/db/digest.test.ts` | Weekly summary (0029): opt-in off by default, the app may switch it, one send per user and week, closing the account turns it off and clears the sends. |
+| `packages/db/test/db/founding.test.ts` | Founding trader numbers (0032): given once and in order, on a paid plan or a manual grant marked founding, never to staff or test accounts, never past 1000, no gaps after a rolled-back grant; reset only before the first paid order; app roles cannot touch the counter. |
 | `packages/db/test/db/harness.ts` | DB test harness: fresh database per suite on the throwaway test Postgres, real migrate + setup-roles scripts, role-scoped clients, fixtures. |
 | `packages/db/test/db/journal.test.ts` | Trade journal (0027): save, update, empty = removed, one per trade, app grants (no access for the worker or research), included in "Export my data" with the 30-day plans and reminders, removed when the account is closed. |
 | `packages/db/test/db/migrations.test.ts` | Migrations apply from 0001 on an empty database and on top of a 0007 database with old data; the old web flow keeps working. |
@@ -450,7 +455,7 @@ _Generated from file headers by `npm run docs:index` — 324 files._
 | `packages/shared/test/pricing.test.ts` | REQ-3: plan durations and prices from the single source of truth, the wording built from them, and no stale copy left in the repo. |
 | `packages/shared/test/rbac.test.ts` | Role permissions and error fingerprinting. |
 | `packages/shared/test/rewind.test.ts` | Rewind (what-if replay) on the golden reports: no rules = the real result; each rule does exactly what it says; stops never make a trade worse; date rules need dates; the 30-day plan becomes Rewind settings. |
-| `packages/shared/test/share.test.ts` | Share card content: level and score from Progress, the chosen stats only (4 at most), return only with capital, and never a money amount, currency sign or symbol on any golden report. |
+| `packages/shared/test/share.test.ts` | Share card v2 on every golden report: no money, currency, contract symbol or name; positives only; deterministic slot filling (dates or not, 1 or many months, plan or not, founding number or not); formats; layout fits; the committed QR reads back as SHARE_URL. |
 | `tests/e2e-web/blog.spec.ts` | REQ-7 blog end to end: owner drafts, previews, publishes, unpublishes, schedules; /blog, article, landing preview, sitemap; raw-HTML SEO; sanitising; support sees no Blog tab; events. |
 | `tests/e2e-web/credits.spec.ts` | Credits spec (19 Oct 2026) in the browser: "N reports left" pill and "Plans" menu, plan card wording, free preview (3 numbers, 2 insights, blurred, from ₹99/$9), plan window end, no "credit" on customer screens. |
 | `tests/e2e-web/digest.spec.ts` | Weekly summary email: off by default, turned on in Your data, the email arrives once with focus rules and the report link, and its "Stop these emails" link turns it off (button, no sign-in). |
@@ -471,7 +476,8 @@ _Generated from file headers by `npm run docs:index` — 324 files._
 | `tests/e2e-web/research.spec.ts` | Research datasets end to end: the owner builds one now (the real worker, storage and encryption), downloads the ZIP; finds who a subject or report code belongs to (audited); an admin has no Research tab. |
 | `tests/e2e-web/rewind.spec.ts` | Rewind tab: replay the report's trades with rules (30-day plan preset, stop, chips, reset); the result, curve and per-rule list update; no sideways scroll on a phone. |
 | `tests/e2e-web/score-card.spec.ts` | REQ-1: the Progress score card's level labels never overlap, at every level and width, in Chromium (Chrome/Edge) and WebKit (Safari). |
-| `tests/e2e-web/share.spec.ts` | Share progress: the dialog shows up to 4 chosen stats (no money), the card is a 1080×1350 PNG download, the choice changes the card, and the use is recorded. |
+| `tests/e2e-web/share-visual.spec.ts` | Share card v2 pixels: the real drawing code (share-draw.ts) bundled onto a blank page with the site's Manrope, two golden reports as Card and Story compared with stored snapshots, and the QR on the drawn card decodes to the share URL. Needs no stack. |
+| `tests/e2e-web/share.spec.ts` | Share progress (v2): 7 strength tiles and no money, hero and tile chips change the card, Card (1080×1728) and Story (1080×1920) downloads with a readable QR, the founding badge from /me and its toggle, the use recorded with its choices; a QR visit is counted. |
 | `tests/e2e-web/user-admin.spec.ts` | User management end to end: owner requests reports → email → one-click Yes → Included; restrict signs the user out; delete with typed email; admin and support limits. |
 | `tests/e2e-web/workspace.spec.ts` | Browser end to end on the stack: sign in → upload with consent → loader → report (8 tabs) → "+" → file tabs/All files → rename in history → second device → remove → delete. |
 | `tests/load/prepare.mjs` | Load test setup: creates N test accounts (load-NN@load.invalid) in the running dev stack and writes a session token for each to .load/tokens.json. |

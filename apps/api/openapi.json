@@ -1258,12 +1258,55 @@
                   "reason": {
                     "type": "string",
                     "maxLength": 500
+                  },
+                  "founding": {
+                    "type": "boolean"
                   }
                 },
                 "required": [
                   "email",
                   "planId",
                   "reason"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/api/v1/admin/test-account": {
+      "post": {
+        "summary": "Owner only: mark or unmark a test account",
+        "tags": [
+          "admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "isTest": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "email",
+                  "isTest"
                 ]
               }
             }

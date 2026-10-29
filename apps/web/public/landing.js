@@ -126,6 +126,12 @@
   var send = function (name, props) {
     try { fetch('/api/v1/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, props: props }), keepalive: true }).catch(function () {}); } catch (e) { /* ignore */ }
   };
+  // share card v2: a visit from a share card's QR (utm_source=share_card) is counted once per page view; only the
+  // two utm values are sent, cut to 32 safe characters
+  try {
+    var qs = new URLSearchParams(location.search), clean = function (v) { return (v || '').replace(/[^a-z0-9_-]/gi, '').slice(0, 32); };
+    if (qs.get('utm_source')) send('landing_visit', { region: region, source: clean(qs.get('utm_source')), medium: clean(qs.get('utm_medium')) });
+  } catch (e) { /* ignore */ }
   var pricing = document.getElementById('pricing'), hero = root.querySelector('.lp-hero'), pill = root.querySelector('[data-pill]');
   var pastHero = false, pricingOn = false, pricingSeen = false, footOn = false;
   var showPill = function () { if (pill) pill.hidden = !(pastHero && !pricingOn && !footOn); };
